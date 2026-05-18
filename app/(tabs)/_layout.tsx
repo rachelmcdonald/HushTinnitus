@@ -11,7 +11,7 @@ type TabIconProps = {
 function TabIcon({ focused, label, emoji }: TabIconProps) {
   return (
     <View style={styles.iconWrapper}>
-      <Text style={[styles.emoji, focused && styles.emojiActive]}>{emoji}</Text>
+      <Text style={styles.emoji}>{emoji}</Text>
       <Text
         style={[
           styles.label,
@@ -31,10 +31,12 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           backgroundColor: TabBar.backgroundColor,
-          borderTopColor: TabBar.borderTopColor,
           borderTopWidth: TabBar.borderTopWidth,
           height: 64,
           paddingBottom: Spacing.xs,
+          // Flat design — no shadow
+          elevation: 0,
+          shadowOpacity: 0,
         },
         tabBarShowLabel: false,
       }}
@@ -97,13 +99,8 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: 20,
-    opacity: 0.5,
-  },
-  emojiActive: {
-    opacity: 1,
   },
   label: {
     ...Typography.micro,
-    textTransform: 'uppercase',
   },
 });

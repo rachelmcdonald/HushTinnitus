@@ -3,25 +3,15 @@ import { Colors, Typography, Spacing } from '@/src/theme';
 
 type Props = {
   title: string;
-  description: string;
-  accentColor?: string;
+  subtitle: string;
 };
 
-export default function PlaceholderScreen({
-  title,
-  description,
-  accentColor = Colors.calmWave,
-}: Props) {
+export default function PlaceholderScreen({ title, subtitle }: Props) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
-        <View style={[styles.pill, { backgroundColor: accentColor + '20' }]}>
-          <Text style={[styles.pillText, { color: accentColor }]}>
-            Phase 1 — Placeholder
-          </Text>
-        </View>
         <Text style={styles.title}>{title}</Text>
-        <Text style={styles.description}>{description}</Text>
+        <Text style={styles.subtitle}>{subtitle}</Text>
       </View>
     </SafeAreaView>
   );
@@ -37,22 +27,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: Spacing.xl,
-    gap: Spacing.base,
-  },
-  pill: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: 8,
-  },
-  pillText: {
-    ...Typography.micro,
+    gap: Spacing.sm,
   },
   title: {
-    ...Typography.display,
-    color: Colors.deepTide,
+    ...Typography.heading1,
+    color: Colors.darkText,
     textAlign: 'center',
   },
-  description: {
+  subtitle: {
     ...Typography.body,
     color: Colors.midGray,
     textAlign: 'center',

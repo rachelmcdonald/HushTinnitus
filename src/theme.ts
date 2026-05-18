@@ -118,11 +118,10 @@ export const Duration = {
   breathingExhale: 8000,
 } as const;
 
-// Tab bar styling
+// Tab bar styling (spec Section 5.1)
 export const TabBar = {
-  activeTintColor: Colors.deepTide,
+  activeTintColor: Colors.calmWave,
   inactiveTintColor: Colors.midGray,
-  backgroundColor: Colors.warmSand,
-  borderTopColor: Colors.midGray + '30',
-  borderTopWidth: Border.width,
+  backgroundColor: Colors.deepTide,
+  borderTopWidth: 0,
 } as const;
