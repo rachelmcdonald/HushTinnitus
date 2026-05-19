@@ -15,6 +15,13 @@ export function getDb(): SQLite.SQLiteDatabase {
 }
 
 function initSchema(db: SQLite.SQLiteDatabase): void {
+  // Schema migrations — new columns added as ALTER TABLE so existing databases
+  // are upgraded in place. Each is wrapped in try/catch: SQLite throws if the
+  // column already exists, which is the expected case on subsequent launches.
+  const migrations = [
+    'ALTER TABLE preferences ADD COLUMN matchedPitchHz REAL',
+  ];
+
   db.execSync(`
     CREATE TABLE IF NOT EXISTS preferences (
       id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -27,7 +34,8 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       firstLaunchDate TEXT NOT NULL DEFAULT '',
       lastTFIDate TEXT,
       week4Prompted INTEGER NOT NULL DEFAULT 0,
-      week8Prompted INTEGER NOT NULL DEFAULT 0
+      week8Prompted INTEGER NOT NULL DEFAULT 0,
+      matchedPitchHz REAL
     );
 
     CREATE TABLE IF NOT EXISTS tfi_assessments (
@@ -48,6 +56,13 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       savedAt TEXT NOT NULL
     );
 
+  `);
+
+  for (const sql of migrations) {
+    try { db.execSync(sql); } catch { /* column already exists */ }
+  }
+
+  db.execSync(`
     CREATE TABLE IF NOT EXISTS sound_sessions (
       id TEXT PRIMARY KEY,
       date TEXT NOT NULL,

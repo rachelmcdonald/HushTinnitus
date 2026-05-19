@@ -13,6 +13,7 @@ type PreferencesRow = {
   lastTFIDate: string | null;
   week4Prompted: number;
   week8Prompted: number;
+  matchedPitchHz: number | null;
 };
 
 const DEFAULT_PREFERENCES: UserPreferences = {
@@ -26,6 +27,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   lastTFIDate: null,
   week4Prompted: false,
   week8Prompted: false,
+  matchedPitchHz: null,
 };
 
 function rowToPreferences(row: PreferencesRow): UserPreferences {
@@ -40,6 +42,7 @@ function rowToPreferences(row: PreferencesRow): UserPreferences {
     lastTFIDate: row.lastTFIDate,
     week4Prompted: row.week4Prompted === 1,
     week8Prompted: row.week8Prompted === 1,
+    matchedPitchHz: row.matchedPitchHz ?? null,
   };
 }
 
@@ -58,8 +61,8 @@ export function savePreferences(prefs: UserPreferences): void {
     `INSERT OR REPLACE INTO preferences (
       id, onboardingComplete, isPremium, darkMode, textSize,
       notificationsEnabled, notificationTime, firstLaunchDate,
-      lastTFIDate, week4Prompted, week8Prompted
-    ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      lastTFIDate, week4Prompted, week8Prompted, matchedPitchHz
+    ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       prefs.onboardingComplete ? 1 : 0,
       prefs.isPremium ? 1 : 0,
@@ -71,6 +74,7 @@ export function savePreferences(prefs: UserPreferences): void {
       prefs.lastTFIDate,
       prefs.week4Prompted ? 1 : 0,
       prefs.week8Prompted ? 1 : 0,
+      prefs.matchedPitchHz,
     ]
   );
 }

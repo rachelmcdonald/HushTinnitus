@@ -14,6 +14,7 @@ const WEB_DEFAULTS: UserPreferences = {
   lastTFIDate: null,
   week4Prompted: false,
   week8Prompted: false,
+  matchedPitchHz: null,
 };
 
 type PreferencesContextValue = {

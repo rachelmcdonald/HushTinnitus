@@ -52,6 +52,7 @@ export interface UserPreferences {
   lastTFIDate: string | null;
   week4Prompted: boolean;
   week8Prompted: boolean;
+  matchedPitchHz: number | null;
 }
 
 // TFI severity grade type

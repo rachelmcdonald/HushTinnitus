@@ -47,9 +47,11 @@ class AudioEngine {
   private ctx: AudioContext | null = null;
   private chain: Chain | null = null;
   private gain: GainNode | null = null;
+  private notchFilter: BiquadFilterNode | null = null;
   private _currentSound: SoundSource | null = null;
   private _volume: number = DEFAULT_GAIN;
   private _sessionStartTime: number | null = null;
+  private _notchedFrequencyHz: number | null = null;
 
   private constructor() {}
 
@@ -78,6 +80,22 @@ class AudioEngine {
     return this._volume;
   }
 
+  get notchedFrequencyHz(): number | null {
+    return this._notchedFrequencyHz;
+  }
+
+  // Enable notched therapy. If audio is playing, restarts it through the filter.
+  enableNotchedTherapy(frequencyHz: number): void {
+    this._notchedFrequencyHz = frequencyHz;
+    if (this._currentSound) this.play(this._currentSound, this._volume);
+  }
+
+  // Disable notched therapy. If audio is playing, restarts it without the filter.
+  disableNotchedTherapy(): void {
+    this._notchedFrequencyHz = null;
+    if (this._currentSound) this.play(this._currentSound, this._volume);
+  }
+
   play(soundId: SoundSource, volume: number = DEFAULT_GAIN): void {
     this.stop();
 
@@ -87,8 +105,23 @@ class AudioEngine {
     // Shared output gain node
     const gain = ctx.createGain();
     gain.gain.value = volume;
-    gain.connect(ctx.destination);
     this.gain = gain;
+
+    // Route: gain → [notch filter?] → destination
+    // Notched therapy: BiquadFilterNode 'notch', Q=1.0 (~1-octave bandwidth).
+    // Protocol: Okamoto et al. (2010), PNAS 107(3), 1207-1210.
+    if (this._notchedFrequencyHz !== null) {
+      const notch = ctx.createBiquadFilter();
+      notch.type = 'notch';
+      notch.frequency.value = this._notchedFrequencyHz;
+      notch.Q.value = 1.0;
+      gain.connect(notch);
+      notch.connect(ctx.destination);
+      this.notchFilter = notch;
+    } else {
+      gain.connect(ctx.destination);
+      this.notchFilter = null;
+    }
 
     if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
       this.chain = this.buildBinauralChain(ctx, soundId, gain);
@@ -203,6 +236,10 @@ class AudioEngine {
         try { this.chain.rightPan.disconnect(); } catch {}
       }
       this.chain = null;
+    }
+    if (this.notchFilter) {
+      try { this.notchFilter.disconnect(); } catch {}
+      this.notchFilter = null;
     }
     if (this.gain) {
       try { this.gain.disconnect(); } catch {}

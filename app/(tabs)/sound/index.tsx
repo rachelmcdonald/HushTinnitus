@@ -1,6 +1,11 @@
+import { useState } from 'react';
 import { StyleSheet, Text, View, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { router } from 'expo-router';
 import { SoundSource } from '@/src/types';
 import { useAudioPlayback } from '@/src/hooks/useAudioPlayback';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { audioEngine } from '@/src/audio/AudioEngine';
+import { formatHz } from '@/src/audio/PitchMatchEngine';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
@@ -368,6 +373,137 @@ function SectionHeading({ label }: { label: string }) {
   return <Text style={styles.sectionLabel}>{label}</Text>;
 }
 
+// ─── Notched therapy card ─────────────────────────────────────────────────────
+
+type NotchedCardProps = {
+  frequencyHz: number;
+  isActive: boolean;
+  onToggle: () => void;
+};
+
+function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProps) {
+  return (
+    <View style={nt.card}>
+      <View style={nt.headerRow}>
+        <View style={nt.titleBlock}>
+          <Text style={nt.title}>Notched sound therapy</Text>
+          <Text style={nt.frequency}>Notch at {formatHz(frequencyHz)}</Text>
+        </View>
+        <Pressable
+          style={({ pressed }) => [
+            nt.toggle,
+            isActive && nt.toggleActive,
+            pressed && nt.togglePressed,
+          ]}
+          onPress={onToggle}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: isActive }}
+          accessibilityLabel={`Notched therapy ${isActive ? 'on' : 'off'}`}
+        >
+          <Text style={[nt.toggleLabel, isActive && nt.toggleLabelActive]}>
+            {isActive ? 'On' : 'Off'}
+          </Text>
+        </Pressable>
+      </View>
+      <Text style={nt.body}>
+        Based on research by Okamoto et al. (2010), listening to sound with a
+        narrow notch removed at your tinnitus frequency may reduce auditory
+        cortex activity at that frequency over time. Play any sound above with
+        notched therapy enabled.
+      </Text>
+      {isActive && (
+        <View style={nt.activeBadge}>
+          <Text style={nt.activeBadgeText}>
+            Notch filter active — sounds currently play with a notch at {formatHz(frequencyHz)}
+          </Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const nt = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+  },
+  titleBlock: { flex: 1, gap: 2 },
+  title: { ...Typography.heading2, color: Colors.darkText },
+  frequency: { ...Typography.caption, color: Colors.midGray },
+  toggle: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.chip,
+    borderWidth: Border.width * 2,
+    borderColor: Colors.midGray + '50',
+    minWidth: 52,
+    alignItems: 'center',
+  },
+  toggleActive: {
+    backgroundColor: Colors.deepTide,
+    borderColor: Colors.deepTide,
+  },
+  togglePressed: { opacity: 0.7 },
+  toggleLabel: { ...Typography.micro, color: Colors.midGray },
+  toggleLabelActive: { color: Colors.white },
+  body: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },
+  activeBadge: {
+    backgroundColor: Colors.tealLight,
+    borderRadius: Radius.chip,
+    padding: Spacing.sm,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.calmWave,
+  },
+  activeBadgeText: { ...Typography.caption, color: Colors.deepTide },
+});
+
+// ─── Pitch matching entry ─────────────────────────────────────────────────────
+
+function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [pm.container, pressed && pm.pressed]}
+      onPress={() => router.push('/sound/pitch-matching')}
+      accessibilityRole="button"
+      accessibilityLabel="Open pitch matching"
+    >
+      <View style={pm.body}>
+        <Text style={pm.title}>Pitch matching</Text>
+        <Text style={pm.subtitle}>
+          {savedHz
+            ? `Saved frequency: ${formatHz(savedHz)}`
+            : 'Find your tinnitus frequency using a tone sweep'}
+        </Text>
+      </View>
+      <Text style={pm.arrow}>›</Text>
+    </Pressable>
+  );
+}
+
+const pm = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  pressed: { opacity: 0.8 },
+  body: { flex: 1, gap: 2 },
+  title: { ...Typography.heading2, color: Colors.darkText },
+  subtitle: { ...Typography.body, color: Colors.midGray },
+  arrow: { ...Typography.heading1, color: Colors.midGray },
+});
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SoundScreen() {
@@ -380,6 +516,21 @@ export default function SoundScreen() {
     stopAll,
     setTimer,
   } = useAudioPlayback();
+
+  const { preferences } = usePreferences();
+  const savedPitchHz = preferences?.matchedPitchHz ?? null;
+  const [notchedActive, setNotchedActive] = useState(false);
+
+  function handleNotchedToggle() {
+    if (!savedPitchHz) return;
+    const next = !notchedActive;
+    setNotchedActive(next);
+    if (next) {
+      audioEngine.enableNotchedTherapy(savedPitchHz);
+    } else {
+      audioEngine.disableNotchedTherapy();
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -399,6 +550,19 @@ export default function SoundScreen() {
             onStop={stopAll}
           />
         )}
+
+        {/* Pitch matching entry — always visible */}
+        <View style={styles.section}>
+          <SectionHeading label="Pitch matching & therapy" />
+          <PitchMatchingEntry savedHz={savedPitchHz} />
+          {savedPitchHz !== null && (
+            <NotchedTherapyCard
+              frequencyHz={savedPitchHz}
+              isActive={notchedActive}
+              onToggle={handleNotchedToggle}
+            />
+          )}
+        </View>
 
         {/* Background noise */}
         <View style={styles.section}>
