@@ -1,11 +1,14 @@
 import { useState } from 'react';
 import { StyleSheet, Text, View, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import { SoundSource } from '@/src/types';
 import { useAudioPlayback } from '@/src/hooks/useAudioPlayback';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { audioEngine } from '@/src/audio/AudioEngine';
 import { formatHz } from '@/src/audio/PitchMatchEngine';
+import NowPlayingBar from '@/src/components/NowPlayingBar';
+import PremiumGate from '@/src/components/PremiumGate';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
@@ -506,19 +509,95 @@ const pm = StyleSheet.create({
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
+// ─── 3-Source mixer preview (Premium) ────────────────────────────────────────
+
+const MIXER_SOUNDS: SoundDef[] = [
+  { id: 'white-noise', name: 'White noise', description: '' },
+  { id: 'rain',        name: 'Rain',        description: '' },
+  { id: 'ocean',       name: 'Ocean waves', description: '' },
+];
+
+function MixerPreview() {
+  return (
+    <View style={mx.container}>
+      {MIXER_SOUNDS.map((s, i) => (
+        <View key={s.id} style={mx.row}>
+          <Text style={mx.label}>{s.name}</Text>
+          <Slider
+            style={mx.slider}
+            minimumValue={0}
+            maximumValue={1}
+            value={i === 0 ? 0.7 : i === 1 ? 0.4 : 0.3}
+            minimumTrackTintColor={Colors.calmWave}
+            maximumTrackTintColor={Colors.midGray + '40'}
+            thumbTintColor={Colors.deepTide}
+            disabled
+          />
+          <Text style={mx.pct}>{i === 0 ? '70%' : i === 1 ? '40%' : '30%'}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const mx = StyleSheet.create({
+  container: { padding: Spacing.base, gap: Spacing.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+  label: { ...Typography.caption, color: Colors.darkText, width: 88 },
+  slider: { flex: 1, height: 32 },
+  pct: { ...Typography.caption, color: Colors.midGray, width: 32, textAlign: 'right' },
+});
+
+// ─── Per-ear balance preview (Premium) ───────────────────────────────────────
+
+function BalancePreview() {
+  return (
+    <View style={bal.container}>
+      <View style={bal.labelRow}>
+        <Text style={bal.endLabel}>L</Text>
+        <Text style={bal.centreLabel}>Centre</Text>
+        <Text style={bal.endLabel}>R</Text>
+      </View>
+      <Slider
+        style={bal.slider}
+        minimumValue={-1}
+        maximumValue={1}
+        value={0}
+        minimumTrackTintColor={Colors.midGray + '40'}
+        maximumTrackTintColor={Colors.midGray + '40'}
+        thumbTintColor={Colors.deepTide}
+        disabled
+      />
+    </View>
+  );
+}
+
+const bal = StyleSheet.create({
+  container: { padding: Spacing.base, gap: Spacing.sm },
+  labelRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  endLabel: { ...Typography.caption, color: Colors.darkText },
+  centreLabel: { ...Typography.caption, color: Colors.midGray },
+  slider: { width: '100%', height: 32 },
+});
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
+
 export default function SoundScreen() {
   const {
     currentSound,
     isPlaying,
+    isPaused,
     selectedTimer,
     timeRemaining,
     toggle,
+    pauseResume,
     stopAll,
     setTimer,
   } = useAudioPlayback();
 
   const { preferences } = usePreferences();
   const savedPitchHz = preferences?.matchedPitchHz ?? null;
+  const isPremium = preferences?.isPremium ?? false;
   const [notchedActive, setNotchedActive] = useState(false);
 
   function handleNotchedToggle() {
@@ -534,24 +613,15 @@ export default function SoundScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
+      {/* Scrollable content */}
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Sound</Text>
 
-        {/* Now Playing panel */}
-        {isPlaying && currentSound && (
-          <NowPlayingPanel
-            soundName={soundNameFor(currentSound)}
-            timeRemaining={timeRemaining}
-            selectedTimer={selectedTimer}
-            onSetTimer={setTimer}
-            onStop={stopAll}
-          />
-        )}
-
-        {/* Pitch matching entry — always visible */}
+        {/* Pitch matching entry */}
         <View style={styles.section}>
           <SectionHeading label="Pitch matching & therapy" />
           <PitchMatchingEntry savedHz={savedPitchHz} />
@@ -593,7 +663,6 @@ export default function SoundScreen() {
         {/* Binaural beats */}
         <View style={styles.section}>
           <SectionHeading label="Binaural beats" />
-          {/* Advisory note — Section 7.1 */}
           <View style={styles.advisoryCard}>
             <Text style={styles.advisoryHeading}>Headphones required</Text>
             <Text style={styles.advisoryBody}>
@@ -613,11 +682,50 @@ export default function SoundScreen() {
           ))}
         </View>
 
+        {/* 3-Source mixer — Premium */}
+        <View style={styles.section}>
+          <View style={styles.premiumSectionHeader}>
+            <SectionHeading label="Sound mixer" />
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumBadgeText}>Premium</Text>
+            </View>
+          </View>
+          <PremiumGate isPremium={isPremium} featureName="3-source sound mixer">
+            <MixerPreview />
+          </PremiumGate>
+        </View>
+
+        {/* Per-ear balance — Premium */}
+        <View style={styles.section}>
+          <View style={styles.premiumSectionHeader}>
+            <SectionHeading label="Per-ear balance" />
+            <View style={styles.premiumBadge}>
+              <Text style={styles.premiumBadgeText}>Premium</Text>
+            </View>
+          </View>
+          <PremiumGate isPremium={isPremium} featureName="Per-ear volume balance">
+            <BalancePreview />
+          </PremiumGate>
+        </View>
+
         {/* Timer selector — only shown when nothing is playing */}
         {!isPlaying && (
           <TimerSelector selected={selectedTimer} onSelect={setTimer} />
         )}
       </ScrollView>
+
+      {/* Fixed Now Playing bar — outside ScrollView, pinned above safe area */}
+      {isPlaying && currentSound && (
+        <NowPlayingBar
+          currentSound={currentSound}
+          isPaused={isPaused}
+          timeRemaining={timeRemaining}
+          selectedTimer={selectedTimer}
+          onPauseResume={pauseResume}
+          onStop={stopAll}
+          onSetTimer={setTimer}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -628,6 +736,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warmSand,
   },
   scroll: {
+    flex: 1,
+  },
+  scrollContent: {
     flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
@@ -664,5 +775,24 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.deepTide,
     lineHeight: 22,
+  },
+
+  // Premium section header
+  premiumSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  premiumBadge: {
+    backgroundColor: Colors.goldLight,
+    borderRadius: Radius.chip,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 2,
+    borderWidth: Border.width,
+    borderColor: Colors.softGold,
+  },
+  premiumBadgeText: {
+    ...Typography.micro,
+    color: Colors.softGold,
   },
 });

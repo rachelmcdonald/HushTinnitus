@@ -52,6 +52,7 @@ class AudioEngine {
   private _volume: number = DEFAULT_GAIN;
   private _sessionStartTime: number | null = null;
   private _notchedFrequencyHz: number | null = null;
+  private _isPaused = false;
 
   private constructor() {}
 
@@ -82,6 +83,24 @@ class AudioEngine {
 
   get notchedFrequencyHz(): number | null {
     return this._notchedFrequencyHz;
+  }
+
+  get isPaused(): boolean {
+    return this._isPaused;
+  }
+
+  // Suspend the AudioContext — pauses all audio without losing the loop
+  // position. Resumes from exactly where it left off.
+  async pause(): Promise<void> {
+    if (!this.ctx || !this._currentSound || this._isPaused) return;
+    await this.ctx.suspend();
+    this._isPaused = true;
+  }
+
+  async resume(): Promise<void> {
+    if (!this.ctx || !this._currentSound || !this._isPaused) return;
+    await this.ctx.resume();
+    this._isPaused = false;
   }
 
   // Enable notched therapy. If audio is playing, restarts it through the filter.
@@ -137,6 +156,7 @@ class AudioEngine {
     this.clearChain();
     this._currentSound = null;
     this._sessionStartTime = null;
+    this._isPaused = false;
   }
 
   // Schedule a linear gain fade to 0 over `durationSeconds`.

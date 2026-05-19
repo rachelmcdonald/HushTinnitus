@@ -3,15 +3,41 @@ import { Platform } from 'react-native';
 import { SoundSource, SoundSession } from '@/src/types';
 import { audioEngine } from '@/src/audio/AudioEngine';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import {
+  showPlaybackNotification,
+  hidePlaybackNotification,
+  subscribeToExternalControls,
+} from '@/src/audio/AudioSession';
 
 const FADE_OUT_SECONDS = 10;
+
+// Human-readable names for the notification / Now Playing bar.
+const SOUND_NAMES: Record<SoundSource, string> = {
+  'white-noise':    'White noise',
+  'pink-noise':     'Pink noise',
+  'brown-noise':    'Brown noise',
+  'rain':           'Rain',
+  'ocean':          'Ocean waves',
+  'stream':         'Stream',
+  'forest':         'Forest',
+  'fire':           'Fire',
+  'cafe':           'Cafe ambience',
+  'binaural-alpha': 'Alpha waves',
+  'binaural-theta': 'Theta waves',
+};
+
+export function soundDisplayName(id: SoundSource): string {
+  return SOUND_NAMES[id] ?? id;
+}
 
 export type AudioPlaybackState = {
   currentSound: SoundSource | null;
   isPlaying: boolean;
-  selectedTimer: number | null;   // chosen duration in minutes (null = no timer)
-  timeRemaining: number | null;   // countdown in seconds (null = timer not active)
+  isPaused: boolean;
+  selectedTimer: number | null;
+  timeRemaining: number | null;
   toggle: (id: SoundSource) => void;
+  pauseResume: () => Promise<void>;
   stopAll: () => void;
   setTimer: (minutes: number | null) => void;
 };
@@ -20,21 +46,51 @@ export function useAudioPlayback(): AudioPlaybackState {
   const [currentSound, setCurrentSound] = useState<SoundSource | null>(
     () => audioEngine.currentSound
   );
+  const [isPaused, setIsPaused] = useState(false);
   const [selectedTimer, setSelectedTimer] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
-  // Wall-clock start of the current session — used to compute durationSeconds.
   const sessionStartRef = useRef<number | null>(null);
-  // The sound playing when the session started (needed for the DB record).
   const sessionSoundRef = useRef<SoundSource | null>(null);
 
-  // ─── Session save helper ─────────────────────────────────────────────────
+  // ─── Notification sync ────────────────────────────────────────────────────
+
+  useEffect(() => {
+    if (currentSound) {
+      showPlaybackNotification(soundDisplayName(currentSound), isPaused ? 'paused' : 'playing');
+    } else {
+      hidePlaybackNotification();
+    }
+  }, [currentSound, isPaused]);
+
+  // ─── External controls (lock screen / notification) ───────────────────────
+
+  useEffect(() => {
+    const unsubscribe = subscribeToExternalControls({
+      onPlay: () => {
+        if (audioEngine.isPaused) {
+          audioEngine.resume().then(() => setIsPaused(false));
+        }
+      },
+      onPause: () => {
+        if (!audioEngine.isPaused && audioEngine.isPlaying) {
+          audioEngine.pause().then(() => setIsPaused(true));
+        }
+      },
+      onStop: () => {
+        performStopRef.current?.();
+      },
+    });
+    return unsubscribe;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Session save ─────────────────────────────────────────────────────────
 
   function saveSession(durationSeconds: number) {
     const sound = sessionSoundRef.current;
     if (Platform.OS === 'web' || !sound || durationSeconds < 1) return;
     try {
-      const session: SoundSession = {
+      saveSoundSession({
         id: createSessionId(),
         date: new Date().toISOString(),
         sounds: [sound],
@@ -43,14 +99,11 @@ export function useAudioPlayback(): AudioPlaybackState {
         volume: audioEngine.volume,
         balance: 0,
         notchedFrequency: null,
-      };
-      saveSoundSession(session);
-    } catch {
-      // Non-critical — never crash the UI over a failed session write.
-    }
+      } as SoundSession);
+    } catch {}
   }
 
-  // ─── Core stop ───────────────────────────────────────────────────────────
+  // ─── Core stop ────────────────────────────────────────────────────────────
 
   const performStop = useCallback(
     (durationOverride?: number) => {
@@ -67,6 +120,7 @@ export function useAudioPlayback(): AudioPlaybackState {
       saveSession(duration);
 
       setCurrentSound(null);
+      setIsPaused(false);
       setTimeRemaining(null);
       sessionStartRef.current = null;
       sessionSoundRef.current = null;
@@ -75,48 +129,51 @@ export function useAudioPlayback(): AudioPlaybackState {
     [selectedTimer]
   );
 
-  // ─── Timer countdown ─────────────────────────────────────────────────────
+  // Stable ref so external control callbacks can always call the latest version.
+  const performStopRef = useRef(performStop);
+  useEffect(() => { performStopRef.current = performStop; }, [performStop]);
+
+  // ─── Timer countdown ──────────────────────────────────────────────────────
 
   useEffect(() => {
     if (timeRemaining === null) return;
 
     if (timeRemaining === 0) {
-      // Fade already started at timeRemaining === FADE_OUT_SECONDS.
-      // Now the fade is complete — stop and save.
       const totalSeconds = selectedTimer ? selectedTimer * 60 : 0;
       performStop(totalSeconds);
       return;
     }
 
-    if (timeRemaining === FADE_OUT_SECONDS) {
-      // Start the gentle 10-second fade-out.
-      if (Platform.OS !== 'web') {
-        audioEngine.startFadeOut(FADE_OUT_SECONDS);
-      }
+    if (timeRemaining === FADE_OUT_SECONDS && !isPaused) {
+      if (Platform.OS !== 'web') audioEngine.startFadeOut(FADE_OUT_SECONDS);
     }
 
     const tick = setTimeout(
-      () => setTimeRemaining((prev) => (prev !== null ? prev - 1 : null)),
+      () => setTimeRemaining((prev) => (prev !== null && !isPaused ? prev - 1 : prev)),
       1000
     );
     return () => clearTimeout(tick);
-  }, [timeRemaining, performStop, selectedTimer]);
+  }, [timeRemaining, isPaused, performStop, selectedTimer]);
 
-  // ─── Toggle play/stop ────────────────────────────────────────────────────
+  // ─── Toggle play/stop ─────────────────────────────────────────────────────
 
   const toggle = useCallback(
     (soundId: SoundSource) => {
-      if (currentSound === soundId) {
+      if (currentSound === soundId && !isPaused) {
         performStop();
         return;
       }
 
-      // Stop any currently playing sound first (different sound tapped).
+      // Resume if paused on this same sound.
+      if (currentSound === soundId && isPaused) {
+        audioEngine.resume().then(() => setIsPaused(false));
+        return;
+      }
+
       if (currentSound !== null && Platform.OS !== 'web') {
         audioEngine.stop();
       }
 
-      // Start the new sound.
       if (Platform.OS !== 'web') {
         audioEngine.play(soundId);
       }
@@ -124,42 +181,54 @@ export function useAudioPlayback(): AudioPlaybackState {
       sessionStartRef.current = Date.now();
       sessionSoundRef.current = soundId;
       setCurrentSound(soundId);
-
-      // Kick off the countdown if a timer is selected.
+      setIsPaused(false);
       setTimeRemaining(selectedTimer !== null ? selectedTimer * 60 : null);
     },
-    [currentSound, selectedTimer, performStop]
+    [currentSound, isPaused, selectedTimer, performStop]
   );
 
-  // ─── Stop all ────────────────────────────────────────────────────────────
+  // ─── Pause / resume ───────────────────────────────────────────────────────
+
+  const pauseResume = useCallback(async () => {
+    if (!currentSound) return;
+    if (isPaused) {
+      if (Platform.OS !== 'web') await audioEngine.resume();
+      setIsPaused(false);
+    } else {
+      if (Platform.OS !== 'web') await audioEngine.pause();
+      setIsPaused(true);
+    }
+  }, [currentSound, isPaused]);
+
+  // ─── Stop all ─────────────────────────────────────────────────────────────
 
   const stopAll = useCallback(() => {
     performStop();
   }, [performStop]);
 
-  // ─── Timer selection ─────────────────────────────────────────────────────
+  // ─── Timer selection ──────────────────────────────────────────────────────
 
   const setTimer = useCallback(
     (minutes: number | null) => {
       setSelectedTimer(minutes);
-      // If audio is already playing, restart the countdown with the new duration.
-      if (currentSound !== null) {
+      if (currentSound !== null && !isPaused) {
         setTimeRemaining(minutes !== null ? minutes * 60 : null);
         if (minutes !== null && Platform.OS !== 'web') {
-          // Re-set gain to full volume in case a previous fade was in progress.
           audioEngine.setVolume(audioEngine.volume);
         }
       }
     },
-    [currentSound]
+    [currentSound, isPaused]
   );
 
   return {
     currentSound,
     isPlaying: currentSound !== null,
+    isPaused,
     selectedTimer,
     timeRemaining,
     toggle,
+    pauseResume,
     stopAll,
     setTimer,
   };

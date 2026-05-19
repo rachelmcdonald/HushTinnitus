@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npx tsc *)",
       "Bash(npx expo *)",
-      "WebFetch(domain:docs.swmansion.com)"
+      "WebFetch(domain:docs.swmansion.com)",
+      "Bash(python3 -m json.tool)"
     ]
   }
 }
