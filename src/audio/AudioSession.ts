@@ -13,31 +13,57 @@
 // callers provide callbacks so this module stays decoupled from React state.
 
 import { Platform } from 'react-native';
-import { AudioManager, PlaybackNotificationManager } from 'react-native-audio-api';
+
+// Type-only import for AudioEventSubscription (used in subscribeToExternalControls).
 import type AudioEventSubscription from 'react-native-audio-api/lib/typescript/events/AudioEventSubscription';
+
+// ─── Lazy module loading ──────────────────────────────────────────────────────
+// AudioManager and PlaybackNotificationManager are singleton instances exported
+// from the package. We load the module lazily to avoid crashing in Expo Go.
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AudioSessionModule = Record<string, any>;
+
+let _mod: AudioSessionModule | null = null;
+let _modChecked = false;
+
+function loadMod(): AudioSessionModule | null {
+  if (_modChecked) return _mod;
+  _modChecked = true;
+  try {
+    _mod = require('react-native-audio-api') as AudioSessionModule;
+  } catch {
+    _mod = null;
+  }
+  return _mod;
+}
 
 // ─── Session initialisation ───────────────────────────────────────────────────
 
 export function initAudioSession(): void {
   if (Platform.OS === 'web') return;
+  const mod = loadMod();
+  if (!mod) return; // Expo Go — silently skip, audio won't work anyway
 
-  // iOS: 'playback' category keeps audio alive when the screen locks or the
-  // app is backgrounded. Combined with UIBackgroundModes: ["audio"] in
-  // app.json, this is all that's required on iOS.
-  AudioManager.setAudioSessionOptions({
-    iosCategory: 'playback',
-    iosMode: 'default',
-    iosOptions: ['allowAirPlay', 'allowBluetoothA2DP'],
-  });
+  try {
+    // iOS: 'playback' category keeps audio alive when the screen locks.
+    // Combined with UIBackgroundModes: ["audio"] in app.json, this is all
+    // that is required on iOS.
+    mod.AudioManager.setAudioSessionOptions({
+      iosCategory: 'playback',
+      iosMode: 'default',
+      iosOptions: ['allowAirPlay', 'allowBluetoothA2DP'],
+    });
 
-  // Both platforms: observe audio focus so we can handle interruptions (phone
-  // calls, navigation prompts, other audio apps) and resume automatically.
-  // 'gain' = request persistent audio focus, not transient.
-  AudioManager.observeAudioInterruptions('gain');
+    // Both platforms: observe audio focus so we can handle interruptions
+    // (phone calls, navigation prompts, other audio apps) and resume.
+    mod.AudioManager.observeAudioInterruptions('gain');
 
-  // Aggressively reclaim session after interruptions end (e.g. when a phone
-  // call finishes). Experimental but appropriate for a continuous audio app.
-  AudioManager.activelyReclaimSession(true);
+    // Aggressively reclaim session after interruptions end.
+    mod.AudioManager.activelyReclaimSession(true);
+  } catch {
+    // Best-effort — never crash the app over session config failures.
+  }
 }
 
 // ─── Playback notification ────────────────────────────────────────────────────
@@ -49,32 +75,32 @@ export async function showPlaybackNotification(
   state: 'playing' | 'paused'
 ): Promise<void> {
   if (Platform.OS === 'web') return;
+  const mod = loadMod();
+  if (!mod) return;
   try {
-    await PlaybackNotificationManager.show({
+    await mod.PlaybackNotificationManager.show({
       title: soundName,
       artist: 'Hush Tinnitus',
       state,
     });
-    // Enable the controls shown on the notification / lock screen.
-    await PlaybackNotificationManager.enableControl('play', state === 'paused');
-    await PlaybackNotificationManager.enableControl('pause', state === 'playing');
-    await PlaybackNotificationManager.enableControl('stop', true);
+    await mod.PlaybackNotificationManager.enableControl('play', state === 'paused');
+    await mod.PlaybackNotificationManager.enableControl('pause', state === 'playing');
+    await mod.PlaybackNotificationManager.enableControl('stop', true);
   } catch {
-    // Non-fatal — if the notification fails (e.g. permission not granted),
-    // audio still plays. The foreground service fallback is best-effort.
+    // Non-fatal — audio still plays if notification fails.
   }
 }
 
 export async function hidePlaybackNotification(): Promise<void> {
   if (Platform.OS === 'web') return;
+  const mod = loadMod();
+  if (!mod) return;
   try {
-    await PlaybackNotificationManager.hide();
+    await mod.PlaybackNotificationManager.hide();
   } catch {}
 }
 
 // ─── External control subscriptions ──────────────────────────────────────────
-// Subscribe to lock screen / notification control events so that tapping
-// play/pause/stop on the notification or headphones affects app state.
 
 type ExternalControlHandlers = {
   onPlay: () => void;
@@ -86,24 +112,26 @@ export function subscribeToExternalControls(
   handlers: ExternalControlHandlers
 ): () => void {
   if (Platform.OS === 'web') return () => {};
+  const mod = loadMod();
+  if (!mod) return () => {};
 
   const subs: AudioEventSubscription[] = [];
 
   try {
     subs.push(
-      PlaybackNotificationManager.addEventListener(
+      mod.PlaybackNotificationManager.addEventListener(
         'playbackNotificationPlay',
         handlers.onPlay
       )
     );
     subs.push(
-      PlaybackNotificationManager.addEventListener(
+      mod.PlaybackNotificationManager.addEventListener(
         'playbackNotificationPause',
         handlers.onPause
       )
     );
     subs.push(
-      PlaybackNotificationManager.addEventListener(
+      mod.PlaybackNotificationManager.addEventListener(
         'playbackNotificationStop',
         handlers.onStop
       )

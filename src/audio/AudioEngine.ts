@@ -1,6 +1,7 @@
-// Named imports from the main package — do not use deep import paths.
-// react-native-audio-api ships a full web shim, so no Platform guards are needed.
-import {
+// Type-only imports — erased at compile time, zero runtime cost.
+// The actual module is loaded lazily below to prevent crashes in Expo Go,
+// where the react-native-audio-api native module is not linked.
+import type {
   AudioContext,
   AudioBufferSourceNode,
   GainNode,
@@ -10,6 +11,34 @@ import {
 } from 'react-native-audio-api';
 import { SoundSource } from '@/src/types';
 import { fillNoise } from './noiseGenerators';
+
+// ─── Lazy module loading ──────────────────────────────────────────────────────
+// Tries to load react-native-audio-api once. Returns null and logs a warning
+// if the native module is not present (Expo Go) or on web.
+
+type AudioApiCtor = { AudioContext: new () => AudioContext };
+let _audioApi: AudioApiCtor | null = null;
+let _audioApiChecked = false;
+
+function loadAudioApi(): AudioApiCtor | null {
+  if (_audioApiChecked) return _audioApi;
+  _audioApiChecked = true;
+  try {
+    _audioApi = require('react-native-audio-api') as AudioApiCtor;
+  } catch {
+    console.warn(
+      '[HushTinnitus] react-native-audio-api native module not available. ' +
+      'Audio playback requires a development build — it will not work in Expo Go.'
+    );
+    _audioApi = null;
+  }
+  return _audioApi;
+}
+
+/** Returns true when the audio engine can actually play sound. */
+export function isAudioAvailable(): boolean {
+  return loadAudioApi() !== null;
+}
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -116,6 +145,7 @@ class AudioEngine {
   }
 
   play(soundId: SoundSource, volume: number = DEFAULT_GAIN): void {
+    if (!loadAudioApi()) return; // no-op in Expo Go / web
     this.stop();
 
     const ctx = this.getContext();
@@ -268,8 +298,10 @@ class AudioEngine {
   }
 
   private getContext(): AudioContext {
+    const api = loadAudioApi();
+    if (!api) throw new Error('Audio not available');
     if (!this.ctx) {
-      this.ctx = new AudioContext();
+      this.ctx = new api.AudioContext();
     }
     return this.ctx!;
   }

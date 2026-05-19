@@ -10,7 +10,8 @@ export default function RootLayout() {
     // Configure background audio session once on app startup.
     // iOS: sets category 'playback' so audio survives screen lock.
     // Android: enables interruption handling and foreground service support.
-    initAudioSession();
+    // Wrapped in try/catch — a failure here must never crash the app.
+    try { initAudioSession(); } catch {}
   }, []);
 
   return (

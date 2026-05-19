@@ -10,9 +10,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
-import * as ExpoNotifications from 'expo-notifications';
+import Constants from 'expo-constants';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+
+// expo-notifications remote push was removed from Expo Go in SDK 53.
+// We import it but guard every call — the UI always renders safely.
+let ExpoNotifications: typeof import('expo-notifications') | null = null;
+try {
+  ExpoNotifications = require('expo-notifications');
+} catch {}
+
+// True when running inside Expo Go (executionEnvironment === 'storeClient').
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 type NotificationItem = {
   emoji: string;
@@ -52,10 +62,13 @@ export default function NotificationsScreen() {
   async function handleAllow() {
     setRequesting(true);
     try {
-      if (Platform.OS !== 'web') {
-        const { status } = await ExpoNotifications.requestPermissionsAsync();
-        const granted = status === 'granted';
-        updatePreferences({ notificationsEnabled: granted });
+      if (Platform.OS !== 'web' && ExpoNotifications && !isExpoGo) {
+        try {
+          const { status } = await ExpoNotifications.requestPermissionsAsync();
+          updatePreferences({ notificationsEnabled: status === 'granted' });
+        } catch {
+          // Permission request failed — skip silently, user can enable from Settings.
+        }
       }
     } finally {
       setRequesting(false);
@@ -96,6 +109,12 @@ export default function NotificationsScreen() {
           You can change notification settings at any time in the app. We
           will never send promotional messages.
         </Text>
+
+        {isExpoGo && (
+          <Text style={styles.devNote}>
+            Notification setup requires a development build
+          </Text>
+        )}
 
         <View style={styles.footer}>
           <Pressable
@@ -201,6 +220,12 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Colors.midGray,
     textAlign: 'center',
+  },
+  devNote: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 
   // Footer

@@ -1,6 +1,23 @@
 // Dedicated oscillator for the pitch-matching screen.
 // Kept separate from AudioEngine so it does not interfere with sound playback.
-import { AudioContext, OscillatorNode, GainNode } from 'react-native-audio-api';
+
+// Type-only imports — erased at compile time, no runtime module loading.
+import type { AudioContext, OscillatorNode, GainNode } from 'react-native-audio-api';
+
+type PitchApiCtor = { AudioContext: new () => AudioContext };
+let _pitchApi: PitchApiCtor | null = null;
+let _pitchApiChecked = false;
+
+function loadPitchApi(): PitchApiCtor | null {
+  if (_pitchApiChecked) return _pitchApi;
+  _pitchApiChecked = true;
+  try {
+    _pitchApi = require('react-native-audio-api') as PitchApiCtor;
+  } catch {
+    _pitchApi = null;
+  }
+  return _pitchApi;
+}
 
 const MIN_HZ = 100;
 const MAX_HZ = 15000;
@@ -55,10 +72,12 @@ class PitchMatchEngine {
   get frequencyHz(): number { return this._frequencyHz; }
 
   start(frequencyHz: number = this._frequencyHz, volume = DEFAULT_VOLUME): void {
+    const api = loadPitchApi();
+    if (!api) return; // no-op in Expo Go
     this.stop();
 
     if (!this.ctx) {
-      this.ctx = new AudioContext();
+      this.ctx = new api.AudioContext();
     }
 
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, frequencyHz));

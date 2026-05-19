@@ -4,7 +4,8 @@
       "Bash(npx tsc *)",
       "Bash(npx expo *)",
       "WebFetch(domain:docs.swmansion.com)",
-      "Bash(python3 -m json.tool)"
+      "Bash(python3 -m json.tool)",
+      "Bash(xargs cat)"
     ]
   }
 }

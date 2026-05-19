@@ -9,6 +9,7 @@ import { audioEngine } from '@/src/audio/AudioEngine';
 import { formatHz } from '@/src/audio/PitchMatchEngine';
 import NowPlayingBar from '@/src/components/NowPlayingBar';
 import PremiumGate from '@/src/components/PremiumGate';
+import { isAudioAvailable } from '@/src/audio/AudioEngine';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
@@ -621,6 +622,15 @@ export default function SoundScreen() {
       >
         <Text style={styles.title}>Sound</Text>
 
+        {/* Expo Go / no dev build notice */}
+        {!isAudioAvailable() && (
+          <View style={styles.devNotice}>
+            <Text style={styles.devNoticeText}>
+              Audio requires a development build — playback is not available in Expo Go.
+            </Text>
+          </View>
+        )}
+
         {/* Pitch matching entry */}
         <View style={styles.section}>
           <SectionHeading label="Pitch matching & therapy" />
@@ -775,6 +785,19 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: Colors.deepTide,
     lineHeight: 22,
+  },
+
+  // Dev build notice
+  devNotice: {
+    backgroundColor: Colors.goldLight,
+    borderRadius: Radius.card,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.softGold,
+  },
+  devNoticeText: {
+    ...Typography.caption,
+    color: Colors.softGold,
   },
 
   // Premium section header
