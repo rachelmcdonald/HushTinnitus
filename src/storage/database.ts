@@ -29,5 +29,23 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       week4Prompted INTEGER NOT NULL DEFAULT 0,
       week8Prompted INTEGER NOT NULL DEFAULT 0
     );
+
+    CREATE TABLE IF NOT EXISTS tfi_assessments (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      totalScore REAL NOT NULL,
+      grade TEXT NOT NULL,
+      subscalesJson TEXT NOT NULL,
+      responsesJson TEXT NOT NULL,
+      isBaseline INTEGER NOT NULL DEFAULT 1,
+      weekNumber INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS tfi_draft (
+      id INTEGER PRIMARY KEY CHECK (id = 1),
+      responsesJson TEXT NOT NULL,
+      currentIndex INTEGER NOT NULL DEFAULT 0,
+      savedAt TEXT NOT NULL
+    );
   `);
 }
