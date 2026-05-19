@@ -47,5 +47,16 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       currentIndex INTEGER NOT NULL DEFAULT 0,
       savedAt TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS sound_sessions (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      soundsJson TEXT NOT NULL,
+      durationSeconds INTEGER NOT NULL,
+      timerMinutes INTEGER NOT NULL DEFAULT 0,
+      volume REAL NOT NULL DEFAULT 0.7,
+      balance REAL NOT NULL DEFAULT 0,
+      notchedFrequency REAL
+    );
   `);
 }

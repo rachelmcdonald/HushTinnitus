@@ -1,71 +1,64 @@
 import { StyleSheet, Text, View, Pressable, SafeAreaView, ScrollView } from 'react-native';
+import { SoundSource } from '@/src/types';
 import { useAudioPlayback } from '@/src/hooks/useAudioPlayback';
-import { NoiseType } from '@/src/audio/AudioEngine';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
-// ─── Sound definitions ────────────────────────────────────────────────────────
+// ─── Sound catalogue ──────────────────────────────────────────────────────────
 
-type SoundDefinition = {
-  id: NoiseType;
+type SoundDef = {
+  id: SoundSource;
   name: string;
   description: string;
 };
 
-const NOISE_SOUNDS: SoundDefinition[] = [
-  {
-    id: 'white',
-    name: 'White noise',
-    description: 'Constant broadband sound with equal energy at every frequency. Effective for masking environmental sounds.',
-  },
-  {
-    id: 'pink',
-    name: 'Pink noise',
-    description: 'Softer and warmer than white noise, with more energy in lower frequencies. Often described as soothing.',
-  },
-  {
-    id: 'brown',
-    name: 'Brown noise',
-    description: 'Deep, low-rumble sound modelled on Brownian motion. Gentler on the ears for extended listening sessions.',
-  },
+const NOISE_SOUNDS: SoundDef[] = [
+  { id: 'white-noise', name: 'White noise',  description: 'Broadband sound with equal energy at every frequency. Effective for masking environmental noise.' },
+  { id: 'pink-noise',  name: 'Pink noise',   description: 'Softer and warmer than white noise, with more energy in lower frequencies. Widely used for relaxation.' },
+  { id: 'brown-noise', name: 'Brown noise',  description: 'Deep, low-rumble sound modelled on Brownian motion. Gentler on the ears for extended sessions.' },
 ];
 
-// ─── Now playing banner ───────────────────────────────────────────────────────
+// PLACEHOLDER: Nature sounds are synthesised approximations of real soundscapes.
+// Before release, replace the AudioEngine buffer chains for these IDs with
+// createFileSource() calls pointing to royalty-free audio files in assets/sounds/.
+// Recommended sources: Freesound.org (CC0) or licensed ambient packs.
+const NATURE_SOUNDS: SoundDef[] = [
+  { id: 'rain',   name: 'Rain',          description: 'Steady rainfall — white noise filtered through a 3 kHz lowpass.' },
+  { id: 'ocean',  name: 'Ocean waves',   description: 'Deep rolling waves — brown noise filtered through a 600 Hz lowpass.' },
+  { id: 'stream', name: 'Stream',        description: 'Babbling water — white noise bandpassed around 1.8 kHz.' },
+  { id: 'forest', name: 'Forest',        description: 'Soft ambient outdoor sound — pink noise filtered at 1.5 kHz.' },
+  { id: 'fire',   name: 'Fire',          description: 'Crackling warmth — brown noise filtered through a 500 Hz lowpass.' },
+  { id: 'cafe',   name: 'Cafe ambience', description: 'Gentle background murmur — pink noise with a mid-frequency cut.' },
+];
 
-function NowPlayingBanner({ name }: { name: string }) {
+const BINAURAL_SOUNDS: SoundDef[] = [
+  { id: 'binaural-alpha', name: 'Alpha waves (8–12 Hz)', description: 'Associated with relaxed, wakeful awareness. Carrier 200 Hz, beat 10 Hz.' },
+  { id: 'binaural-theta', name: 'Theta waves (4–8 Hz)',  description: 'Associated with deep relaxation and light sleep. Carrier 200 Hz, beat 6 Hz.' },
+];
+
+// Timer durations offered in the UI (minutes)
+const TIMER_OPTIONS = [15, 30, 60, 90] as const;
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function formatTime(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
+function soundNameFor(id: SoundSource): string {
   return (
-    <View style={banner.container}>
-      <View style={banner.dot} />
-      <Text style={banner.text}>Now playing — {name}</Text>
-    </View>
+    [...NOISE_SOUNDS, ...NATURE_SOUNDS, ...BINAURAL_SOUNDS].find(
+      (s) => s.id === id
+    )?.name ?? id
   );
 }
 
-const banner = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    gap: Spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.calmWave,
-  },
-  text: {
-    ...Typography.caption,
-    color: Colors.white,
-  },
-});
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-// ─── Sound card ───────────────────────────────────────────────────────────────
-
+// Sound card — used for all three sections
 type SoundCardProps = {
-  sound: SoundDefinition;
+  sound: SoundDef;
   isActive: boolean;
   onPress: () => void;
 };
@@ -80,27 +73,26 @@ function SoundCard({ sound, isActive, onPress }: SoundCardProps) {
       ]}
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`${sound.name}${isActive ? ', currently playing, tap to stop' : ', tap to play'}`}
+      accessibilityLabel={
+        isActive
+          ? `${sound.name}, playing. Tap to stop.`
+          : `${sound.name}. Tap to play.`
+      }
       accessibilityState={{ selected: isActive }}
     >
-      <View style={card.content}>
-        <Text style={[card.name, isActive && card.nameActive]}>
-          {sound.name}
-        </Text>
+      <View style={card.body}>
+        <Text style={[card.name, isActive && card.nameActive]}>{sound.name}</Text>
         <Text style={[card.description, isActive && card.descriptionActive]}>
           {sound.description}
         </Text>
       </View>
-
       <View style={[card.iconWell, isActive && card.iconWellActive]}>
         {isActive ? (
-          // Stop icon — two vertical bars
           <View style={card.stopIcon}>
             <View style={[card.stopBar, card.stopBarActive]} />
             <View style={[card.stopBar, card.stopBarActive]} />
           </View>
         ) : (
-          // Play icon — triangle
           <View style={card.playTriangle} />
         )}
       </View>
@@ -117,80 +109,277 @@ const card = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
-  containerActive: {
-    backgroundColor: Colors.deepTide,
-  },
-  containerPressed: {
-    opacity: 0.85,
-  },
-  content: {
-    flex: 1,
-    gap: 4,
-  },
-  name: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  nameActive: {
-    color: Colors.white,
-  },
-  description: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-  descriptionActive: {
-    color: Colors.calmWave,
-  },
-
-  // Play/stop icon well
+  containerActive: { backgroundColor: Colors.deepTide },
+  containerPressed: { opacity: 0.8 },
+  body: { flex: 1, gap: 4 },
+  name: { ...Typography.heading2, color: Colors.darkText },
+  nameActive: { color: Colors.white },
+  description: { ...Typography.body, color: Colors.midGray },
+  descriptionActive: { color: Colors.calmWave },
   iconWell: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 40, height: 40, borderRadius: 20,
     backgroundColor: Colors.tealLight,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'center', alignItems: 'center',
   },
-  iconWellActive: {
-    backgroundColor: Colors.calmWave + '30',
-  },
-
-  // Play icon — triangle drawn with borders
+  iconWellActive: { backgroundColor: Colors.calmWave + '30' },
   playTriangle: {
-    width: 0,
-    height: 0,
-    borderTopWidth: 7,
-    borderBottomWidth: 7,
-    borderLeftWidth: 12,
-    borderTopColor: Colors.transparent,
-    borderBottomColor: Colors.transparent,
+    width: 0, height: 0,
+    borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
+    borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
     borderLeftColor: Colors.deepTide,
-    marginLeft: 3, // optical centre adjustment
+    marginLeft: 3,
   },
+  stopIcon: { flexDirection: 'row', gap: 4, alignItems: 'center' },
+  stopBar: { width: 3, height: 14, borderRadius: 2, backgroundColor: Colors.midGray },
+  stopBarActive: { backgroundColor: Colors.calmWave },
+});
 
-  // Stop icon — two vertical bars
-  stopIcon: {
+// Now Playing panel — shown while audio is active
+type NowPlayingProps = {
+  soundName: string;
+  timeRemaining: number | null;
+  selectedTimer: number | null;
+  onSetTimer: (minutes: number | null) => void;
+  onStop: () => void;
+};
+
+function NowPlayingPanel({
+  soundName,
+  timeRemaining,
+  selectedTimer,
+  onSetTimer,
+  onStop,
+}: NowPlayingProps) {
+  const isFading =
+    timeRemaining !== null && timeRemaining > 0 && timeRemaining <= 10;
+
+  return (
+    <View style={np.container}>
+      {/* Header row */}
+      <View style={np.headerRow}>
+        <View style={np.indicatorRow}>
+          <View style={[np.dot, isFading && np.dotFading]} />
+          <Text style={np.label}>
+            {isFading ? 'Fading out…' : 'Now playing'}
+          </Text>
+        </View>
+        <Pressable
+          style={np.stopButton}
+          onPress={onStop}
+          accessibilityRole="button"
+          accessibilityLabel="Stop playback"
+        >
+          <Text style={np.stopLabel}>Stop</Text>
+        </Pressable>
+      </View>
+
+      <Text style={np.soundName}>{soundName}</Text>
+
+      {/* Timer display or selector */}
+      {timeRemaining !== null ? (
+        <View style={np.timerRow}>
+          <Text style={[np.countdown, isFading && np.countdownFading]}>
+            {formatTime(timeRemaining)}
+          </Text>
+          <Text style={np.countdownSuffix}>remaining</Text>
+        </View>
+      ) : (
+        <View style={np.timerPickerRow}>
+          <Text style={np.timerPickerLabel}>Set timer:</Text>
+          {TIMER_OPTIONS.map((min) => (
+            <Pressable
+              key={min}
+              style={({ pressed }) => [
+                np.timerChip,
+                selectedTimer === min && np.timerChipActive,
+                pressed && np.timerChipPressed,
+              ]}
+              onPress={() => onSetTimer(selectedTimer === min ? null : min)}
+              accessibilityRole="button"
+              accessibilityLabel={`${min} minute timer${selectedTimer === min ? ', selected' : ''}`}
+            >
+              <Text
+                style={[
+                  np.timerChipLabel,
+                  selectedTimer === min && np.timerChipLabelActive,
+                ]}
+              >
+                {min}m
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const np = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.deepTide,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+  },
+  headerRow: {
     flexDirection: 'row',
-    gap: 4,
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  stopBar: {
-    width: 3,
-    height: 14,
-    borderRadius: 2,
-    backgroundColor: Colors.midGray,
+  indicatorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
-  stopBarActive: {
+  dot: {
+    width: 8, height: 8, borderRadius: 4,
     backgroundColor: Colors.calmWave,
   },
+  dotFading: {
+    backgroundColor: Colors.softGold,
+  },
+  label: { ...Typography.micro, color: Colors.calmWave },
+  stopButton: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.chip,
+    borderWidth: Border.width * 2,
+    borderColor: Colors.calmWave + '60',
+  },
+  stopLabel: { ...Typography.caption, color: Colors.white },
+  soundName: { ...Typography.heading1, color: Colors.white },
+  timerRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacing.sm,
+    marginTop: Spacing.xs,
+  },
+  countdown: {
+    fontSize: 32,
+    fontWeight: '400',
+    color: Colors.white,
+    lineHeight: 38,
+  },
+  countdownFading: { color: Colors.softGold },
+  countdownSuffix: { ...Typography.body, color: Colors.calmWave },
+  timerPickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flexWrap: 'wrap',
+    marginTop: Spacing.xs,
+  },
+  timerPickerLabel: { ...Typography.caption, color: Colors.calmWave },
+  timerChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.chip,
+    borderWidth: Border.width * 2,
+    borderColor: Colors.calmWave + '50',
+  },
+  timerChipActive: {
+    backgroundColor: Colors.calmWave,
+    borderColor: Colors.calmWave,
+  },
+  timerChipPressed: { opacity: 0.7 },
+  timerChipLabel: { ...Typography.micro, color: Colors.white },
+  timerChipLabelActive: { color: Colors.deepTide },
 });
+
+// Timer selector — shown when nothing is playing
+function TimerSelector({
+  selected,
+  onSelect,
+}: {
+  selected: number | null;
+  onSelect: (min: number | null) => void;
+}) {
+  return (
+    <View style={ts.container}>
+      <Text style={ts.label}>Session timer</Text>
+      <Text style={ts.hint}>Audio fades out gently when the timer ends.</Text>
+      <View style={ts.chipRow}>
+        <Pressable
+          style={({ pressed }) => [
+            ts.chip,
+            selected === null && ts.chipActive,
+            pressed && ts.chipPressed,
+          ]}
+          onPress={() => onSelect(null)}
+          accessibilityRole="button"
+          accessibilityLabel="No timer"
+        >
+          <Text style={[ts.chipLabel, selected === null && ts.chipLabelActive]}>
+            No timer
+          </Text>
+        </Pressable>
+        {TIMER_OPTIONS.map((min) => (
+          <Pressable
+            key={min}
+            style={({ pressed }) => [
+              ts.chip,
+              selected === min && ts.chipActive,
+              pressed && ts.chipPressed,
+            ]}
+            onPress={() => onSelect(selected === min ? null : min)}
+            accessibilityRole="button"
+            accessibilityLabel={`${min} minute timer`}
+          >
+            <Text
+              style={[ts.chipLabel, selected === min && ts.chipLabelActive]}
+            >
+              {min} min
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const ts = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+  },
+  label: { ...Typography.heading2, color: Colors.darkText },
+  hint: { ...Typography.caption, color: Colors.midGray },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xs },
+  chip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: Radius.chip,
+    borderWidth: Border.width * 2,
+    borderColor: Colors.midGray + '50',
+  },
+  chipActive: {
+    backgroundColor: Colors.deepTide,
+    borderColor: Colors.deepTide,
+  },
+  chipPressed: { opacity: 0.7 },
+  chipLabel: { ...Typography.micro, color: Colors.midGray },
+  chipLabelActive: { color: Colors.white },
+});
+
+// Section heading
+function SectionHeading({ label }: { label: string }) {
+  return <Text style={styles.sectionLabel}>{label}</Text>;
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SoundScreen() {
-  const { currentNoise, isPlaying, toggle } = useAudioPlayback();
-
-  const activeSound = NOISE_SOUNDS.find((s) => s.id === currentNoise);
+  const {
+    currentSound,
+    isPlaying,
+    selectedTimer,
+    timeRemaining,
+    toggle,
+    stopAll,
+    setTimer,
+  } = useAudioPlayback();
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -198,38 +387,72 @@ export default function SoundScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Sound</Text>
-          {isPlaying && activeSound && (
-            <NowPlayingBanner name={activeSound.name} />
-          )}
+        <Text style={styles.title}>Sound</Text>
+
+        {/* Now Playing panel */}
+        {isPlaying && currentSound && (
+          <NowPlayingPanel
+            soundName={soundNameFor(currentSound)}
+            timeRemaining={timeRemaining}
+            selectedTimer={selectedTimer}
+            onSetTimer={setTimer}
+            onStop={stopAll}
+          />
+        )}
+
+        {/* Background noise */}
+        <View style={styles.section}>
+          <SectionHeading label="Background noise" />
+          {NOISE_SOUNDS.map((s) => (
+            <SoundCard
+              key={s.id}
+              sound={s}
+              isActive={currentSound === s.id}
+              onPress={() => toggle(s.id)}
+            />
+          ))}
         </View>
 
-        {/* Background noise section */}
+        {/* Nature sounds */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Background noise</Text>
-          <View style={styles.cardList}>
-            {NOISE_SOUNDS.map((sound) => (
-              <SoundCard
-                key={sound.id}
-                sound={sound}
-                isActive={currentNoise === sound.id}
-                onPress={() => toggle(sound.id)}
-              />
-            ))}
-          </View>
+          <SectionHeading label="Nature sounds" />
+          {NATURE_SOUNDS.map((s) => (
+            <SoundCard
+              key={s.id}
+              sound={s}
+              isActive={currentSound === s.id}
+              onPress={() => toggle(s.id)}
+            />
+          ))}
         </View>
 
-        {/* Placeholder rows for future sound types */}
+        {/* Binaural beats */}
         <View style={styles.section}>
-          <Text style={styles.sectionLabel}>Nature sounds</Text>
-          <View style={[styles.comingSoon]}>
-            <Text style={styles.comingSoonText}>
-              Rain, ocean, stream, forest and more — coming in Phase 3
+          <SectionHeading label="Binaural beats" />
+          {/* Advisory note — Section 7.1 */}
+          <View style={styles.advisoryCard}>
+            <Text style={styles.advisoryHeading}>Headphones required</Text>
+            <Text style={styles.advisoryBody}>
+              Binaural beats require stereo headphones to work — they are not
+              effective through speakers. Use at a comfortable volume. Not
+              recommended while driving or operating machinery. If you have a
+              history of seizures or epilepsy, consult your doctor before use.
             </Text>
           </View>
+          {BINAURAL_SOUNDS.map((s) => (
+            <SoundCard
+              key={s.id}
+              sound={s}
+              isActive={currentSound === s.id}
+              onPress={() => toggle(s.id)}
+            />
+          ))}
         </View>
+
+        {/* Timer selector — only shown when nothing is playing */}
+        {!isPlaying && (
+          <TimerSelector selected={selectedTimer} onSelect={setTimer} />
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -247,40 +470,35 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
     gap: Spacing.xl,
   },
-
-  // Header
-  header: {
-    gap: Spacing.md,
-  },
   title: {
     ...Typography.display,
     color: Colors.darkText,
   },
-
-  // Sections
   section: {
-    gap: Spacing.md,
+    gap: Spacing.sm,
   },
   sectionLabel: {
     ...Typography.micro,
     color: Colors.midGray,
-  },
-  cardList: {
-    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
 
-  // Coming soon placeholder
-  comingSoon: {
-    backgroundColor: Colors.white,
+  // Binaural advisory card
+  advisoryCard: {
+    backgroundColor: Colors.tealLight,
     borderRadius: Radius.card,
     padding: Spacing.base,
-    borderWidth: Border.width,
-    borderColor: Colors.midGray + '40',
-    borderStyle: 'dashed',
+    gap: Spacing.xs,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.calmWave,
   },
-  comingSoonText: {
+  advisoryHeading: {
+    ...Typography.heading2,
+    color: Colors.deepTide,
+  },
+  advisoryBody: {
     ...Typography.body,
-    color: Colors.midGray,
-    textAlign: 'center',
+    color: Colors.deepTide,
+    lineHeight: 22,
   },
 });
