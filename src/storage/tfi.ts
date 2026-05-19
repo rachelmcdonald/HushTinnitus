@@ -94,6 +94,32 @@ export function buildAndSaveAssessment(
   return assessment;
 }
 
+export function getAssessmentById(id: string): TFIAssessment | null {
+  const db = getDb();
+  const row = db.getFirstSync<{
+    id: string;
+    date: string;
+    totalScore: number;
+    grade: string;
+    subscalesJson: string;
+    responsesJson: string;
+    isBaseline: number;
+    weekNumber: number;
+  }>('SELECT * FROM tfi_assessments WHERE id = ?', [id]);
+
+  if (!row) return null;
+  return {
+    id: row.id,
+    date: row.date,
+    totalScore: row.totalScore,
+    grade: row.grade as TFIAssessment['grade'],
+    subscales: JSON.parse(row.subscalesJson),
+    responses: JSON.parse(row.responsesJson),
+    isBaseline: row.isBaseline === 1,
+    weekNumber: row.weekNumber,
+  };
+}
+
 export function getLatestAssessment(): TFIAssessment | null {
   const db = getDb();
   const row = db.getFirstSync<{

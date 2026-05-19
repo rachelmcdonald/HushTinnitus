@@ -115,12 +115,13 @@ export default function TFIQuestionnaireScreen() {
           params: { assessmentId: assessment.id },
         });
       } else {
-        // Web: skip DB, pass score data directly via params
+        // Web: skip DB, pass all score data via params
         router.replace({
           pathname: '/onboarding/tfi-result',
           params: {
             totalScore: String(score.totalScore),
             grade: score.grade,
+            subscalesJson: JSON.stringify(score.subscales),
           },
         });
       }

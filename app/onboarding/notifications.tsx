@@ -1,23 +1,239 @@
-import { StyleSheet, Text, View, SafeAreaView } from 'react-native';
-import { Colors, Typography, Spacing } from '@/src/theme';
+import { useState } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
+import { router } from 'expo-router';
+import * as ExpoNotifications from 'expo-notifications';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
-// Screen 7 — Notification preferences (Phase 2)
-// Optional — permission for daily check-in reminder and week 4/8 TFI retest prompt
-// Skip clearly available
+type NotificationItem = {
+  emoji: string;
+  heading: string;
+  body: string;
+};
+
+const NOTIFICATION_ITEMS: NotificationItem[] = [
+  {
+    emoji: '📋',
+    heading: 'Daily check-in',
+    body: 'A gentle prompt to log your loudness and distress levels — takes under a minute.',
+  },
+  {
+    emoji: '📅',
+    heading: 'TFI retest reminders',
+    body: 'A reminder at 4 weeks and 8 weeks to retake the TFI so you can track your progress.',
+  },
+];
+
+function NotificationRow({ emoji, heading, body }: NotificationItem) {
+  return (
+    <View style={styles.notifRow}>
+      <Text style={styles.notifEmoji}>{emoji}</Text>
+      <View style={styles.notifText}>
+        <Text style={styles.notifHeading}>{heading}</Text>
+        <Text style={styles.notifBody}>{body}</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function NotificationsScreen() {
+  const { updatePreferences } = usePreferences();
+  const [requesting, setRequesting] = useState(false);
+
+  async function handleAllow() {
+    setRequesting(true);
+    try {
+      if (Platform.OS !== 'web') {
+        const { status } = await ExpoNotifications.requestPermissionsAsync();
+        const granted = status === 'granted';
+        updatePreferences({ notificationsEnabled: granted });
+      }
+    } finally {
+      setRequesting(false);
+      router.replace('/(tabs)');
+    }
+  }
+
+  function handleSkip() {
+    router.replace('/(tabs)');
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
-        <Text style={styles.title}>Stay on track</Text>
-        <Text style={styles.subtitle}>Notification preferences — coming in Phase 2</Text>
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Stay on track</Text>
+          <Text style={styles.subtitle}>
+            Optional reminders to help you build consistent habits and monitor
+            how your tinnitus changes over time.
+          </Text>
+        </View>
+
+        <View style={styles.card}>
+          {NOTIFICATION_ITEMS.map((item, i) => (
+            <View key={item.heading}>
+              <NotificationRow {...item} />
+              {i < NOTIFICATION_ITEMS.length - 1 && (
+                <View style={styles.divider} />
+              )}
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.note}>
+          You can change notification settings at any time in the app. We
+          will never send promotional messages.
+        </Text>
+
+        <View style={styles.footer}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.allowButton,
+              pressed && styles.allowButtonPressed,
+              requesting && styles.allowButtonDisabled,
+            ]}
+            onPress={handleAllow}
+            disabled={requesting}
+            accessibilityRole="button"
+            accessibilityLabel="Allow notifications"
+          >
+            {requesting ? (
+              <ActivityIndicator color={Colors.white} />
+            ) : (
+              <Text style={styles.allowLabel}>Allow notifications</Text>
+            )}
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.skipButton,
+              pressed && styles.skipButtonPressed,
+            ]}
+            onPress={handleSkip}
+            disabled={requesting}
+            accessibilityRole="button"
+            accessibilityLabel="Skip for now"
+          >
+            <Text style={styles.skipLabel}>Skip for now</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: Spacing.xl },
-  title: { ...Typography.heading1, color: Colors.darkText, textAlign: 'center', marginBottom: Spacing.sm },
-  subtitle: { ...Typography.body, color: Colors.midGray, textAlign: 'center' },
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.warmSand,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.huge,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.xl,
+  },
+
+  // Header
+  header: {
+    gap: Spacing.sm,
+  },
+  title: {
+    ...Typography.display,
+    color: Colors.darkText,
+  },
+  subtitle: {
+    ...Typography.body,
+    color: Colors.midGray,
+  },
+
+  // Notification items card
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.md,
+  },
+  notifRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    alignItems: 'flex-start',
+  },
+  notifEmoji: {
+    fontSize: 20,
+    lineHeight: 28,
+    width: 28,
+    textAlign: 'center',
+  },
+  notifText: {
+    flex: 1,
+    gap: 2,
+  },
+  notifHeading: {
+    ...Typography.heading2,
+    color: Colors.darkText,
+  },
+  notifBody: {
+    ...Typography.body,
+    color: Colors.midGray,
+  },
+  divider: {
+    height: Border.width,
+    backgroundColor: Colors.midGray + '30',
+    marginTop: Spacing.md,
+  },
+
+  // Note
+  note: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    textAlign: 'center',
+  },
+
+  // Footer
+  footer: {
+    gap: Spacing.sm,
+  },
+  allowButton: {
+    backgroundColor: Colors.deepTide,
+    borderRadius: Radius.chip,
+    paddingVertical: Spacing.base,
+    alignItems: 'center',
+    minHeight: 52,
+    justifyContent: 'center',
+  },
+  allowButtonPressed: {
+    opacity: 0.85,
+  },
+  allowButtonDisabled: {
+    opacity: 0.7,
+  },
+  allowLabel: {
+    ...Typography.heading2,
+    color: Colors.white,
+  },
+  skipButton: {
+    paddingVertical: Spacing.sm,
+    alignItems: 'center',
+  },
+  skipButtonPressed: {
+    opacity: 0.6,
+  },
+  skipLabel: {
+    ...Typography.body,
+    color: Colors.midGray,
+  },
 });
