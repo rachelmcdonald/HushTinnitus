@@ -4,9 +4,9 @@ import {
   Text,
   View,
   Pressable,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';

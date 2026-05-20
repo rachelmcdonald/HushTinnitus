@@ -17,7 +17,11 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.hushtinnitus.app",
       "infoPlist": {
-        "UIBackgroundModes": ["audio"]
+        "UIBackgroundModes": [
+          "audio",
+          "audio"
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -27,16 +31,28 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.hushtinnitus.app"
+      "package": "com.hushtinnitus.app",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ]
     },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
+      "expo-dev-client",
       "expo-router",
       "expo-sqlite",
       "react-native-audio-api"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "892655fe-f1a4-4b27-85dd-6b015d3bef56"
+      }
+    }
   }
 }

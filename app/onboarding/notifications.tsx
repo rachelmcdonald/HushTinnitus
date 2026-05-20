@@ -1,28 +1,24 @@
+// ─── NO static imports from expo-notifications ───────────────────────────────
+// expo-notifications throws at module-evaluation time in Expo Go SDK 53.
+// The only safe pattern is a dynamic import() inside the button handler.
+
 import { useState } from 'react';
 import {
   StyleSheet,
   Text,
   View,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Platform,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
-// expo-notifications remote push was removed from Expo Go in SDK 53.
-// We import it but guard every call — the UI always renders safely.
-let ExpoNotifications: typeof import('expo-notifications') | null = null;
-try {
-  ExpoNotifications = require('expo-notifications');
-} catch {}
-
-// True when running inside Expo Go (executionEnvironment === 'storeClient').
-const isExpoGo = Constants.executionEnvironment === 'storeClient';
+const isExpoGo = Constants.appOwnership === 'expo';
 
 type NotificationItem = {
   emoji: string;
@@ -58,22 +54,28 @@ function NotificationRow({ emoji, heading, body }: NotificationItem) {
 export default function NotificationsScreen() {
   const { updatePreferences } = usePreferences();
   const [requesting, setRequesting] = useState(false);
+  const [unavailableNote, setUnavailableNote] = useState(false);
 
   async function handleAllow() {
     setRequesting(true);
-    try {
-      if (Platform.OS !== 'web' && ExpoNotifications && !isExpoGo) {
-        try {
-          const { status } = await ExpoNotifications.requestPermissionsAsync();
-          updatePreferences({ notificationsEnabled: status === 'granted' });
-        } catch {
-          // Permission request failed — skip silently, user can enable from Settings.
-        }
+    setUnavailableNote(false);
+
+    if (Platform.OS !== 'web') {
+      try {
+        // Dynamic import — only runs on button press, never at module load time
+        const ExpoNotifications = await import('expo-notifications');
+        const { status } = await ExpoNotifications.requestPermissionsAsync();
+        updatePreferences({ notificationsEnabled: status === 'granted' });
+      } catch {
+        // expo-notifications not available (Expo Go SDK 53+)
+        setUnavailableNote(true);
+        setRequesting(false);
+        return; // Show message; user can tap Skip to continue
       }
-    } finally {
-      setRequesting(false);
-      router.replace('/(tabs)');
     }
+
+    setRequesting(false);
+    router.replace('/(tabs)');
   }
 
   function handleSkip() {
@@ -105,16 +107,18 @@ export default function NotificationsScreen() {
           ))}
         </View>
 
+        {(unavailableNote || isExpoGo) && (
+          <View style={styles.devNote}>
+            <Text style={styles.devNoteText}>
+              Notification setup requires a development build
+            </Text>
+          </View>
+        )}
+
         <Text style={styles.note}>
           You can change notification settings at any time in the app. We
           will never send promotional messages.
         </Text>
-
-        {isExpoGo && (
-          <Text style={styles.devNote}>
-            Notification setup requires a development build
-          </Text>
-        )}
 
         <View style={styles.footer}>
           <Pressable
@@ -165,73 +169,39 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
     gap: Spacing.xl,
   },
-
-  // Header
-  header: {
-    gap: Spacing.sm,
-  },
-  title: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  subtitle: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-
-  // Notification items card
+  header: { gap: Spacing.sm },
+  title: { ...Typography.display, color: Colors.darkText },
+  subtitle: { ...Typography.body, color: Colors.midGray },
   card: {
     backgroundColor: Colors.white,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
   },
-  notifRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'flex-start',
-  },
-  notifEmoji: {
-    fontSize: 20,
-    lineHeight: 28,
-    width: 28,
-    textAlign: 'center',
-  },
-  notifText: {
-    flex: 1,
-    gap: 2,
-  },
-  notifHeading: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  notifBody: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+  notifRow: { flexDirection: 'row', gap: Spacing.md, alignItems: 'flex-start' },
+  notifEmoji: { fontSize: 20, lineHeight: 28, width: 28, textAlign: 'center' },
+  notifText: { flex: 1, gap: 2 },
+  notifHeading: { ...Typography.heading2, color: Colors.darkText },
+  notifBody: { ...Typography.body, color: Colors.midGray },
   divider: {
     height: Border.width,
     backgroundColor: Colors.midGray + '30',
     marginTop: Spacing.md,
   },
-
-  // Note
-  note: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-  },
   devNote: {
+    backgroundColor: Colors.tealLight,
+    borderRadius: Radius.chip,
+    padding: Spacing.md,
+    borderLeftWidth: 3,
+    borderLeftColor: Colors.calmWave,
+  },
+  devNoteText: {
     ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
+    color: Colors.deepTide,
     fontStyle: 'italic',
   },
-
-  // Footer
-  footer: {
-    gap: Spacing.sm,
-  },
+  note: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
+  footer: { gap: Spacing.sm },
   allowButton: {
     backgroundColor: Colors.deepTide,
     borderRadius: Radius.chip,
@@ -240,25 +210,10 @@ const styles = StyleSheet.create({
     minHeight: 52,
     justifyContent: 'center',
   },
-  allowButtonPressed: {
-    opacity: 0.85,
-  },
-  allowButtonDisabled: {
-    opacity: 0.7,
-  },
-  allowLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-  skipButton: {
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  skipButtonPressed: {
-    opacity: 0.6,
-  },
-  skipLabel: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+  allowButtonPressed: { opacity: 0.85 },
+  allowButtonDisabled: { opacity: 0.7 },
+  allowLabel: { ...Typography.heading2, color: Colors.white },
+  skipButton: { paddingVertical: Spacing.sm, alignItems: 'center' },
+  skipButtonPressed: { opacity: 0.6 },
+  skipLabel: { ...Typography.body, color: Colors.midGray },
 });

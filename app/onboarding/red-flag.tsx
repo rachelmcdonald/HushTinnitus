@@ -4,9 +4,9 @@ import {
   Text,
   View,
   Pressable,
-  SafeAreaView,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 

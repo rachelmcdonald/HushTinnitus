@@ -4,10 +4,10 @@ import {
   Text,
   View,
   Pressable,
-  SafeAreaView,
   ScrollView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { TFIAssessment } from '@/src/types';

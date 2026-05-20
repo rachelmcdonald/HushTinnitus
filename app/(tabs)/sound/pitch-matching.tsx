@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { StyleSheet, Text, View, Pressable, SafeAreaView, ScrollView, Platform } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import {

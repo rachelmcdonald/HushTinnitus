@@ -4,9 +4,9 @@ import {
   Text,
   View,
   Pressable,
-  SafeAreaView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
 import { TFI_QUESTIONS } from '@/src/data/tfiQuestions';

@@ -1,43 +1,37 @@
-// Type-only imports — erased at compile time, zero runtime cost.
-// The actual module is loaded lazily below to prevent crashes in Expo Go,
-// where the react-native-audio-api native module is not linked.
-import type {
-  AudioContext,
-  AudioBufferSourceNode,
-  GainNode,
-  OscillatorNode,
-  StereoPannerNode,
-  BiquadFilterNode,
-} from 'react-native-audio-api';
+// ─── NO static imports from react-native-audio-api ───────────────────────────
+// The module's TurboModule registration fires synchronously at evaluation time
+// in Expo Go (where the native module is absent) and throws before any JS
+// try/catch can run. The only safe pattern is a dynamic import() called
+// lazily inside a method — it runs only on user interaction, never at
+// module-load time.
+
+import { Alert, Platform } from 'react-native';
+import Constants from 'expo-constants';
 import { SoundSource } from '@/src/types';
-import { fillNoise } from './noiseGenerators';
+import { fillNoise, NoiseType } from './noiseGenerators';
 
-// ─── Lazy module loading ──────────────────────────────────────────────────────
-// Tries to load react-native-audio-api once. Returns null and logs a warning
-// if the native module is not present (Expo Go) or on web.
+// ─── Audio availability ───────────────────────────────────────────────────────
 
-type AudioApiCtor = { AudioContext: new () => AudioContext };
-let _audioApi: AudioApiCtor | null = null;
-let _audioApiChecked = false;
-
-function loadAudioApi(): AudioApiCtor | null {
-  if (_audioApiChecked) return _audioApi;
-  _audioApiChecked = true;
-  try {
-    _audioApi = require('react-native-audio-api') as AudioApiCtor;
-  } catch {
-    console.warn(
-      '[HushTinnitus] react-native-audio-api native module not available. ' +
-      'Audio playback requires a development build — it will not work in Expo Go.'
-    );
-    _audioApi = null;
-  }
-  return _audioApi;
+/** True when real native audio is accessible (dev build / EAS build). */
+export function isAudioAvailable(): boolean {
+  if (Platform.OS === 'web') return false;
+  return Constants.appOwnership !== 'expo';
 }
 
-/** Returns true when the audio engine can actually play sound. */
-export function isAudioAvailable(): boolean {
-  return loadAudioApi() !== null;
+// ─── Lazy module cache ────────────────────────────────────────────────────────
+
+let _api: any = null;
+let _apiLoaded = false;
+
+async function loadApi(): Promise<any> {
+  if (_apiLoaded) return _api;
+  _apiLoaded = true;
+  try {
+    _api = await import('react-native-audio-api');
+  } catch {
+    _api = null;
+  }
+  return _api;
 }
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -45,38 +39,21 @@ export function isAudioAvailable(): boolean {
 const BUFFER_SECONDS = 10;
 const DEFAULT_GAIN = 0.7;
 
-// ─── Internal node graph representations ─────────────────────────────────────
-
-// Buffer-based sound (noise + all soundscapes):
-//   BufferSourceNode → [BiquadFilterNode?] → GainNode → destination
-type BufferChain = {
-  kind: 'buffer';
-  source: AudioBufferSourceNode;
-  filter: BiquadFilterNode | null;
-};
-
-// Binaural beats: dual oscillators hard-panned L/R
-//   LeftOsc → LeftPan → GainNode → destination
-//   RightOsc → RightPan ─────────┘
-type BinauralChain = {
-  kind: 'binaural';
-  leftOsc: OscillatorNode;
-  rightOsc: OscillatorNode;
-  leftPan: StereoPannerNode;
-  rightPan: StereoPannerNode;
-};
-
-type Chain = BufferChain | BinauralChain;
-
 // ─── AudioEngine singleton ────────────────────────────────────────────────────
 
 class AudioEngine {
   private static _instance: AudioEngine | null = null;
 
-  private ctx: AudioContext | null = null;
-  private chain: Chain | null = null;
-  private gain: GainNode | null = null;
-  private notchFilter: BiquadFilterNode | null = null;
+  // All node references typed as `any` — the concrete types come from the
+  // dynamically-loaded react-native-audio-api module.
+  private ctx: any = null;
+  private activeSource: any = null;   // AudioBufferSourceNode | null
+  private activeGain: any = null;     // GainNode | null
+  private activeFilter: any = null;   // BiquadFilterNode | null (soundscape)
+  private notchFilter: any = null;    // BiquadFilterNode | null (therapy)
+  private activeOscillators: any[] = [];    // OscillatorNode[]
+  private activePanners: any[] = [];        // StereoPannerNode[]
+
   private _currentSound: SoundSource | null = null;
   private _volume: number = DEFAULT_GAIN;
   private _sessionStartTime: number | null = null;
@@ -94,32 +71,72 @@ class AudioEngine {
 
   // ─── Public API ──────────────────────────────────────────────────────────
 
-  get currentSound(): SoundSource | null {
-    return this._currentSound;
+  get currentSound(): SoundSource | null { return this._currentSound; }
+  get isPlaying(): boolean { return this._currentSound !== null; }
+  get sessionStartTime(): number | null { return this._sessionStartTime; }
+  get volume(): number { return this._volume; }
+  get notchedFrequencyHz(): number | null { return this._notchedFrequencyHz; }
+  get isPaused(): boolean { return this._isPaused; }
+
+  // play() returns void and fires the async work in the background so callers
+  // do not need to be made async.
+  play(soundId: SoundSource, volume: number = DEFAULT_GAIN): void {
+    this._volume = volume;
+    this._doPlay(soundId, volume);
   }
 
-  get isPlaying(): boolean {
-    return this._currentSound !== null;
+  private async _doPlay(soundId: SoundSource, volume: number): Promise<void> {
+    const api = await loadApi();
+    if (!api) {
+      Alert.alert(
+        'Audio unavailable',
+        'Audio playback requires a development build. Expo Go does not support native audio.'
+      );
+      return;
+    }
+
+    this.clearNodes();
+
+    // Create / reuse AudioContext
+    if (!this.ctx) {
+      this.ctx = new api.AudioContext();
+    }
+
+    const gain = this.ctx.createGain();
+    gain.gain.value = volume;
+
+    // Route: gain → [notch filter?] → destination
+    if (this._notchedFrequencyHz !== null) {
+      const notch = this.ctx.createBiquadFilter();
+      notch.type = 'notch';
+      notch.frequency.value = this._notchedFrequencyHz;
+      notch.Q.value = 1.0;
+      gain.connect(notch);
+      notch.connect(this.ctx.destination);
+      this.notchFilter = notch;
+    } else {
+      gain.connect(this.ctx.destination);
+      this.notchFilter = null;
+    }
+    this.activeGain = gain;
+
+    if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
+      this.buildBinauralNodes(soundId, gain);
+    } else {
+      this.buildBufferNodes(soundId, gain);
+    }
+
+    this._currentSound = soundId;
+    this._sessionStartTime = Date.now();
   }
 
-  get sessionStartTime(): number | null {
-    return this._sessionStartTime;
+  stop(): void {
+    this.clearNodes();
+    this._currentSound = null;
+    this._sessionStartTime = null;
+    this._isPaused = false;
   }
 
-  get volume(): number {
-    return this._volume;
-  }
-
-  get notchedFrequencyHz(): number | null {
-    return this._notchedFrequencyHz;
-  }
-
-  get isPaused(): boolean {
-    return this._isPaused;
-  }
-
-  // Suspend the AudioContext — pauses all audio without losing the loop
-  // position. Resumes from exactly where it left off.
   async pause(): Promise<void> {
     if (!this.ctx || !this._currentSound || this._isPaused) return;
     await this.ctx.suspend();
@@ -132,116 +149,61 @@ class AudioEngine {
     this._isPaused = false;
   }
 
-  // Enable notched therapy. If audio is playing, restarts it through the filter.
+  startFadeOut(durationSeconds: number): void {
+    if (!this.activeGain || !this.ctx) return;
+    const now = this.ctx.currentTime;
+    const cur = this.activeGain.gain.value;
+    this.activeGain.gain.setValueAtTime(cur, now);
+    this.activeGain.gain.linearRampToValueAtTime(0, now + durationSeconds);
+  }
+
+  setVolume(volume: number): void {
+    this._volume = Math.max(0, Math.min(1, volume));
+    if (this.activeGain && this.ctx) {
+      this.activeGain.gain.setValueAtTime(this._volume, this.ctx.currentTime);
+    } else if (this.activeGain) {
+      this.activeGain.gain.value = this._volume;
+    }
+  }
+
   enableNotchedTherapy(frequencyHz: number): void {
     this._notchedFrequencyHz = frequencyHz;
     if (this._currentSound) this.play(this._currentSound, this._volume);
   }
 
-  // Disable notched therapy. If audio is playing, restarts it without the filter.
   disableNotchedTherapy(): void {
     this._notchedFrequencyHz = null;
     if (this._currentSound) this.play(this._currentSound, this._volume);
   }
 
-  play(soundId: SoundSource, volume: number = DEFAULT_GAIN): void {
-    if (!loadAudioApi()) return; // no-op in Expo Go / web
-    this.stop();
+  // ─── Node builders ────────────────────────────────────────────────────────
 
-    const ctx = this.getContext();
-    this._volume = volume;
-
-    // Shared output gain node
-    const gain = ctx.createGain();
-    gain.gain.value = volume;
-    this.gain = gain;
-
-    // Route: gain → [notch filter?] → destination
-    // Notched therapy: BiquadFilterNode 'notch', Q=1.0 (~1-octave bandwidth).
-    // Protocol: Okamoto et al. (2010), PNAS 107(3), 1207-1210.
-    if (this._notchedFrequencyHz !== null) {
-      const notch = ctx.createBiquadFilter();
-      notch.type = 'notch';
-      notch.frequency.value = this._notchedFrequencyHz;
-      notch.Q.value = 1.0;
-      gain.connect(notch);
-      notch.connect(ctx.destination);
-      this.notchFilter = notch;
-    } else {
-      gain.connect(ctx.destination);
-      this.notchFilter = null;
-    }
-
-    if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
-      this.chain = this.buildBinauralChain(ctx, soundId, gain);
-    } else {
-      this.chain = this.buildBufferChain(ctx, soundId, gain);
-    }
-
-    this._currentSound = soundId;
-    this._sessionStartTime = Date.now();
-  }
-
-  stop(): void {
-    this.clearChain();
-    this._currentSound = null;
-    this._sessionStartTime = null;
-    this._isPaused = false;
-  }
-
-  // Schedule a linear gain fade to 0 over `durationSeconds`.
-  // Call stop() separately after the fade completes.
-  startFadeOut(durationSeconds: number): void {
-    if (!this.gain || !this.ctx) return;
-    const now = this.ctx.currentTime;
-    const currentGain = this.gain.gain.value;
-    this.gain.gain.setValueAtTime(currentGain, now);
-    this.gain.gain.linearRampToValueAtTime(0, now + durationSeconds);
-  }
-
-  setVolume(volume: number): void {
-    this._volume = Math.max(0, Math.min(1, volume));
-    if (this.gain && this.ctx) {
-      this.gain.gain.setValueAtTime(this._volume, this.ctx.currentTime);
-    } else if (this.gain) {
-      this.gain.gain.value = this._volume;
-    }
-  }
-
-  // ─── Chain builders ───────────────────────────────────────────────────────
-
-  private buildBufferChain(
-    ctx: AudioContext,
-    soundId: SoundSource,
-    gain: GainNode
-  ): BufferChain {
-    const noiseBase = noiseBaseFor(soundId);
-    const bufferLength = Math.floor(ctx.sampleRate * BUFFER_SECONDS);
-    const buffer = ctx.createBuffer(1, bufferLength, ctx.sampleRate);
-    fillNoise(buffer.getChannelData(0), noiseBase);
+  private buildBufferNodes(soundId: SoundSource, gain: any): void {
+    const ctx = this.ctx;
+    const bufLen = Math.floor(ctx.sampleRate * BUFFER_SECONDS);
+    const buffer = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    fillNoise(buffer.getChannelData(0), noiseBaseFor(soundId));
 
     const source = ctx.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
 
     const filter = buildFilter(ctx, soundId);
-
     if (filter) {
       source.connect(filter);
       filter.connect(gain);
+      this.activeFilter = filter;
     } else {
       source.connect(gain);
+      this.activeFilter = null;
     }
 
     source.start();
-    return { kind: 'buffer', source, filter };
+    this.activeSource = source;
   }
 
-  private buildBinauralChain(
-    ctx: AudioContext,
-    soundId: SoundSource,
-    gain: GainNode
-  ): BinauralChain {
+  private buildBinauralNodes(soundId: SoundSource, gain: any): void {
+    const ctx = this.ctx;
     const { leftHz, rightHz } = binauralFrequencies(soundId);
 
     const leftOsc = ctx.createOscillator();
@@ -266,146 +228,74 @@ class AudioEngine {
     leftOsc.start();
     rightOsc.start();
 
-    return { kind: 'binaural', leftOsc, rightOsc, leftPan, rightPan };
+    this.activeOscillators = [leftOsc, rightOsc];
+    this.activePanners = [leftPan, rightPan];
   }
 
-  private clearChain(): void {
-    if (this.chain) {
-      if (this.chain.kind === 'buffer') {
-        try { this.chain.source.stop(); } catch {}
-        try { this.chain.source.disconnect(); } catch {}
-        if (this.chain.filter) {
-          try { this.chain.filter.disconnect(); } catch {}
-        }
-      } else {
-        try { this.chain.leftOsc.stop(); } catch {}
-        try { this.chain.leftOsc.disconnect(); } catch {}
-        try { this.chain.rightOsc.stop(); } catch {}
-        try { this.chain.rightOsc.disconnect(); } catch {}
-        try { this.chain.leftPan.disconnect(); } catch {}
-        try { this.chain.rightPan.disconnect(); } catch {}
-      }
-      this.chain = null;
+  // ─── Cleanup ──────────────────────────────────────────────────────────────
+
+  private clearNodes(): void {
+    if (this.activeSource) {
+      try { this.activeSource.stop(); } catch {}
+      try { this.activeSource.disconnect(); } catch {}
+      this.activeSource = null;
+    }
+    for (const osc of this.activeOscillators) {
+      try { osc.stop(); } catch {}
+      try { osc.disconnect(); } catch {}
+    }
+    this.activeOscillators = [];
+    for (const pan of this.activePanners) {
+      try { pan.disconnect(); } catch {}
+    }
+    this.activePanners = [];
+    if (this.activeFilter) {
+      try { this.activeFilter.disconnect(); } catch {}
+      this.activeFilter = null;
     }
     if (this.notchFilter) {
       try { this.notchFilter.disconnect(); } catch {}
       this.notchFilter = null;
     }
-    if (this.gain) {
-      try { this.gain.disconnect(); } catch {}
-      this.gain = null;
+    if (this.activeGain) {
+      try { this.activeGain.disconnect(); } catch {}
+      this.activeGain = null;
     }
-  }
-
-  private getContext(): AudioContext {
-    const api = loadAudioApi();
-    if (!api) throw new Error('Audio not available');
-    if (!this.ctx) {
-      this.ctx = new api.AudioContext();
-    }
-    return this.ctx!;
   }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-type NoiseBase = 'white' | 'pink' | 'brown';
-
-function noiseBaseFor(soundId: SoundSource): NoiseBase {
+function noiseBaseFor(soundId: SoundSource): NoiseType {
   switch (soundId) {
     case 'white-noise': return 'white';
     case 'pink-noise':  return 'pink';
     case 'brown-noise': return 'brown';
-    // Soundscapes — choose the closest noise texture as the base.
-    // PLACEHOLDER: swap these with createFileSource() calls when real
-    // royalty-free audio files (rain.mp3, ocean.mp3, etc.) are added to
-    // assets/sounds/ before release. See Section 7.1 of the spec.
-    case 'rain':   return 'white';  // white noise is a good rain base
-    case 'ocean':  return 'brown';  // brown noise approximates deep wave rumble
-    case 'stream': return 'white';  // white noise + bandpass ≈ babbling stream
-    case 'forest': return 'pink';   // pink noise ≈ soft ambient outdoor
-    case 'fire':   return 'brown';  // brown noise + lowpass ≈ crackling fire
-    case 'cafe':   return 'pink';   // pink noise + peaking ≈ ambient murmur
-    default:       return 'white';
+    case 'rain': case 'stream': return 'white';
+    case 'ocean': case 'fire':  return 'brown';
+    case 'forest': case 'cafe': return 'pink';
+    default: return 'white';
   }
 }
 
-// Returns a configured BiquadFilterNode for soundscapes, null for plain noise.
-// PLACEHOLDER: these filters are synthesized approximations only. Replace the
-// entire buildBufferChain for soundscapes with createFileSource() + real files
-// before release.
-function buildFilter(
-  ctx: AudioContext,
-  soundId: SoundSource
-): BiquadFilterNode | null {
+function buildFilter(ctx: any, soundId: SoundSource): any {
   const f = ctx.createBiquadFilter();
-
   switch (soundId) {
-    case 'rain':
-      // Heavy rain: white noise through a ~3 kHz lowpass
-      f.type = 'lowpass';
-      f.frequency.value = 3000;
-      f.Q.value = 0.5;
-      return f;
-
-    case 'ocean':
-      // Ocean waves: brown noise through a deep ~600 Hz lowpass
-      f.type = 'lowpass';
-      f.frequency.value = 600;
-      f.Q.value = 0.7;
-      return f;
-
-    case 'stream':
-      // Babbling stream: white noise bandpassed around 1.8 kHz
-      f.type = 'bandpass';
-      f.frequency.value = 1800;
-      f.Q.value = 1.5;
-      return f;
-
-    case 'forest':
-      // Ambient forest: pink noise soft-lowpassed at 1.5 kHz
-      f.type = 'lowpass';
-      f.frequency.value = 1500;
-      f.Q.value = 0.5;
-      return f;
-
-    case 'fire':
-      // Crackling fire: brown noise through a ~500 Hz lowpass
-      f.type = 'lowpass';
-      f.frequency.value = 500;
-      f.Q.value = 0.3;
-      return f;
-
-    case 'cafe':
-      // Cafe ambience: pink noise with a peaking cut in the mids
-      f.type = 'peaking';
-      f.frequency.value = 600;
-      f.Q.value = 1.0;
-      f.gain.value = -8;
-      return f;
-
-    default:
-      // No filter for plain noise types
-      return null;
+    case 'rain':   f.type = 'lowpass';  f.frequency.value = 3000; f.Q.value = 0.5; return f;
+    case 'ocean':  f.type = 'lowpass';  f.frequency.value = 600;  f.Q.value = 0.7; return f;
+    case 'stream': f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 1.5; return f;
+    case 'forest': f.type = 'lowpass';  f.frequency.value = 1500; f.Q.value = 0.5; return f;
+    case 'fire':   f.type = 'lowpass';  f.frequency.value = 500;  f.Q.value = 0.3; return f;
+    case 'cafe':   f.type = 'peaking';  f.frequency.value = 600;  f.Q.value = 1.0; f.gain.value = -8; return f;
+    default:       return null;
   }
 }
 
-function binauralFrequencies(soundId: SoundSource): {
-  leftHz: number;
-  rightHz: number;
-} {
-  // Carrier tone: 200 Hz (low enough to be comfortable, high enough to be
-  // perceived clearly with headphones).
-  // Beat frequency = rightHz - leftHz, perceived binaurally.
+function binauralFrequencies(soundId: SoundSource): { leftHz: number; rightHz: number } {
   switch (soundId) {
-    case 'binaural-alpha':
-      // Alpha range: 8–12 Hz (spec Section 7.1). Using 10 Hz beat.
-      return { leftHz: 200, rightHz: 210 };
-    case 'binaural-theta':
-      // Theta range: 4–8 Hz (spec Section 7.1). Using 6 Hz beat.
-      return { leftHz: 200, rightHz: 206 };
-    default:
-      return { leftHz: 200, rightHz: 210 };
+    case 'binaural-alpha': return { leftHz: 200, rightHz: 210 };
+    case 'binaural-theta': return { leftHz: 200, rightHz: 206 };
+    default:               return { leftHz: 200, rightHz: 210 };
   }
 }
 
