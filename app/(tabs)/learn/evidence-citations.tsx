@@ -1,0 +1,380 @@
+import { StyleSheet, Text, View, Pressable, ScrollView, Linking, Alert } from 'react-native';
+import { router } from 'expo-router';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+
+// ─── Citation data — all 8 references from Section 11 of the spec ─────────────
+
+type Citation = {
+  id: string;
+  authors: string;
+  year: number;
+  title: string;
+  journal: string;
+  details: string;
+  relevance: string;
+  url: string | null;
+  urlLabel: string;
+};
+
+type CitationGroup = {
+  groupTitle: string;
+  citations: Citation[];
+};
+
+const CITATION_GROUPS: CitationGroup[] = [
+  {
+    groupTitle: 'Tinnitus Functional Index (TFI)',
+    citations: [
+      {
+        id: 'meikle-2012',
+        authors: 'Meikle MB, Henry JA, Griest SE, et al.',
+        year: 2012,
+        title:
+          'The Tinnitus Functional Index: Development of a New Clinical Measure for Chronic, Intrusive Tinnitus',
+        journal: 'Ear and Hearing',
+        details: '33(2), 153–176',
+        relevance:
+          'Describes the development and validation of the 25-item TFI questionnaire used in this app for baseline and follow-up assessment.',
+        url: 'https://doi.org/10.1097/AUD.0b013e3182498c78',
+        urlLabel: 'doi.org',
+      },
+    ],
+  },
+  {
+    groupTitle: 'Sound therapy & habituation',
+    citations: [
+      {
+        id: 'jastreboff-1990',
+        authors: 'Jastreboff PJ',
+        year: 1990,
+        title:
+          'Phantom auditory perception (tinnitus): mechanisms of generation and perception',
+        journal: 'Neuroscience Research',
+        details: '8(4), 221–254',
+        relevance:
+          'Established the neurophysiological model of tinnitus underpinning habituation-based approaches and tinnitus retraining therapy (TRT).',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/2175622/',
+        urlLabel: 'PubMed',
+      },
+      {
+        id: 'okamoto-2010',
+        authors: 'Okamoto H, Stracke H, Stoll W, Pantev C',
+        year: 2010,
+        title:
+          'Listening to tailor-made notched music reduces tinnitus loudness and tinnitus-related auditory cortex activity',
+        journal: 'Proceedings of the National Academy of Sciences',
+        details: '107(3), 1207–1210',
+        relevance:
+          'Provided experimental support for notched sound therapy — the basis for the notched therapy feature in this app.',
+        url: 'https://doi.org/10.1073/pnas.0911268107',
+        urlLabel: 'doi.org',
+      },
+    ],
+  },
+  {
+    groupTitle: 'CBT & relaxation',
+    citations: [
+      {
+        id: 'henry-wilson-2001',
+        authors: 'Henry JL, Wilson PH',
+        year: 2001,
+        title: 'The Psychological Management of Chronic Tinnitus',
+        journal: 'Allyn & Bacon',
+        details: 'Book publication',
+        relevance:
+          'A foundational text describing cognitive behavioural therapy approaches to tinnitus management.',
+        url: 'https://scholar.google.com/scholar?q=Henry+Wilson+Psychological+Management+Chronic+Tinnitus+2001',
+        urlLabel: 'Google Scholar',
+      },
+      {
+        id: 'jasper-2014',
+        authors: 'Jasper K, Weise C, Conrad I, Andersson G, Hiller W, Kleinstäuber M',
+        year: 2014,
+        title:
+          'Internet-based guided self-help versus group cognitive behavioral therapy for chronic tinnitus',
+        journal: 'Psychotherapy and Psychosomatics',
+        details: '83(4), 234–246',
+        relevance:
+          'Demonstrated the efficacy of mindfulness-based cognitive therapy and self-guided CBT for tinnitus — the basis for CBT-informed tools in this app.',
+        url: 'https://doi.org/10.1159/000360705',
+        urlLabel: 'doi.org',
+      },
+      {
+        id: 'erlandsson-1991',
+        authors: 'Erlandsson SI, Hallberg LRM, Axelsson A',
+        year: 1991,
+        title:
+          'Psychological and audiological correlates of perceived tinnitus severity',
+        journal: 'Audiology',
+        details: '30(4), 203–216',
+        relevance:
+          'Examined psychological factors — including progressive muscle relaxation responses — in tinnitus severity, supporting relaxation-based interventions.',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/1910818/',
+        urlLabel: 'PubMed',
+      },
+    ],
+  },
+  {
+    groupTitle: 'Sleep & clinical guidelines',
+    citations: [
+      {
+        id: 'lasisi-2018',
+        authors: 'Lasisi AO, Gureje O',
+        year: 2018,
+        title: 'Sleep disorder in patients with tinnitus',
+        journal: 'Journal of Laryngology and Otology',
+        details: '132(6), 490–494',
+        relevance:
+          'Quantified the bidirectional relationship between tinnitus and sleep disturbance, supporting targeted sleep hygiene in tinnitus self-management.',
+        url: 'https://doi.org/10.1017/S0022215118000671',
+        urlLabel: 'doi.org',
+      },
+      {
+        id: 'nice-2020',
+        authors: 'National Institute for Health and Care Excellence',
+        year: 2020,
+        title: 'Tinnitus: Assessment and Management',
+        journal: 'NICE guideline NG155',
+        details: 'UK clinical guideline',
+        relevance:
+          'The current UK gold-standard clinical guideline for tinnitus assessment and management, informing the overall approach of this app.',
+        url: 'https://www.nice.org.uk/guidance/ng155',
+        urlLabel: 'nice.org.uk',
+      },
+    ],
+  },
+];
+
+// ─── Components ───────────────────────────────────────────────────────────────
+
+function BackButton() {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
+      onPress={() => router.back()}
+      accessibilityRole="button"
+      accessibilityLabel="Back to Learn"
+    >
+      <Text style={styles.backLabel}>← Learn</Text>
+    </Pressable>
+  );
+}
+
+async function openUrl(url: string | null, label: string) {
+  if (!url) return;
+  try {
+    const canOpen = await Linking.canOpenURL(url);
+    if (canOpen) {
+      await Linking.openURL(url);
+    } else {
+      Alert.alert('Could not open link', `Visit ${label} to access this reference.`);
+    }
+  } catch {
+    Alert.alert('Could not open link', `Visit ${label} to access this reference.`);
+  }
+}
+
+function CitationCard({ citation }: { citation: Citation }) {
+  return (
+    <View style={styles.card}>
+      <View style={styles.cardMeta}>
+        <Text style={styles.cardAuthors}>{citation.authors}</Text>
+        <Text style={styles.cardYear}>{citation.year}</Text>
+      </View>
+      <Text style={styles.cardTitle}>{citation.title}</Text>
+      <Text style={styles.cardJournal}>
+        <Text style={styles.cardJournalItalic}>{citation.journal}</Text>
+        {citation.details ? `. ${citation.details}.` : '.'}
+      </Text>
+      <Text style={styles.cardRelevance}>{citation.relevance}</Text>
+      {citation.url && (
+        <Pressable
+          style={({ pressed }) => [styles.linkBtn, pressed && styles.linkBtnPressed]}
+          onPress={() => openUrl(citation.url, citation.urlLabel)}
+          accessibilityRole="link"
+          accessibilityLabel={`View source for ${citation.title}`}
+        >
+          <Text style={styles.linkBtnText}>View source — {citation.urlLabel}</Text>
+          <Text style={styles.linkBtnArrow}> ↗</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
+function GroupSection({ group }: { group: CitationGroup }) {
+  return (
+    <View style={styles.group}>
+      <View style={styles.groupHeader}>
+        <Text style={styles.groupTitle}>{group.groupTitle}</Text>
+        <Text style={styles.groupCount}>
+          {group.citations.length} {group.citations.length === 1 ? 'reference' : 'references'}
+        </Text>
+      </View>
+      {group.citations.map((c) => (
+        <CitationCard key={c.id} citation={c} />
+      ))}
+    </View>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
+export default function EvidenceCitationsScreen() {
+  const total = CITATION_GROUPS.reduce((n, g) => n + g.citations.length, 0);
+
+  return (
+    <SafeAreaView style={styles.safe}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+      >
+        <BackButton />
+
+        <View style={styles.header}>
+          <Text style={styles.title}>Evidence citations</Text>
+          <Text style={styles.lead}>
+            Hush Tinnitus is grounded in {total} peer-reviewed sources. Each
+            feature and recommendation in the app has a corresponding evidence
+            base listed here.
+          </Text>
+          <View style={styles.disclaimer}>
+            <Text style={styles.disclaimerText}>
+              Links open in your browser. Internet access is required to view
+              external sources.
+            </Text>
+          </View>
+        </View>
+
+        {CITATION_GROUPS.map((group) => (
+          <GroupSection key={group.groupTitle} group={group} />
+        ))}
+
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>
+            This app does not claim to diagnose, treat, or cure any medical
+            condition. The references above describe the approaches on which
+            its self-management tools are based. Always consult a qualified
+            healthcare professional for clinical assessment.
+          </Text>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  safe: { flex: 1, backgroundColor: Colors.warmSand },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.xl,
+    gap: Spacing.xl,
+  },
+
+  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+  backBtnPressed: { opacity: 0.6 },
+  backLabel: { ...Typography.body, color: Colors.deepTide },
+
+  header: { gap: Spacing.md },
+  title: { ...Typography.display, color: Colors.darkText },
+  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+  disclaimer: {
+    backgroundColor: Colors.tealLight,
+    borderRadius: Radius.chip,
+    padding: Spacing.sm,
+  },
+  disclaimerText: { ...Typography.caption, color: Colors.deepTide },
+
+  // Group
+  group: { gap: Spacing.sm },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.xs,
+  },
+  groupTitle: { ...Typography.heading1, color: Colors.deepTide },
+  groupCount: { ...Typography.caption, color: Colors.midGray },
+
+  // Citation card
+  card: {
+    backgroundColor: Colors.white,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+    borderTopWidth: 3,
+    borderTopColor: Colors.calmWave,
+  },
+  cardMeta: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    gap: Spacing.sm,
+  },
+  cardAuthors: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    flex: 1,
+    lineHeight: 18,
+  },
+  cardYear: {
+    ...Typography.caption,
+    color: Colors.deepTide,
+    fontWeight: '600',
+    flexShrink: 0,
+  },
+  cardTitle: {
+    ...Typography.heading2,
+    color: Colors.darkText,
+    lineHeight: 22,
+  },
+  cardJournal: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    lineHeight: 18,
+  },
+  cardJournalItalic: {
+    fontStyle: 'italic',
+  },
+  cardRelevance: {
+    ...Typography.caption,
+    color: Colors.darkText,
+    lineHeight: 18,
+    borderTopWidth: Border.width,
+    borderTopColor: Colors.midGray + '25',
+    paddingTop: Spacing.sm,
+  },
+
+  // Source link button
+  linkBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: Colors.tealLight,
+    borderRadius: Radius.chip,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+  },
+  linkBtnPressed: { opacity: 0.7 },
+  linkBtnText: { ...Typography.micro, color: Colors.deepTide },
+  linkBtnArrow: { ...Typography.micro, color: Colors.deepTide },
+
+  // Footer
+  footer: {
+    borderTopWidth: Border.width,
+    borderTopColor: Colors.midGray + '30',
+    paddingTop: Spacing.md,
+  },
+  footerText: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    textAlign: 'center',
+    fontStyle: 'italic',
+    lineHeight: 18,
+  },
+});

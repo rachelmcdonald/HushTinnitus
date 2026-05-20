@@ -73,5 +73,24 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       balance REAL NOT NULL DEFAULT 0,
       notchedFrequency REAL
     );
+
+    -- Phase 5: sleep hygiene checklist persistence
+    CREATE TABLE IF NOT EXISTS sleep_hygiene_checks (
+      id TEXT PRIMARY KEY,
+      checked INTEGER NOT NULL DEFAULT 0,
+      updatedAt TEXT NOT NULL DEFAULT ''
+    );
+
+    -- Phase 5 / Phase 6: symptom log (UI populated in Phase 6;
+    -- sleep hygiene personalisation reads it defensively from Phase 5 onwards)
+    CREATE TABLE IF NOT EXISTS symptom_log (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      timeOfDay TEXT NOT NULL,
+      loudness INTEGER NOT NULL,
+      distress INTEGER NOT NULL,
+      notes TEXT NOT NULL DEFAULT '',
+      triggersJson TEXT NOT NULL DEFAULT '[]'
+    );
   `);
 }
