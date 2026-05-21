@@ -176,6 +176,13 @@ export default function SleepRoutineScreen() {
   const sessionStartRef = useRef<number | null>(null);
   const sessionSavedRef = useRef(false);
   const prevBoxPhaseRef = useRef<string>('');
+  const isKeepAwakeActive = useRef(false);
+
+  function safeDeactivate() {
+    if (!isKeepAwakeActive.current) return;
+    isKeepAwakeActive.current = false;
+    try { deactivateKeepAwake(); } catch {}
+  }
 
   // Shared animation values
   const stageOpacity = useSharedValue(1);
@@ -267,7 +274,7 @@ export default function SleepRoutineScreen() {
           saveSession(STAGE1_SECONDS + STAGE2_SECONDS);
           sessionSavedRef.current = true;
         }
-        deactivateKeepAwake();
+        safeDeactivate();
         goToStage('stage3');
       }
     }, 1000);
@@ -280,7 +287,8 @@ export default function SleepRoutineScreen() {
     setIsPaused(false);
     setStage('stage1');
     startStage1();
-    activateKeepAwakeAsync();
+    isKeepAwakeActive.current = true;
+    activateKeepAwakeAsync().catch(() => { isKeepAwakeActive.current = false; });
   }
 
   // ── Pause / Resume ─────────────────────────────────────────────────────────
@@ -321,7 +329,7 @@ export default function SleepRoutineScreen() {
             saveSession(STAGE1_SECONDS + STAGE2_SECONDS);
             sessionSavedRef.current = true;
           }
-          deactivateKeepAwake();
+          safeDeactivate();
           goToStage('stage3');
         }
       }, 1000);
@@ -334,7 +342,7 @@ export default function SleepRoutineScreen() {
     if (s2IntervalRef.current) { clearInterval(s2IntervalRef.current); s2IntervalRef.current = null; }
     cancelAnimation(circleScale);
     stopBreathOrb();
-    deactivateKeepAwake();
+    safeDeactivate();
     if (!sessionSavedRef.current && sessionStartRef.current) {
       const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       saveSession(elapsed);
@@ -359,7 +367,7 @@ export default function SleepRoutineScreen() {
       if (s2IntervalRef.current) clearInterval(s2IntervalRef.current);
       cancelAnimation(circleScale);
       cancelAnimation(breathOrbScale);
-      deactivateKeepAwake();
+      safeDeactivate();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

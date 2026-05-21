@@ -162,6 +162,13 @@ export default function PMRScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
+  const isKeepAwakeActive = useRef(false);
+
+  function safeDeactivate() {
+    if (!isKeepAwakeActive.current) return;
+    isKeepAwakeActive.current = false;
+    try { deactivateKeepAwake(); } catch {}
+  }
 
   function startTick() {
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -177,7 +184,7 @@ export default function PMRScreen() {
   }
 
   function finishSession() {
-    deactivateKeepAwake();
+    safeDeactivate();
     saveSession(TOTAL_SECONDS);
     sessionStartRef.current = null;
     setStage('done');
@@ -190,7 +197,8 @@ export default function PMRScreen() {
     setIsPaused(false);
     setStage('session');
     startTick();
-    activateKeepAwakeAsync();
+    isKeepAwakeActive.current = true;
+    activateKeepAwakeAsync().catch(() => { isKeepAwakeActive.current = false; });
   }
 
   function handlePause() {
@@ -205,7 +213,7 @@ export default function PMRScreen() {
 
   function handleEnd() {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    deactivateKeepAwake();
+    safeDeactivate();
     if (sessionStartRef.current) {
       const dur = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       saveSession(dur);
@@ -217,7 +225,7 @@ export default function PMRScreen() {
   useEffect(() => {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
-      deactivateKeepAwake();
+      safeDeactivate();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

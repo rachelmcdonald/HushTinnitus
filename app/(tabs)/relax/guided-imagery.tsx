@@ -86,6 +86,13 @@ export default function GuidedImageryScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const elapsedRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
+  const isKeepAwakeActive = useRef(false);
+
+  function safeDeactivate() {
+    if (!isKeepAwakeActive.current) return;
+    isKeepAwakeActive.current = false;
+    try { deactivateKeepAwake(); } catch {}
+  }
 
   const breathScale = useSharedValue(1);
   const breathStyle = useAnimatedStyle(() => ({
@@ -123,7 +130,7 @@ export default function GuidedImageryScreen() {
 
   function finishSession() {
     stopBreathing();
-    deactivateKeepAwake();
+    safeDeactivate();
     saveSession(TOTAL_SECONDS);
     sessionStartRef.current = null;
     setStage('done');
@@ -137,7 +144,8 @@ export default function GuidedImageryScreen() {
     setStage('session');
     startBreathing();
     startTick();
-    activateKeepAwakeAsync();
+    isKeepAwakeActive.current = true;
+    activateKeepAwakeAsync().catch(() => { isKeepAwakeActive.current = false; });
   }
 
   function handlePause() {
@@ -155,7 +163,7 @@ export default function GuidedImageryScreen() {
   function handleEnd() {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
     stopBreathing();
-    deactivateKeepAwake();
+    safeDeactivate();
     if (sessionStartRef.current) {
       const dur = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       saveSession(dur);
@@ -168,7 +176,7 @@ export default function GuidedImageryScreen() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       cancelAnimation(breathScale);
-      deactivateKeepAwake();
+      safeDeactivate();
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
