@@ -44,15 +44,15 @@ const CONTENT: ContentCard[] = [
   },
   {
     title: 'CBT thought journal',
-    description: 'Walk through a cognitive reframe for distressing thoughts about tinnitus.',
-    available: false,
-    badge: 'Premium · Phase 5',
+    description: 'A guided cognitive reframe for distressing thoughts about tinnitus — step by step.',
+    route: '/learn/thought-journal',
+    available: true,
   },
   {
     title: 'Red flag guide',
     description: 'When to seek medical advice: sudden onset, pulsatile tinnitus, and one-sided symptoms.',
-    available: false,
-    badge: 'Phase 5',
+    route: '/learn/red-flag-guide',
+    available: true,
   },
 ];
 

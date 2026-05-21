@@ -92,5 +92,18 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       notes TEXT NOT NULL DEFAULT '',
       triggersJson TEXT NOT NULL DEFAULT '[]'
     );
+
+    -- Phase 5: CBT thought journal (Premium)
+    CREATE TABLE IF NOT EXISTS thought_journal (
+      id TEXT PRIMARY KEY,
+      date TEXT NOT NULL,
+      originalThought TEXT NOT NULL,
+      emotion TEXT NOT NULL,
+      evidenceFor TEXT NOT NULL DEFAULT '',
+      friendPerspective TEXT NOT NULL DEFAULT '',
+      balancedView TEXT NOT NULL DEFAULT '',
+      reframedThought TEXT NOT NULL,
+      completedAt TEXT NOT NULL
+    );
   `);
 }
