@@ -87,7 +87,9 @@ const TECHNIQUES: Technique[] = [
       'Progressive Muscle Relaxation (PMR) involves systematically tensing and releasing muscle groups to produce a state of deep physical relaxation. It is a well-established technique for managing stress and sleep difficulties, and is commonly used as part of broader tinnitus self-management programmes.',
     meta: '15 min  ·  Premium',
     tier: 'Premium',
-    available: false,
+    route: '/relax/pmr',
+    available: true,
+    premiumGated: true,
   },
   {
     id: 'body-scan',
@@ -98,18 +100,35 @@ const TECHNIQUES: Technique[] = [
       'A body scan guides awareness through each part of the body in sequence, promoting a sense of physical ease and present-moment focus. It is a common component of mindfulness-based programmes and can be used at any time of day to reset and reduce accumulated tension.',
     meta: '10 min  ·  Premium',
     tier: 'Premium',
-    available: false,
+    route: '/relax/body-scan',
+    available: true,
+    premiumGated: true,
+  },
+  {
+    id: 'guided-imagery',
+    title: 'Guided Imagery',
+    description:
+      'A calm beach visualisation to ease tension and build distance from tinnitus-related distress.',
+    infoText:
+      'Guided imagery uses vivid mental scenes to produce a genuine physical relaxation response. This session takes you through a peaceful beach scene at sunset, including a moment of calm acceptance for any sounds — including tinnitus — that arise. Regular practice strengthens the ability to shift attention away from distressing stimuli.',
+    meta: '10 min  ·  Premium',
+    tier: 'Premium',
+    route: '/relax/guided-imagery',
+    available: true,
+    premiumGated: true,
   },
   {
     id: 'sleep-routine',
     title: 'Sleep Preparation Routine',
     description:
-      'A combined breathing, body scan, and sound enrichment session designed for bedtime.',
+      'A three-stage bedtime sequence — box breathing, body scan, and a gentle sound prompt.',
     infoText:
       'This session combines breathing exercises, body scan, and sound enrichment into a sequential bedtime routine. Sleep difficulty is one of the most commonly reported impacts of tinnitus, and a consistent pre-sleep routine helps condition the nervous system to settle. Each element builds on the others for a calmer transition to sleep.',
-    meta: '15–20 min  ·  Premium',
+    meta: '~10 min  ·  Premium',
     tier: 'Premium',
-    available: false,
+    route: '/relax/sleep-routine',
+    available: true,
+    premiumGated: true,
   },
 ];
 
@@ -241,19 +260,25 @@ function TechniqueCard({ technique }: { technique: Technique }) {
     );
   }
 
-  // Premium gated — taps open upgrade modal
+  // Premium gated — navigate to route if available, else show UpgradeModal inline
   if (isPremiumGated) {
     return (
       <Pressable
         style={({ pressed }) => [styles.card, styles.cardPremiumGated, pressed && styles.cardPressed]}
-        onPress={() => setUpgradeVisible(true)}
+        onPress={() => {
+          if (technique.route) {
+            router.push(technique.route as any);
+          } else {
+            setUpgradeVisible(true);
+          }
+        }}
         accessibilityRole="button"
-        accessibilityLabel={`Unlock ${technique.title} — Premium`}
+        accessibilityLabel={`${technique.title} — Premium`}
       >
         {modals}
         <View style={styles.cardBody}>
           <View style={styles.cardTitleRow}>
-            <Text style={[styles.cardTitle, styles.cardTitleDisabled]} numberOfLines={1}>
+            <Text style={[styles.cardTitle, styles.cardTitlePremium]} numberOfLines={1}>
               {technique.title}
             </Text>
             {infoBadge}
@@ -264,7 +289,7 @@ function TechniqueCard({ technique }: { technique: Technique }) {
           <Text style={styles.cardDescription}>{technique.description}</Text>
           <Text style={styles.cardMeta}>{technique.meta}</Text>
         </View>
-        <Text style={styles.lockIcon}>⚿</Text>
+        <Text style={styles.chevronPremium}>›</Text>
       </Pressable>
     );
   }
@@ -358,6 +383,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.midGray + '30',
   },
   cardPremiumGated: {
+    backgroundColor: Colors.goldLight,
     borderWidth: Border.width,
     borderColor: Colors.softGold + '60',
   },
@@ -366,10 +392,11 @@ const styles = StyleSheet.create({
   cardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
   cardTitle: { ...Typography.heading2, color: Colors.darkText, flexShrink: 1 },
   cardTitleDisabled: { color: Colors.midGray },
+  cardTitlePremium: { ...Typography.heading2, color: Colors.softGold, flexShrink: 1 },
   cardDescription: { ...Typography.body, color: Colors.midGray },
   cardMeta: { ...Typography.caption, color: Colors.midGray + 'CC' },
   chevron: { ...Typography.heading1, color: Colors.midGray },
-  lockIcon: { fontSize: 18, color: Colors.softGold },
+  chevronPremium: { ...Typography.heading1, color: Colors.softGold + '80' },
 
   // Info button
   infoBtn: { paddingHorizontal: 2 },

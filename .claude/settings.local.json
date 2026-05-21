@@ -5,7 +5,9 @@
       "Bash(npx expo *)",
       "WebFetch(domain:docs.swmansion.com)",
       "Bash(python3 -m json.tool)",
-      "Bash(xargs cat)"
+      "Bash(xargs cat)",
+      "Bash(python3 *)",
+      "Bash(unzip -p hush_tinnitus_handoff.docx word/document.xml)"
     ]
   }
 }
