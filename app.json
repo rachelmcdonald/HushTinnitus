@@ -1,4 +1,7 @@
 {
+  "cli": {
+    "appVersionSource": "local"
+  },
   "expo": {
     "name": "Hush Tinnitus",
     "slug": "HushTinnitus",
@@ -18,7 +21,6 @@
       "bundleIdentifier": "com.hushtinnitus.app",
       "infoPlist": {
         "UIBackgroundModes": [
-          "audio",
           "audio"
         ],
         "ITSAppUsesNonExemptEncryption": false
@@ -46,8 +48,7 @@
       "expo-dev-client",
       "expo-router",
       "expo-sqlite",
-      "react-native-audio-api",
-      "react-native-reanimated"
+      "react-native-audio-api"
     ],
     "extra": {
       "router": {},
