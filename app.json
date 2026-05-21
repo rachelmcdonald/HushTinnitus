@@ -46,7 +46,8 @@
       "expo-dev-client",
       "expo-router",
       "expo-sqlite",
-      "react-native-audio-api"
+      "react-native-audio-api",
+      "react-native-reanimated"
     ],
     "extra": {
       "router": {},
