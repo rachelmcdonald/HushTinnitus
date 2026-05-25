@@ -1,95 +1,115 @@
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Typography, Spacing, Radius } from '@/src/theme';
 
-type ContentCard = {
+// ─── Content catalogue ────────────────────────────────────────────────────────
+
+type GridItem = {
   title: string;
-  description: string;
-  route?: string;
-  available: boolean;
-  badge?: string;
+  desc: string;
+  route: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  premium?: boolean;
 };
 
-const CONTENT: ContentCard[] = [
+const GRID_ITEMS: GridItem[] = [
   {
     title: 'Tinnitus 101',
-    description: 'What tinnitus is, why it happens, and how the brain adapts over time.',
+    desc: 'What tinnitus is and how the brain adapts over time.',
     route: '/learn/tinnitus-101',
-    available: true,
+    icon: 'ear-outline',
   },
   {
-    title: 'The neurological loop',
-    description: 'How attention and the stress response amplify what you hear — and how to interrupt the cycle.',
+    title: 'The Neurological Loop',
+    desc: 'How attention and stress amplify what you hear.',
     route: '/learn/neurological-loop',
-    available: true,
+    icon: 'pulse-outline',
   },
   {
-    title: 'Sleep hygiene checklist',
-    description: 'A personalised checklist based on how sleep and tinnitus interact. Progress saved on device.',
-    route: '/learn/sleep-hygiene',
-    available: true,
-  },
-  {
-    title: 'Noise exposure guide',
-    description: 'dB reference chart and practical hearing protection recommendations.',
-    route: '/learn/noise-exposure',
-    available: true,
-  },
-  {
-    title: 'Evidence citations',
-    description: 'All 8 peer-reviewed references behind the tools and content in this app.',
-    route: '/learn/evidence-citations',
-    available: true,
-  },
-  {
-    title: 'CBT thought journal',
-    description: 'A guided cognitive reframe for distressing thoughts about tinnitus — step by step.',
+    title: 'Thought Journal',
+    desc: 'Guided cognitive reframing for tinnitus distress.',
     route: '/learn/thought-journal',
-    available: true,
+    icon: 'journal-outline',
+    premium: true,
   },
   {
-    title: 'Red flag guide',
-    description: 'When to seek medical advice: sudden onset, pulsatile tinnitus, and one-sided symptoms.',
+    title: 'Sleep Hygiene',
+    desc: 'Personalised checklist for sleep and tinnitus.',
+    route: '/learn/sleep-hygiene',
+    icon: 'moon-outline',
+  },
+  {
+    title: 'Noise Exposure',
+    desc: 'dB reference chart and hearing protection guide.',
+    route: '/learn/noise-exposure',
+    icon: 'volume-high-outline',
+  },
+  {
+    title: 'Evidence Citations',
+    desc: 'Peer-reviewed references behind this app.',
+    route: '/learn/evidence-citations',
+    icon: 'document-text-outline',
+  },
+  {
+    title: 'Red Flag Guide',
+    desc: 'When to seek urgent medical advice.',
     route: '/learn/red-flag-guide',
-    available: true,
+    icon: 'warning-outline',
   },
 ];
 
-function ContentCard({ card }: { card: ContentCard }) {
-  if (!card.available) {
-    return (
-      <View style={[styles.card, styles.cardDisabled]}>
-        <View style={styles.cardBody}>
-          <Text style={[styles.cardTitle, styles.cardTitleDisabled]}>{card.title}</Text>
-          <Text style={styles.cardDescription}>{card.description}</Text>
-        </View>
-        {card.badge && (
-          <View style={styles.comingSoonBadge}>
-            <Text style={styles.comingSoonText}>{card.badge}</Text>
+// ─── Grid card ────────────────────────────────────────────────────────────────
+
+function GridCard({ item, width }: { item: GridItem; width: number }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.gridCard, { width }, pressed && styles.cardPressed]}
+      onPress={() => router.push(item.route as any)}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${item.title}`}
+    >
+      <View style={styles.gridCardTop}>
+        <Ionicons name={item.icon} size={22} color={Colors.deepTide} />
+        {item.premium && (
+          <View style={styles.premiumBadge}>
+            <Text style={styles.premiumBadgeText}>Premium</Text>
           </View>
         )}
       </View>
-    );
-  }
-
-  return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-      onPress={() => card.route && router.push(card.route as any)}
-      accessibilityRole="button"
-      accessibilityLabel={`Open ${card.title}`}
-    >
-      <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{card.title}</Text>
-        <Text style={styles.cardDescription}>{card.description}</Text>
-      </View>
-      <Text style={styles.chevron}>›</Text>
+      <Text style={styles.gridCardTitle}>{item.title}</Text>
+      <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
     </Pressable>
   );
 }
 
+// ─── About card ───────────────────────────────────────────────────────────────
+
+function AboutCard() {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.aboutCard, pressed && styles.cardPressed]}
+      onPress={() => router.push('/about' as any)}
+      accessibilityRole="button"
+      accessibilityLabel="About Hush Tinnitus — Meet the team"
+    >
+      <Text style={styles.aboutHeading}>Built by clinicians, backed by research</Text>
+      <Text style={styles.aboutSubtitle}>
+        Created by a registered audiologist with clinical experience in tinnitus
+        management, developed to fill a real gap in tinnitus self-management.
+      </Text>
+      <Text style={styles.aboutLink}>Meet the team →</Text>
+    </Pressable>
+  );
+}
+
+// ─── Screen ───────────────────────────────────────────────────────────────────
+
 export default function LearnScreen() {
+  const { width } = useWindowDimensions();
+  const cardWidth = (width - Spacing.xl * 2 - Spacing.sm) / 2;
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -103,11 +123,13 @@ export default function LearnScreen() {
           </Text>
         </View>
 
-        <View style={styles.cardList}>
-          {CONTENT.map((card) => (
-            <ContentCard key={card.title} card={card} />
+        <View style={styles.grid}>
+          {GRID_ITEMS.map((item) => (
+            <GridCard key={item.title} item={item} width={cardWidth} />
           ))}
         </View>
+
+        <AboutCard />
 
         <Text style={styles.disclaimer}>
           Content here is for educational purposes. It is not a substitute for advice
@@ -127,36 +149,51 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.xl,
     gap: Spacing.xl,
   },
+
   header: { gap: Spacing.sm },
   title: { ...Typography.display, color: Colors.darkText },
   subtitle: { ...Typography.body, color: Colors.midGray },
-  cardList: { gap: Spacing.sm },
-  card: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
+
+  // Grid
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
     gap: Spacing.sm,
   },
-  cardDisabled: {
-    opacity: 0.55,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
+  gridCard: {
+    backgroundColor: Colors.tealLight,
+    borderRadius: Radius.card,
+    padding: Spacing.md,
+    gap: Spacing.xs,
+    minHeight: 110,
   },
   cardPressed: { opacity: 0.8 },
-  cardBody: { flex: 1, gap: 4 },
-  cardTitle: { ...Typography.heading2, color: Colors.darkText },
-  cardTitleDisabled: { color: Colors.midGray },
-  cardDescription: { ...Typography.body, color: Colors.midGray },
-  chevron: { ...Typography.heading1, color: Colors.midGray },
-  comingSoonBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
+  gridCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  comingSoonText: { ...Typography.micro, color: Colors.deepTide },
+  gridCardTitle: { ...Typography.heading2, color: Colors.darkText },
+  gridCardDesc: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+  premiumBadge: {
+    backgroundColor: Colors.goldLight,
+    borderRadius: 4,
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+  },
+  premiumBadgeText: { ...Typography.micro, fontSize: 9, color: Colors.softGold },
+
+  // About card
+  aboutCard: {
+    backgroundColor: Colors.deepTide,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    gap: Spacing.sm,
+  },
+  aboutHeading: { ...Typography.heading2, color: Colors.white },
+  aboutSubtitle: { ...Typography.body, color: Colors.calmWave, lineHeight: 22 },
+  aboutLink: { ...Typography.body, color: Colors.calmWave, fontWeight: '500' as const },
+
   disclaimer: {
     ...Typography.caption,
     color: Colors.midGray,

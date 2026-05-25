@@ -11,6 +11,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Duration, Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import UpgradeModal from '@/src/components/UpgradeModal';
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
@@ -60,6 +62,9 @@ function saveSession(durationSeconds: number) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function BoxBreathingScreen() {
+  const { preferences } = usePreferences();
+  const isPremium = preferences?.isPremium ?? false;
+  const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<BoxPhase>('idle');
   const [countdown, setCountdown] = useState(0);
@@ -283,18 +288,29 @@ export default function BoxBreathingScreen() {
         </View>
 
         {/* Start / Stop */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.btn,
-            isRunning ? styles.btnStop : styles.btnStart,
-            pressed && styles.btnPressed,
-          ]}
-          onPress={isRunning ? handleStop : handleStart}
-          accessibilityRole="button"
-          accessibilityLabel={isRunning ? 'Stop session' : 'Start breathing exercise'}
-        >
-          <Text style={styles.btnLabel}>{isRunning ? 'Stop' : 'Start'}</Text>
-        </Pressable>
+        {isRunning || isPremium ? (
+          <Pressable
+            style={({ pressed }) => [
+              styles.btn,
+              isRunning ? styles.btnStop : styles.btnStart,
+              pressed && styles.btnPressed,
+            ]}
+            onPress={isRunning ? handleStop : handleStart}
+            accessibilityRole="button"
+            accessibilityLabel={isRunning ? 'Stop session' : 'Start breathing exercise'}
+          >
+            <Text style={styles.btnLabel}>{isRunning ? 'Stop' : 'Start'}</Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [styles.btn, styles.btnUnlock, pressed && styles.btnPressed]}
+            onPress={() => setUpgradeVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Unlock Premium to start"
+          >
+            <Text style={styles.btnLabel}>Unlock Premium</Text>
+          </Pressable>
+        )}
 
         {!isRunning && (
           <Text style={styles.tip}>
@@ -304,6 +320,8 @@ export default function BoxBreathingScreen() {
           </Text>
         )}
       </ScrollView>
+
+      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -405,8 +423,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
     alignItems: 'center',
   },
-  btnStart: { backgroundColor: Colors.deepTide },
-  btnStop:  { backgroundColor: Colors.warmCoral },
+  btnStart:  { backgroundColor: Colors.deepTide },
+  btnStop:   { backgroundColor: Colors.warmCoral },
+  btnUnlock: { backgroundColor: Colors.softGold },
   btnPressed: { opacity: 0.85 },
   btnLabel: { ...Typography.heading2, color: Colors.white },
 

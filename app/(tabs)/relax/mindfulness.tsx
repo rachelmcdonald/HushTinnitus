@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import UpgradeModal from '@/src/components/UpgradeModal';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -63,6 +65,9 @@ function saveSession(durationSeconds: number) {
 }
 
 export default function MindfulnessScreen() {
+  const { preferences } = usePreferences();
+  const isPremium = preferences?.isPremium ?? false;
+  const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [stage, setStage] = useState<'intro' | 'session' | 'done'>('intro');
   const [isPaused, setIsPaused] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -187,7 +192,7 @@ export default function MindfulnessScreen() {
         <View style={styles.introContent}>
           <View style={styles.introHeader}>
             <Text style={styles.introTitle}>Mindfulness Practice</Text>
-            <Text style={styles.introDuration}>5 minutes · Free</Text>
+            <Text style={styles.introDuration}>5 min · Premium</Text>
           </View>
           <Text style={styles.introBody}>
             A guided session using mindful awareness to support a calmer
@@ -199,15 +204,27 @@ export default function MindfulnessScreen() {
             Find a quiet, comfortable place to sit or lie down. You don't need
             to silence your tinnitus — just allow it to be there.
           </Text>
-          <Pressable
-            style={({ pressed }) => [styles.beginBtn, pressed && styles.btnPressed]}
-            onPress={handleBegin}
-            accessibilityRole="button"
-            accessibilityLabel="Begin session"
-          >
-            <Text style={styles.beginBtnLabel}>Begin session</Text>
-          </Pressable>
+          {isPremium ? (
+            <Pressable
+              style={({ pressed }) => [styles.beginBtn, pressed && styles.btnPressed]}
+              onPress={handleBegin}
+              accessibilityRole="button"
+              accessibilityLabel="Begin session"
+            >
+              <Text style={styles.beginBtnLabel}>Begin session</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.unlockBtn, pressed && styles.btnPressed]}
+              onPress={() => setUpgradeVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Unlock Premium"
+            >
+              <Text style={styles.unlockBtnLabel}>Unlock Premium</Text>
+            </Pressable>
+          )}
         </View>
+        <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
       </SafeAreaView>
     );
   }
@@ -326,6 +343,14 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   beginBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
+  unlockBtn: {
+    backgroundColor: Colors.softGold,
+    borderRadius: Radius.chip,
+    paddingVertical: Spacing.base,
+    alignItems: 'center',
+    marginTop: Spacing.md,
+  },
+  unlockBtnLabel: { ...Typography.heading2, color: Colors.white },
 
   // ── Done ──────────────────────────────────────────────────────────────────
   doneContent: {

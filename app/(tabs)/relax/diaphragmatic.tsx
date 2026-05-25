@@ -13,6 +13,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import UpgradeModal from '@/src/components/UpgradeModal';
 
 // ─── Timing ───────────────────────────────────────────────────────────────────
 
@@ -250,6 +252,9 @@ const oval = StyleSheet.create({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function DiaphragmaticScreen() {
+  const { preferences } = usePreferences();
+  const isPremium = preferences?.isPremium ?? false;
+  const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [mode, setMode] = useState<'instructions' | 'practice'>('instructions');
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<'inhale' | 'exhale'>('inhale');
@@ -449,16 +454,29 @@ export default function DiaphragmaticScreen() {
             softly pursed lips.
           </Text>
 
-          <Pressable
-            style={({ pressed }) => [styles.btn, styles.btnStart, pressed && styles.btnPressed]}
-            onPress={handleStartPractice}
-            accessibilityRole="button"
-            accessibilityLabel="Start diaphragmatic breathing practice"
-          >
-            <Text style={styles.btnLabel}>Start practice</Text>
-          </Pressable>
+          {isPremium ? (
+            <Pressable
+              style={({ pressed }) => [styles.btn, styles.btnStart, pressed && styles.btnPressed]}
+              onPress={handleStartPractice}
+              accessibilityRole="button"
+              accessibilityLabel="Start diaphragmatic breathing practice"
+            >
+              <Text style={styles.btnLabel}>Start practice</Text>
+            </Pressable>
+          ) : (
+            <Pressable
+              style={({ pressed }) => [styles.btn, styles.btnUnlock, pressed && styles.btnPressed]}
+              onPress={() => setUpgradeVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Unlock Premium to start"
+            >
+              <Text style={styles.btnLabel}>Unlock Premium</Text>
+            </Pressable>
+          )}
         </View>
       </ScrollView>
+
+      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
     </SafeAreaView>
   );
 }
@@ -514,8 +532,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.base,
     alignItems: 'center',
   },
-  btnStart: { backgroundColor: Colors.deepTide },
-  btnStop:  { backgroundColor: Colors.warmCoral },
+  btnStart:  { backgroundColor: Colors.deepTide },
+  btnStop:   { backgroundColor: Colors.warmCoral },
+  btnUnlock: { backgroundColor: Colors.softGold },
   btnPressed: { opacity: 0.85 },
   btnLabel: { ...Typography.heading2, color: Colors.white },
 
