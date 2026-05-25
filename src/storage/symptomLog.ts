@@ -26,6 +26,24 @@ type RowShape = {
   loudness: number; distress: number; notes: string; triggersJson: string;
 };
 
+export function getSymptomLogById(id: string): SymptomLog | null {
+  if (Platform.OS === 'web') return null;
+  const row = getDb().getFirstSync<RowShape>('SELECT * FROM symptom_log WHERE id = ?', [id]);
+  return row ? mapRow(row) : null;
+}
+
+export function updateSymptomLog(
+  id: string,
+  fields: Pick<SymptomLog, 'timeOfDay' | 'loudness' | 'distress' | 'notes' | 'triggers'>
+): void {
+  if (Platform.OS === 'web') return;
+  getDb().runSync(
+    `UPDATE symptom_log SET timeOfDay=?, loudness=?, distress=?, notes=?, triggersJson=?
+     WHERE id=?`,
+    [fields.timeOfDay, fields.loudness, fields.distress, fields.notes, JSON.stringify(fields.triggers), id]
+  );
+}
+
 export function saveSymptomLog(entry: Omit<SymptomLog, 'id'>): SymptomLog {
   if (Platform.OS === 'web') return { id: `web_${Date.now()}`, ...entry };
   const id = makeId();

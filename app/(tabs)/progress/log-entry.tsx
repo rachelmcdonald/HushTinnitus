@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   TextInput, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { saveSymptomLog } from '@/src/storage/symptomLog';
+import { saveSymptomLog, updateSymptomLog, getSymptomLogById } from '@/src/storage/symptomLog';
 import { SymptomLog, TriggerTag } from '@/src/types';
 import UpgradeModal from '@/src/components/UpgradeModal';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
@@ -96,6 +96,9 @@ const slider = StyleSheet.create({
 export default function LogEntryScreen() {
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
+  const params = useLocalSearchParams<{ existingId?: string }>();
+  const existingId = params.existingId;
+  const isEditing = !!existingId;
 
   const [timeOfDay, setTimeOfDay] = useState<SymptomLog['timeOfDay'] | null>(null);
   const [loudness, setLoudness] = useState(5);
@@ -104,6 +107,19 @@ export default function LogEntryScreen() {
   const [triggers, setTriggers] = useState<TriggerTag[]>([]);
   const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  // Pre-populate fields when editing an existing entry
+  useEffect(() => {
+    if (!existingId || Platform.OS === 'web') return;
+    const existing = getSymptomLogById(existingId);
+    if (existing) {
+      setTimeOfDay(existing.timeOfDay);
+      setLoudness(existing.loudness);
+      setDistress(existing.distress);
+      setNotes(existing.notes);
+      setTriggers(existing.triggers);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   function toggleTrigger(tag: TriggerTag) {
     setTriggers((prev) =>
@@ -117,14 +133,18 @@ export default function LogEntryScreen() {
       return;
     }
     if (Platform.OS !== 'web') {
-      saveSymptomLog({
-        date: new Date().toISOString(),
-        timeOfDay,
-        loudness,
-        distress,
-        notes: notes.trim(),
-        triggers,
-      });
+      if (isEditing && existingId) {
+        updateSymptomLog(existingId, { timeOfDay, loudness, distress, notes: notes.trim(), triggers });
+      } else {
+        saveSymptomLog({
+          date: new Date().toISOString(),
+          timeOfDay,
+          loudness,
+          distress,
+          notes: notes.trim(),
+          triggers,
+        });
+      }
     }
     setSaved(true);
   }
@@ -135,11 +155,13 @@ export default function LogEntryScreen() {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.savedHeader}>
             <View style={styles.savedBadge}>
-              <Text style={styles.savedBadgeText}>Entry saved</Text>
+              <Text style={styles.savedBadgeText}>{isEditing ? 'Entry updated' : 'Entry saved'}</Text>
             </View>
-            <Text style={styles.savedTitle}>Logged</Text>
+            <Text style={styles.savedTitle}>{isEditing ? 'Updated' : 'Logged'}</Text>
             <Text style={styles.savedSub}>
-              Your symptom log has been saved privately on this device.
+              {isEditing
+                ? 'Your changes have been saved privately on this device.'
+                : 'Your symptom log has been saved privately on this device.'}
             </Text>
           </View>
           <View style={styles.savedSummary}>
@@ -206,7 +228,9 @@ export default function LogEntryScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.title}>Log today's symptoms</Text>
+            <Text style={styles.title}>
+              {isEditing ? "Edit today's entry" : "Log today's symptoms"}
+            </Text>
             <Text style={styles.subtitle}>
               How are you feeling? Your log is stored privately on this device.
             </Text>

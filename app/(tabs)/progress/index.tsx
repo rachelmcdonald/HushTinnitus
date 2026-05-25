@@ -11,7 +11,7 @@ import * as Sharing from 'expo-sharing';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import {
   getLogsForPeriod, getRecentLogs, getSessionStats, getTriggerStats,
-  groupLogsByDay, TriggerStat, SessionStats,
+  getTodayLogs, groupLogsByDay, TriggerStat, SessionStats,
 } from '@/src/storage/symptomLog';
 import { getAllAssessments } from '@/src/storage/tfi';
 import { TFIAssessment, SymptomLog } from '@/src/types';
@@ -284,7 +284,7 @@ export default function ProgressScreen() {
   });
   const [triggerStats, setTriggerStats] = useState<TriggerStat[]>([]);
   const [sessionStats, setSessionStats] = useState<SessionStats>({ totalSessions: 0, totalMinutes: 0 });
-  const [todayLogged, setTodayLogged] = useState(false);
+  const [todayEntry, setTodayEntry] = useState<SymptomLog | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
 
   useFocusEffect(
@@ -303,9 +303,9 @@ export default function ProgressScreen() {
       setTriggerStats(getTriggerStats());
       setSessionStats(getSessionStats());
 
-      const today = new Date().toISOString().substring(0, 10);
-      const todayLogs = logs30.filter((l) => l.date.startsWith(today));
-      setTodayLogged(todayLogs.length > 0);
+      // Most recent log for today (getTodayLogs returns DESC order)
+      const todayLogs = getTodayLogs();
+      setTodayEntry(todayLogs[0] ?? null);
     }, [])
   );
 
@@ -340,28 +340,47 @@ export default function ProgressScreen() {
 
         {/* ── Log today ─────────────────────────────────────────────────────── */}
         <SectionLabel label="TODAY" />
-        <Pressable
-          style={({ pressed }) => [styles.logCard, pressed && styles.logCardPressed]}
-          onPress={() => router.push('/progress/log-entry' as any)}
-          accessibilityRole="button"
-          accessibilityLabel="Log today's symptoms"
-        >
-          <View style={styles.logCardLeft}>
-            <Text style={styles.logCardTitle}>
-              {todayLogged ? 'Log another entry' : "Log today's symptoms"}
-            </Text>
-            <Text style={styles.logCardSub}>
-              {todayLogged
-                ? "You’ve already logged today — tap to add another entry."
-                : 'Loudness, distress, time of day, and notes.'}
-            </Text>
-          </View>
-          <View style={[styles.logCardBadge, todayLogged && styles.logCardBadgeDone]}>
-            <Text style={[styles.logCardBadgeText, todayLogged && styles.logCardBadgeTextDone]}>
-              {todayLogged ? '✓ Logged' : 'Log now'}
-            </Text>
-          </View>
-        </Pressable>
+        {todayEntry ? (
+          <Pressable
+            style={({ pressed }) => [styles.logCard, styles.logCardLogged, pressed && styles.logCardPressed]}
+            onPress={() =>
+              router.push({
+                pathname: '/progress/log-entry' as any,
+                params: { existingId: todayEntry.id },
+              })
+            }
+            accessibilityRole="button"
+            accessibilityLabel="Edit today's symptom log entry"
+          >
+            <View style={styles.logCardLeft}>
+              <View style={styles.logCardTitleRow}>
+                <Text style={styles.logCardCheckmark}>✓</Text>
+                <Text style={styles.logCardTitleLogged}>Today's symptoms logged</Text>
+              </View>
+              <Text style={styles.logCardSummary}>
+                {todayEntry.timeOfDay} · Loudness {todayEntry.loudness}/10 · Distress {todayEntry.distress}/10
+              </Text>
+            </View>
+            <View style={[styles.logCardBadge, styles.logCardBadgeDone]}>
+              <Text style={[styles.logCardBadgeText, styles.logCardBadgeTextDone]}>Edit entry</Text>
+            </View>
+          </Pressable>
+        ) : (
+          <Pressable
+            style={({ pressed }) => [styles.logCard, pressed && styles.logCardPressed]}
+            onPress={() => router.push('/progress/log-entry' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Log today's symptoms"
+          >
+            <View style={styles.logCardLeft}>
+              <Text style={styles.logCardTitle}>Log today's symptoms</Text>
+              <Text style={styles.logCardSub}>Loudness, distress, time of day, and notes.</Text>
+            </View>
+            <View style={styles.logCardBadge}>
+              <Text style={styles.logCardBadgeText}>Log now</Text>
+            </View>
+          </Pressable>
+        )}
 
         {/* ── Session stats ─────────────────────────────────────────────────── */}
         <SectionLabel label="ACTIVITY" />
@@ -613,6 +632,15 @@ const styles = StyleSheet.create({
   logCardLeft: { flex: 1, gap: 2 },
   logCardTitle: { ...Typography.heading2, color: Colors.white },
   logCardSub: { ...Typography.caption, color: Colors.white + 'BB' },
+  logCardLogged: {
+    backgroundColor: Colors.white,
+    borderWidth: Border.width * 2,
+    borderColor: Colors.calmWave,
+  },
+  logCardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+  logCardCheckmark: { ...Typography.body, color: Colors.calmWave, fontWeight: '600' as const },
+  logCardTitleLogged: { ...Typography.heading2, color: Colors.darkText },
+  logCardSummary: { ...Typography.caption, color: Colors.midGray },
   logCardBadge: {
     backgroundColor: Colors.calmWave,
     borderRadius: Radius.chip,
