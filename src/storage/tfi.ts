@@ -120,6 +120,31 @@ export function getAssessmentById(id: string): TFIAssessment | null {
   };
 }
 
+export function getAllAssessments(): TFIAssessment[] {
+  const db = getDb();
+  const rows = db.getAllSync<{
+    id: string;
+    date: string;
+    totalScore: number;
+    grade: string;
+    subscalesJson: string;
+    responsesJson: string;
+    isBaseline: number;
+    weekNumber: number;
+  }>('SELECT * FROM tfi_assessments ORDER BY date ASC');
+
+  return rows.map((row) => ({
+    id: row.id,
+    date: row.date,
+    totalScore: row.totalScore,
+    grade: row.grade as TFIAssessment['grade'],
+    subscales: JSON.parse(row.subscalesJson),
+    responses: JSON.parse(row.responsesJson),
+    isBaseline: row.isBaseline === 1,
+    weekNumber: row.weekNumber,
+  }));
+}
+
 export function getLatestAssessment(): TFIAssessment | null {
   const db = getDb();
   const row = db.getFirstSync<{
