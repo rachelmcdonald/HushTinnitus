@@ -6,8 +6,6 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
 import Svg, { Polyline, Circle, Line as SvgLine } from 'react-native-svg';
-import * as Print from 'expo-print';
-import * as Sharing from 'expo-sharing';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import {
   getLogsForPeriod, getRecentLogs, getSessionStats, getTriggerStats,
@@ -237,6 +235,18 @@ function buildPDFHtml(assessments: TFIAssessment[], logs: SymptomLog[]): string 
 }
 
 async function sharePDF(assessments: TFIAssessment[], logs: SymptomLog[]): Promise<void> {
+  let Print: typeof import('expo-print');
+  let Sharing: typeof import('expo-sharing');
+  try {
+    Print = await import('expo-print');
+    Sharing = await import('expo-sharing');
+  } catch {
+    Alert.alert(
+      'PDF export unavailable',
+      'PDF export requires an updated build. Install the latest version and try again.'
+    );
+    return;
+  }
   const html = buildPDFHtml(assessments, logs);
   const { uri } = await Print.printToFileAsync({ html });
   const canShare = await Sharing.isAvailableAsync();
