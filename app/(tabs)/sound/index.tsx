@@ -1,15 +1,22 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import {
+  StyleSheet, Text, View, Pressable, ScrollView,
+  FlatList, useWindowDimensions,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
+import Svg, { Path } from 'react-native-svg';
+import Animated, {
+  useSharedValue, useAnimatedStyle, withRepeat, withSequence,
+  withTiming, cancelAnimation, Easing,
+} from 'react-native-reanimated';
 import { SoundSource } from '@/src/types';
 import { useAudioPlayback } from '@/src/hooks/useAudioPlayback';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { audioEngine } from '@/src/audio/AudioEngine';
 import { formatHz } from '@/src/audio/PitchMatchEngine';
 import NowPlayingBar from '@/src/components/NowPlayingBar';
-import PremiumGate from '@/src/components/PremiumGate';
+import UpgradeModal from '@/src/components/UpgradeModal';
 import { isAudioAvailable } from '@/src/audio/AudioEngine';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
@@ -18,286 +25,41 @@ import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 type SoundDef = {
   id: SoundSource;
   name: string;
-  description: string;
 };
 
 const NOISE_SOUNDS: SoundDef[] = [
-  { id: 'white-noise', name: 'White noise',  description: 'Broadband sound with equal energy at every frequency. Effective for masking environmental noise.' },
-  { id: 'pink-noise',  name: 'Pink noise',   description: 'Softer and warmer than white noise, with more energy in lower frequencies. Widely used for relaxation.' },
-  { id: 'brown-noise', name: 'Brown noise',  description: 'Deep, low-rumble sound modelled on Brownian motion. Gentler on the ears for extended sessions.' },
+  { id: 'white-noise', name: 'White noise' },
+  { id: 'pink-noise',  name: 'Pink noise' },
+  { id: 'brown-noise', name: 'Brown noise' },
 ];
 
-// PLACEHOLDER: Nature sounds are synthesised approximations of real soundscapes.
-// Before release, replace the AudioEngine buffer chains for these IDs with
-// createFileSource() calls pointing to royalty-free audio files in assets/sounds/.
-// Recommended sources: Freesound.org (CC0) or licensed ambient packs.
+// PLACEHOLDER: Nature sounds are synthesised approximations.
+// Before release, replace AudioEngine buffer chains with createFileSource()
+// calls pointing to royalty-free audio files in assets/sounds/.
 const NATURE_SOUNDS: SoundDef[] = [
-  { id: 'rain',   name: 'Rain',          description: 'Steady rainfall — white noise filtered through a 3 kHz lowpass.' },
-  { id: 'ocean',  name: 'Ocean waves',   description: 'Deep rolling waves — brown noise filtered through a 600 Hz lowpass.' },
-  { id: 'stream', name: 'Stream',        description: 'Babbling water — white noise bandpassed around 1.8 kHz.' },
-  { id: 'forest', name: 'Forest',        description: 'Soft ambient outdoor sound — pink noise filtered at 1.5 kHz.' },
-  { id: 'fire',   name: 'Fire',          description: 'Crackling warmth — brown noise filtered through a 500 Hz lowpass.' },
-  { id: 'cafe',   name: 'Cafe ambience', description: 'Gentle background murmur — pink noise with a mid-frequency cut.' },
+  { id: 'rain',   name: 'Rain' },
+  { id: 'ocean',  name: 'Ocean waves' },
+  { id: 'stream', name: 'Stream' },
+  { id: 'forest', name: 'Forest' },
+  { id: 'fire',   name: 'Fire' },
+  { id: 'cafe',   name: 'Cafe ambience' },
 ];
 
 const BINAURAL_SOUNDS: SoundDef[] = [
-  { id: 'binaural-alpha', name: 'Alpha waves (8–12 Hz)', description: 'Associated with relaxed, wakeful awareness. Carrier 200 Hz, beat 10 Hz.' },
-  { id: 'binaural-theta', name: 'Theta waves (4–8 Hz)',  description: 'Associated with deep relaxation and light sleep. Carrier 200 Hz, beat 6 Hz.' },
+  { id: 'binaural-alpha', name: 'Alpha waves\n8–12 Hz' },
+  { id: 'binaural-theta', name: 'Theta waves\n4–8 Hz' },
 ];
 
-// Timer durations offered in the UI (minutes)
 const TIMER_OPTIONS = [15, 30, 60, 90] as const;
 
-// ─── Utilities ────────────────────────────────────────────────────────────────
+// ─── Card constant ────────────────────────────────────────────────────────────
 
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+const CARD_HEIGHT = 120;
+const CARD_DARK   = '#0D2B33';   // darker end of gradient
 
-function soundNameFor(id: SoundSource): string {
-  return (
-    [...NOISE_SOUNDS, ...NATURE_SOUNDS, ...BINAURAL_SOUNDS].find(
-      (s) => s.id === id
-    )?.name ?? id
-  );
-}
+// ─── Session timer bar ────────────────────────────────────────────────────────
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
-
-// Sound card — used for all three sections
-type SoundCardProps = {
-  sound: SoundDef;
-  isActive: boolean;
-  onPress: () => void;
-};
-
-function SoundCard({ sound, isActive, onPress }: SoundCardProps) {
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        card.container,
-        isActive && card.containerActive,
-        pressed && !isActive && card.containerPressed,
-      ]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={
-        isActive
-          ? `${sound.name}, playing. Tap to stop.`
-          : `${sound.name}. Tap to play.`
-      }
-      accessibilityState={{ selected: isActive }}
-    >
-      <View style={card.body}>
-        <Text style={[card.name, isActive && card.nameActive]}>{sound.name}</Text>
-        <Text style={[card.description, isActive && card.descriptionActive]}>
-          {sound.description}
-        </Text>
-      </View>
-      <View style={[card.iconWell, isActive && card.iconWellActive]}>
-        {isActive ? (
-          <View style={card.stopIcon}>
-            <View style={[card.stopBar, card.stopBarActive]} />
-            <View style={[card.stopBar, card.stopBarActive]} />
-          </View>
-        ) : (
-          <View style={card.playTriangle} />
-        )}
-      </View>
-    </Pressable>
-  );
-}
-
-const card = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  containerActive: { backgroundColor: Colors.deepTide },
-  containerPressed: { opacity: 0.8 },
-  body: { flex: 1, gap: 4 },
-  name: { ...Typography.heading2, color: Colors.darkText },
-  nameActive: { color: Colors.white },
-  description: { ...Typography.body, color: Colors.midGray },
-  descriptionActive: { color: Colors.calmWave },
-  iconWell: {
-    width: 40, height: 40, borderRadius: 20,
-    backgroundColor: Colors.tealLight,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  iconWellActive: { backgroundColor: Colors.calmWave + '30' },
-  playTriangle: {
-    width: 0, height: 0,
-    borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
-    borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
-    borderLeftColor: Colors.deepTide,
-    marginLeft: 3,
-  },
-  stopIcon: { flexDirection: 'row', gap: 4, alignItems: 'center' },
-  stopBar: { width: 3, height: 14, borderRadius: 2, backgroundColor: Colors.midGray },
-  stopBarActive: { backgroundColor: Colors.calmWave },
-});
-
-// Now Playing panel — shown while audio is active
-type NowPlayingProps = {
-  soundName: string;
-  timeRemaining: number | null;
-  selectedTimer: number | null;
-  onSetTimer: (minutes: number | null) => void;
-  onStop: () => void;
-};
-
-function NowPlayingPanel({
-  soundName,
-  timeRemaining,
-  selectedTimer,
-  onSetTimer,
-  onStop,
-}: NowPlayingProps) {
-  const isFading =
-    timeRemaining !== null && timeRemaining > 0 && timeRemaining <= 10;
-
-  return (
-    <View style={np.container}>
-      {/* Header row */}
-      <View style={np.headerRow}>
-        <View style={np.indicatorRow}>
-          <View style={[np.dot, isFading && np.dotFading]} />
-          <Text style={np.label}>
-            {isFading ? 'Fading out…' : 'Now playing'}
-          </Text>
-        </View>
-        <Pressable
-          style={np.stopButton}
-          onPress={onStop}
-          accessibilityRole="button"
-          accessibilityLabel="Stop playback"
-        >
-          <Text style={np.stopLabel}>Stop</Text>
-        </Pressable>
-      </View>
-
-      <Text style={np.soundName}>{soundName}</Text>
-
-      {/* Timer display or selector */}
-      {timeRemaining !== null ? (
-        <View style={np.timerRow}>
-          <Text style={[np.countdown, isFading && np.countdownFading]}>
-            {formatTime(timeRemaining)}
-          </Text>
-          <Text style={np.countdownSuffix}>remaining</Text>
-        </View>
-      ) : (
-        <View style={np.timerPickerRow}>
-          <Text style={np.timerPickerLabel}>Set timer:</Text>
-          {TIMER_OPTIONS.map((min) => (
-            <Pressable
-              key={min}
-              style={({ pressed }) => [
-                np.timerChip,
-                selectedTimer === min && np.timerChipActive,
-                pressed && np.timerChipPressed,
-              ]}
-              onPress={() => onSetTimer(selectedTimer === min ? null : min)}
-              accessibilityRole="button"
-              accessibilityLabel={`${min} minute timer${selectedTimer === min ? ', selected' : ''}`}
-            >
-              <Text
-                style={[
-                  np.timerChipLabel,
-                  selectedTimer === min && np.timerChipLabelActive,
-                ]}
-              >
-                {min}m
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-}
-
-const np = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  indicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  dot: {
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: Colors.calmWave,
-  },
-  dotFading: {
-    backgroundColor: Colors.softGold,
-  },
-  label: { ...Typography.micro, color: Colors.calmWave },
-  stopButton: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.calmWave + '60',
-  },
-  stopLabel: { ...Typography.caption, color: Colors.white },
-  soundName: { ...Typography.heading1, color: Colors.white },
-  timerRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.sm,
-    marginTop: Spacing.xs,
-  },
-  countdown: {
-    fontSize: 32,
-    fontWeight: '400',
-    color: Colors.white,
-    lineHeight: 38,
-  },
-  countdownFading: { color: Colors.softGold },
-  countdownSuffix: { ...Typography.body, color: Colors.calmWave },
-  timerPickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    flexWrap: 'wrap',
-    marginTop: Spacing.xs,
-  },
-  timerPickerLabel: { ...Typography.caption, color: Colors.calmWave },
-  timerChip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.calmWave + '50',
-  },
-  timerChipActive: {
-    backgroundColor: Colors.calmWave,
-    borderColor: Colors.calmWave,
-  },
-  timerChipPressed: { opacity: 0.7 },
-  timerChipLabel: { ...Typography.micro, color: Colors.white },
-  timerChipLabelActive: { color: Colors.deepTide },
-});
-
-// Timer selector — shown when nothing is playing
-function TimerSelector({
+function SessionTimerBar({
   selected,
   onSelect,
 }: {
@@ -305,40 +67,29 @@ function TimerSelector({
   onSelect: (min: number | null) => void;
 }) {
   return (
-    <View style={ts.container}>
-      <Text style={ts.label}>Session timer</Text>
-      <Text style={ts.hint}>Audio fades out gently when the timer ends.</Text>
-      <View style={ts.chipRow}>
+    <View style={tmr.container}>
+      <Text style={tmr.label}>Session timer</Text>
+      <View style={tmr.pills}>
         <Pressable
-          style={({ pressed }) => [
-            ts.chip,
-            selected === null && ts.chipActive,
-            pressed && ts.chipPressed,
-          ]}
+          style={[tmr.pill, selected === null && tmr.pillActive]}
           onPress={() => onSelect(null)}
           accessibilityRole="button"
           accessibilityLabel="No timer"
+          accessibilityState={{ selected: selected === null }}
         >
-          <Text style={[ts.chipLabel, selected === null && ts.chipLabelActive]}>
-            No timer
-          </Text>
+          <Text style={[tmr.pillLabel, selected === null && tmr.pillLabelActive]}>Off</Text>
         </Pressable>
         {TIMER_OPTIONS.map((min) => (
           <Pressable
             key={min}
-            style={({ pressed }) => [
-              ts.chip,
-              selected === min && ts.chipActive,
-              pressed && ts.chipPressed,
-            ]}
+            style={[tmr.pill, selected === min && tmr.pillActive]}
             onPress={() => onSelect(selected === min ? null : min)}
             accessibilityRole="button"
             accessibilityLabel={`${min} minute timer`}
+            accessibilityState={{ selected: selected === min }}
           >
-            <Text
-              style={[ts.chipLabel, selected === min && ts.chipLabelActive]}
-            >
-              {min} min
+            <Text style={[tmr.pillLabel, selected === min && tmr.pillLabelActive]}>
+              {min}m
             </Text>
           </Pressable>
         ))}
@@ -347,38 +98,419 @@ function TimerSelector({
   );
 }
 
-const ts = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  label: { ...Typography.heading2, color: Colors.darkText },
-  hint: { ...Typography.caption, color: Colors.midGray },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm, marginTop: Spacing.xs },
-  chip: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
+const tmr = StyleSheet.create({
+  container: { gap: Spacing.sm },
+  label: { ...Typography.micro, color: Colors.deepTide },
+  pills: { flexDirection: 'row', gap: Spacing.sm },
+  pill: {
+    flex: 1,
+    paddingVertical: Spacing.sm,
     borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '50',
-  },
-  chipActive: {
-    backgroundColor: Colors.deepTide,
+    alignItems: 'center',
+    backgroundColor: Colors.warmSand,
+    borderWidth: 1.5,
     borderColor: Colors.deepTide,
   },
-  chipPressed: { opacity: 0.7 },
-  chipLabel: { ...Typography.micro, color: Colors.midGray },
-  chipLabelActive: { color: Colors.white },
+  pillActive: {
+    backgroundColor: Colors.calmWave,
+    borderColor: Colors.calmWave,
+  },
+  pillLabel:       { ...Typography.micro, color: Colors.deepTide },
+  pillLabelActive: { color: Colors.white },
 });
 
-// Section heading
+// ─── Section heading ──────────────────────────────────────────────────────────
+
 function SectionHeading({ label }: { label: string }) {
-  return <Text style={styles.sectionLabel}>{label}</Text>;
+  return <Text style={sh.text}>{label}</Text>;
 }
 
-// ─── Notched therapy card ─────────────────────────────────────────────────────
+const sh = StyleSheet.create({
+  text: { ...Typography.micro, color: Colors.deepTide },
+});
+
+// ─── Carousel card ────────────────────────────────────────────────────────────
+
+type CardProps = {
+  sound: SoundDef;
+  isActive: boolean;
+  isPaused: boolean;
+  cardWidth: number;
+  onToggle: () => void;
+  onPauseResume: () => void;
+};
+
+function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseResume }: CardProps) {
+  const waveOpacity = useSharedValue(0.45);
+
+  useEffect(() => {
+    if (isActive && !isPaused) {
+      waveOpacity.value = withRepeat(
+        withSequence(
+          withTiming(1,    { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+          withTiming(0.32, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        ),
+        -1,
+        false
+      );
+    } else {
+      cancelAnimation(waveOpacity);
+      waveOpacity.value = withTiming(isActive ? 0.7 : 0.45, { duration: 400 });
+    }
+    return () => { cancelAnimation(waveOpacity); };
+  }, [isActive, isPaused]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const waveStyle = useAnimatedStyle(() => ({ opacity: waveOpacity.value }));
+
+  const a11yLabel = isActive
+    ? `${sound.name} ${isPaused ? 'paused' : 'playing'}. Tap to ${isPaused ? 'resume' : 'pause'}.`
+    : `${sound.name}. Tap to play.`;
+
+  return (
+    <Pressable
+      style={[cc.card, { width: cardWidth }]}
+      onPress={isActive ? onPauseResume : onToggle}
+      accessibilityRole="button"
+      accessibilityLabel={a11yLabel}
+      accessibilityState={{ selected: isActive }}
+    >
+      {/* Gradient simulation — lighter left half */}
+      <View style={cc.gradientLeft} />
+
+      <View style={cc.row}>
+        {/* Animated waveform */}
+        <Animated.View style={waveStyle}>
+          <Svg width={90} height={36} viewBox="4 9 30 20">
+            <Path
+              d="M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19"
+              stroke={Colors.calmWave}
+              strokeWidth={1.8}
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </Animated.View>
+
+        {/* Sound name */}
+        <Text style={cc.name} numberOfLines={2}>{sound.name}</Text>
+
+        {/* Play / pause button */}
+        <View style={cc.playBtn}>
+          {isActive && !isPaused ? (
+            <View style={cc.pauseIcon}>
+              <View style={cc.pauseBar} />
+              <View style={cc.pauseBar} />
+            </View>
+          ) : (
+            <View style={cc.playTriangle} />
+          )}
+        </View>
+      </View>
+
+      {/* Bottom accent stripe when active */}
+      {isActive && <View style={cc.activeStripe} />}
+    </Pressable>
+  );
+}
+
+const cc = StyleSheet.create({
+  card: {
+    height: CARD_HEIGHT,
+    backgroundColor: CARD_DARK,
+    borderRadius: Radius.card,
+    overflow: 'hidden',
+    justifyContent: 'center',
+  },
+  gradientLeft: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: '52%',
+    backgroundColor: Colors.deepTide,
+    opacity: 0.65,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.base,
+    gap: Spacing.md,
+  },
+  name: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.white,
+    letterSpacing: -0.2,
+    lineHeight: 21,
+  },
+  playBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.calmWave,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  playTriangle: {
+    width: 0, height: 0,
+    borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
+    borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
+    borderLeftColor: Colors.deepTide,
+    marginLeft: 3,
+  },
+  pauseIcon: { flexDirection: 'row', gap: 4, alignItems: 'center' },
+  pauseBar:  { width: 3, height: 14, borderRadius: 2, backgroundColor: Colors.deepTide },
+  activeStripe: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    height: 3,
+    backgroundColor: Colors.calmWave,
+  },
+});
+
+// ─── Sound carousel ───────────────────────────────────────────────────────────
+
+type CarouselProps = {
+  sounds: SoundDef[];
+  currentSound: SoundSource | null;
+  isPaused: boolean;
+  onToggle: (id: SoundSource) => void;
+  onPauseResume: () => void;
+  cardWidth: number;
+};
+
+function SoundCarousel({
+  sounds, currentSound, isPaused, onToggle, onPauseResume, cardWidth,
+}: CarouselProps) {
+  const listRef = useRef<FlatList<SoundDef>>(null);
+  const [idx, setIdx] = useState(0);
+
+  function goTo(i: number) {
+    const next = Math.max(0, Math.min(sounds.length - 1, i));
+    listRef.current?.scrollToIndex({ index: next, animated: true });
+    setIdx(next);
+  }
+
+  return (
+    <View style={cr.wrapper}>
+      <FlatList
+        ref={listRef}
+        data={sounds}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => {
+          const i = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
+          setIdx(Math.max(0, Math.min(sounds.length - 1, i)));
+        }}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <CarouselCard
+            sound={item}
+            isActive={currentSound === item.id}
+            isPaused={isPaused}
+            cardWidth={cardWidth}
+            onToggle={() => onToggle(item.id)}
+            onPauseResume={onPauseResume}
+          />
+        )}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: cardWidth * index,
+          index,
+        })}
+      />
+
+      {/* Left arrow */}
+      {idx > 0 && (
+        <Pressable
+          style={[cr.arrowBtn, cr.arrowLeft]}
+          onPress={() => goTo(idx - 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Previous"
+        >
+          <Text style={cr.arrowText}>‹</Text>
+        </Pressable>
+      )}
+
+      {/* Right arrow */}
+      {idx < sounds.length - 1 && (
+        <Pressable
+          style={[cr.arrowBtn, cr.arrowRight]}
+          onPress={() => goTo(idx + 1)}
+          accessibilityRole="button"
+          accessibilityLabel="Next"
+        >
+          <Text style={cr.arrowText}>›</Text>
+        </Pressable>
+      )}
+
+      {/* Dot indicators */}
+      {sounds.length > 1 && (
+        <View style={cr.dots}>
+          {sounds.map((s, i) => (
+            <Pressable
+              key={s.id}
+              style={[cr.dot, i === idx && cr.dotActive]}
+              onPress={() => goTo(i)}
+              accessibilityRole="button"
+              accessibilityLabel={s.name}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+}
+
+const cr = StyleSheet.create({
+  wrapper: { position: 'relative' },
+  arrowBtn: {
+    position: 'absolute',
+    top: 0,
+    height: CARD_HEIGHT,
+    width: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+  },
+  arrowLeft:  { left: 0 },
+  arrowRight: { right: 0 },
+  arrowText: {
+    fontSize: 32,
+    color: Colors.white,
+    fontWeight: '300',
+    opacity: 0.75,
+    lineHeight: 38,
+  },
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.xs,
+    paddingTop: Spacing.sm,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.midGray + '50',
+  },
+  dotActive: { backgroundColor: Colors.calmWave },
+});
+
+// ─── Premium teaser ───────────────────────────────────────────────────────────
+
+const PREMIUM_FEATURES = [
+  {
+    id: 'mixer',
+    title: '3-source mixer',
+    subtitle: 'Layer sounds at custom volumes',
+  },
+  {
+    id: 'balance',
+    title: 'Per-ear balance',
+    subtitle: 'Adjust L/R volume independently',
+  },
+] as const;
+
+function PremiumTeaser({ onGetPremium }: { onGetPremium: () => void }) {
+  return (
+    <View style={pt.wrapper}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={pt.scroll}
+      >
+        {PREMIUM_FEATURES.map((f) => (
+          <View key={f.id} style={pt.card}>
+            <Text style={pt.lockIcon}>🔒</Text>
+            <Text style={pt.cardTitle}>{f.title}</Text>
+            <Text style={pt.cardSubtitle}>{f.subtitle}</Text>
+          </View>
+        ))}
+      </ScrollView>
+      <Text style={pt.moreLabel}>...and more with Premium</Text>
+      <Pressable
+        style={({ pressed }) => [pt.btn, pressed && pt.btnPressed]}
+        onPress={onGetPremium}
+        accessibilityRole="button"
+        accessibilityLabel="Get Premium"
+      >
+        <Text style={pt.btnLabel}>Get Premium</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+const pt = StyleSheet.create({
+  wrapper: { gap: Spacing.md },
+  scroll:  { gap: Spacing.md, paddingRight: Spacing.sm },
+  card: {
+    backgroundColor: Colors.goldLight,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    width: 190,
+    gap: Spacing.xs,
+    borderWidth: Border.width,
+    borderColor: Colors.softGold + '50',
+  },
+  lockIcon:    { fontSize: 18 },
+  cardTitle:   { ...Typography.heading2, color: Colors.darkText },
+  cardSubtitle:{ ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+  moreLabel:   { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
+  btn: {
+    backgroundColor: Colors.softGold,
+    borderRadius: 8,
+    paddingVertical: Spacing.base,
+    alignItems: 'center',
+  },
+  btnPressed: { opacity: 0.85 },
+  btnLabel:   { ...Typography.heading2, color: Colors.white },
+});
+
+// ─── Pitch matching entry (tool, not sound) ───────────────────────────────────
+
+function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [pm.container, pressed && pm.pressed]}
+      onPress={() => router.push('/sound/pitch-matching')}
+      accessibilityRole="button"
+      accessibilityLabel="Open pitch matching"
+    >
+      <View style={pm.body}>
+        <Text style={pm.title}>Pitch matching</Text>
+        <Text style={pm.subtitle}>
+          {savedHz
+            ? `Saved frequency: ${formatHz(savedHz)}`
+            : 'Find your tinnitus frequency using a tone sweep'}
+        </Text>
+      </View>
+      <Text style={pm.arrow}>›</Text>
+    </Pressable>
+  );
+}
+
+const pm = StyleSheet.create({
+  container: {
+    backgroundColor: Colors.deepTide,
+    borderRadius: Radius.card,
+    padding: Spacing.base,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  pressed: { opacity: 0.85 },
+  body:  { flex: 1, gap: 4 },
+  title:    { ...Typography.heading2, color: Colors.white },
+  subtitle: { ...Typography.body, color: Colors.calmWave },
+  arrow: { ...Typography.heading1, color: Colors.calmWave },
+});
+
+// ─── Notched therapy card (tool, not sound) ───────────────────────────────────
 
 type NotchedCardProps = {
   frequencyHz: number;
@@ -411,15 +543,13 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
         </Pressable>
       </View>
       <Text style={nt.body}>
-        Based on research by Okamoto et al. (2010), listening to sound with a
-        narrow notch removed at your tinnitus frequency may reduce auditory
-        cortex activity at that frequency over time. Play any sound above with
-        notched therapy enabled.
+        Listening to sound with a narrow notch removed at your tinnitus frequency
+        may reduce auditory cortex activity at that frequency over time.
       </Text>
       {isActive && (
         <View style={nt.activeBadge}>
           <Text style={nt.activeBadgeText}>
-            Notch filter active — sounds currently play with a notch at {formatHz(frequencyHz)}
+            Notch filter active — sounds play with a notch at {formatHz(frequencyHz)}
           </Text>
         </View>
       )}
@@ -429,7 +559,7 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
 
 const nt = StyleSheet.create({
   card: {
-    backgroundColor: Colors.warmSand,
+    backgroundColor: Colors.deepTide,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -441,145 +571,33 @@ const nt = StyleSheet.create({
     gap: Spacing.md,
   },
   titleBlock: { flex: 1, gap: 2 },
-  title: { ...Typography.heading2, color: Colors.darkText },
-  frequency: { ...Typography.caption, color: Colors.midGray },
+  title:     { ...Typography.heading2, color: Colors.white },
+  frequency: { ...Typography.caption, color: Colors.calmWave },
   toggle: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: Radius.chip,
     borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '50',
+    borderColor: Colors.white + '40',
     minWidth: 52,
     alignItems: 'center',
   },
   toggleActive: {
-    backgroundColor: Colors.deepTide,
-    borderColor: Colors.deepTide,
+    backgroundColor: Colors.calmWave,
+    borderColor: Colors.calmWave,
   },
-  togglePressed: { opacity: 0.7 },
-  toggleLabel: { ...Typography.micro, color: Colors.midGray },
-  toggleLabelActive: { color: Colors.white },
-  body: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },
+  togglePressed:    { opacity: 0.7 },
+  toggleLabel:      { ...Typography.micro, color: Colors.white },
+  toggleLabelActive:{ color: Colors.deepTide },
+  body: { ...Typography.body, color: Colors.calmWave + 'CC', lineHeight: 22 },
   activeBadge: {
-    backgroundColor: Colors.tealLight,
+    backgroundColor: Colors.calmWave + '22',
     borderRadius: Radius.chip,
     padding: Spacing.sm,
     borderLeftWidth: 3,
     borderLeftColor: Colors.calmWave,
   },
-  activeBadgeText: { ...Typography.caption, color: Colors.deepTide },
-});
-
-// ─── Pitch matching entry ─────────────────────────────────────────────────────
-
-function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
-  return (
-    <Pressable
-      style={({ pressed }) => [pm.container, pressed && pm.pressed]}
-      onPress={() => router.push('/sound/pitch-matching')}
-      accessibilityRole="button"
-      accessibilityLabel="Open pitch matching"
-    >
-      <View style={pm.body}>
-        <Text style={pm.title}>Pitch matching</Text>
-        <Text style={pm.subtitle}>
-          {savedHz
-            ? `Saved frequency: ${formatHz(savedHz)}`
-            : 'Find your tinnitus frequency using a tone sweep'}
-        </Text>
-      </View>
-      <Text style={pm.arrow}>›</Text>
-    </Pressable>
-  );
-}
-
-const pm = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  pressed: { opacity: 0.8 },
-  body: { flex: 1, gap: 2 },
-  title: { ...Typography.heading2, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
-  arrow: { ...Typography.heading1, color: Colors.midGray },
-});
-
-// ─── Main screen ──────────────────────────────────────────────────────────────
-
-// ─── 3-Source mixer preview (Premium) ────────────────────────────────────────
-
-const MIXER_SOUNDS: SoundDef[] = [
-  { id: 'white-noise', name: 'White noise', description: '' },
-  { id: 'rain',        name: 'Rain',        description: '' },
-  { id: 'ocean',       name: 'Ocean waves', description: '' },
-];
-
-function MixerPreview() {
-  return (
-    <View style={mx.container}>
-      {MIXER_SOUNDS.map((s, i) => (
-        <View key={s.id} style={mx.row}>
-          <Text style={mx.label}>{s.name}</Text>
-          <Slider
-            style={mx.slider}
-            minimumValue={0}
-            maximumValue={1}
-            value={i === 0 ? 0.7 : i === 1 ? 0.4 : 0.3}
-            minimumTrackTintColor={Colors.calmWave}
-            maximumTrackTintColor={Colors.midGray + '40'}
-            thumbTintColor={Colors.deepTide}
-            disabled
-          />
-          <Text style={mx.pct}>{i === 0 ? '70%' : i === 1 ? '40%' : '30%'}</Text>
-        </View>
-      ))}
-    </View>
-  );
-}
-
-const mx = StyleSheet.create({
-  container: { padding: Spacing.base, gap: Spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  label: { ...Typography.caption, color: Colors.darkText, width: 88 },
-  slider: { flex: 1, height: 32 },
-  pct: { ...Typography.caption, color: Colors.midGray, width: 32, textAlign: 'right' },
-});
-
-// ─── Per-ear balance preview (Premium) ───────────────────────────────────────
-
-function BalancePreview() {
-  return (
-    <View style={bal.container}>
-      <View style={bal.labelRow}>
-        <Text style={bal.endLabel}>L</Text>
-        <Text style={bal.centreLabel}>Centre</Text>
-        <Text style={bal.endLabel}>R</Text>
-      </View>
-      <Slider
-        style={bal.slider}
-        minimumValue={-1}
-        maximumValue={1}
-        value={0}
-        minimumTrackTintColor={Colors.midGray + '40'}
-        maximumTrackTintColor={Colors.midGray + '40'}
-        thumbTintColor={Colors.deepTide}
-        disabled
-      />
-    </View>
-  );
-}
-
-const bal = StyleSheet.create({
-  container: { padding: Spacing.base, gap: Spacing.sm },
-  labelRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  endLabel: { ...Typography.caption, color: Colors.darkText },
-  centreLabel: { ...Typography.caption, color: Colors.midGray },
-  slider: { width: '100%', height: 32 },
+  activeBadgeText: { ...Typography.caption, color: Colors.calmWave },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
@@ -599,8 +617,11 @@ export default function SoundScreen() {
 
   const { preferences } = usePreferences();
   const savedPitchHz = preferences?.matchedPitchHz ?? null;
-  const isPremium = preferences?.isPremium ?? false;
   const [notchedActive, setNotchedActive] = useState(false);
+  const [upgradeVisible, setUpgradeVisible] = useState(false);
+
+  const { width: screenWidth } = useWindowDimensions();
+  const cardWidth = screenWidth - Spacing.xl * 2;
 
   function handleNotchedToggle() {
     if (!savedPitchHz) return;
@@ -613,9 +634,16 @@ export default function SoundScreen() {
     }
   }
 
+  const carouselProps = {
+    currentSound,
+    isPaused,
+    onToggle: toggle,
+    onPauseResume: pauseResume,
+    cardWidth,
+  };
+
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Scrollable content */}
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
@@ -632,7 +660,38 @@ export default function SoundScreen() {
           </View>
         )}
 
-        {/* Pitch matching entry */}
+        {/* 1 — Session timer */}
+        <SessionTimerBar selected={selectedTimer} onSelect={setTimer} />
+
+        {/* 2 — Background noise */}
+        <View style={styles.section}>
+          <SectionHeading label="Background noise" />
+          <SoundCarousel sounds={NOISE_SOUNDS} {...carouselProps} />
+        </View>
+
+        {/* 3 — Nature sounds */}
+        <View style={styles.section}>
+          <SectionHeading label="Nature sounds" />
+          <SoundCarousel sounds={NATURE_SOUNDS} {...carouselProps} />
+        </View>
+
+        {/* 4 — Binaural beats */}
+        <View style={styles.section}>
+          <SectionHeading label="Binaural beats" />
+          <SoundCarousel sounds={BINAURAL_SOUNDS} {...carouselProps} />
+          <Text style={styles.binauralNote}>
+            Headphones required. Not recommended while driving or operating machinery.
+            If you have a history of seizures, consult your doctor before use.
+          </Text>
+        </View>
+
+        {/* 5 — Premium teaser */}
+        <View style={styles.section}>
+          <SectionHeading label="Unlock Premium" />
+          <PremiumTeaser onGetPremium={() => setUpgradeVisible(true)} />
+        </View>
+
+        {/* 6 — Pitch matching & notched therapy */}
         <View style={styles.section}>
           <SectionHeading label="Pitch matching & therapy" />
           <PitchMatchingEntry savedHz={savedPitchHz} />
@@ -645,87 +704,10 @@ export default function SoundScreen() {
           )}
         </View>
 
-        {/* Background noise */}
-        <View style={styles.section}>
-          <SectionHeading label="Background noise" />
-          {NOISE_SOUNDS.map((s) => (
-            <SoundCard
-              key={s.id}
-              sound={s}
-              isActive={currentSound === s.id}
-              onPress={() => toggle(s.id)}
-            />
-          ))}
-        </View>
-
-        {/* Nature sounds */}
-        <View style={styles.section}>
-          <SectionHeading label="Nature sounds" />
-          {NATURE_SOUNDS.map((s) => (
-            <SoundCard
-              key={s.id}
-              sound={s}
-              isActive={currentSound === s.id}
-              onPress={() => toggle(s.id)}
-            />
-          ))}
-        </View>
-
-        {/* Binaural beats */}
-        <View style={styles.section}>
-          <SectionHeading label="Binaural beats" />
-          <View style={styles.advisoryCard}>
-            <Text style={styles.advisoryHeading}>Headphones required</Text>
-            <Text style={styles.advisoryBody}>
-              Binaural beats require stereo headphones to work — they are not
-              effective through speakers. Use at a comfortable volume. Not
-              recommended while driving or operating machinery. If you have a
-              history of seizures or epilepsy, consult your doctor before use.
-            </Text>
-          </View>
-          {BINAURAL_SOUNDS.map((s) => (
-            <SoundCard
-              key={s.id}
-              sound={s}
-              isActive={currentSound === s.id}
-              onPress={() => toggle(s.id)}
-            />
-          ))}
-        </View>
-
-        {/* 3-Source mixer — Premium */}
-        <View style={styles.section}>
-          <View style={styles.premiumSectionHeader}>
-            <SectionHeading label="Sound mixer" />
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>Premium</Text>
-            </View>
-          </View>
-          <PremiumGate isPremium={isPremium} featureName="3-source sound mixer">
-            <MixerPreview />
-          </PremiumGate>
-        </View>
-
-        {/* Per-ear balance — Premium */}
-        <View style={styles.section}>
-          <View style={styles.premiumSectionHeader}>
-            <SectionHeading label="Per-ear balance" />
-            <View style={styles.premiumBadge}>
-              <Text style={styles.premiumBadgeText}>Premium</Text>
-            </View>
-          </View>
-          <PremiumGate isPremium={isPremium} featureName="Per-ear volume balance">
-            <BalancePreview />
-          </PremiumGate>
-        </View>
-
-        {/* Timer selector — only shown when nothing is playing */}
-        {!isPlaying && (
-          <TimerSelector selected={selectedTimer} onSelect={setTimer} />
-        )}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Fixed Now Playing bar — outside ScrollView, pinned above safe area */}
+      {/* Fixed Now Playing bar */}
       {isPlaying && currentSound && (
         <NowPlayingBar
           currentSound={currentSound}
@@ -737,58 +719,35 @@ export default function SoundScreen() {
           onSetTimer={setTimer}
         />
       )}
+
+      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
     </SafeAreaView>
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flex: 1,
-  },
+  safe: { flex: 1, backgroundColor: Colors.warmSand },
+  scroll: { flex: 1 },
   scrollContent: {
-    flexGrow: 1,
     paddingHorizontal: Spacing.xl,
     paddingTop: Spacing.xl,
     paddingBottom: Spacing.xl,
     gap: Spacing.xl,
   },
-  title: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  section: {
-    gap: Spacing.sm,
-  },
-  sectionLabel: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-    marginBottom: Spacing.xs,
+  title: { ...Typography.display, color: Colors.darkText },
+
+  section: { gap: Spacing.sm },
+
+  binauralNote: {
+    ...Typography.caption,
+    color: Colors.midGray,
+    lineHeight: 18,
+    fontStyle: 'italic',
+    paddingHorizontal: Spacing.xs,
   },
 
-  // Binaural advisory card
-  advisoryCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.xs,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  advisoryHeading: {
-    ...Typography.heading2,
-    color: Colors.deepTide,
-  },
-  advisoryBody: {
-    ...Typography.body,
-    color: Colors.deepTide,
-    lineHeight: 22,
-  },
-
-  // Dev build notice
   devNotice: {
     backgroundColor: Colors.goldLight,
     borderRadius: Radius.card,
@@ -796,27 +755,7 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: Colors.softGold,
   },
-  devNoticeText: {
-    ...Typography.caption,
-    color: Colors.softGold,
-  },
+  devNoticeText: { ...Typography.caption, color: Colors.softGold },
 
-  // Premium section header
-  premiumSectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  premiumBadge: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-    borderWidth: Border.width,
-    borderColor: Colors.softGold,
-  },
-  premiumBadgeText: {
-    ...Typography.micro,
-    color: Colors.softGold,
-  },
+  bottomSpacer: { height: Spacing.xxl },
 });
