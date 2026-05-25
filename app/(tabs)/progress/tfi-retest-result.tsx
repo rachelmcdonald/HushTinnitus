@@ -305,12 +305,12 @@ const styles = StyleSheet.create({
 
   // Subscale card
   subscaleCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
   },
   subscaleTitle: { ...Typography.heading2, color: Colors.darkText },
   subscaleSubtitle: { ...Typography.caption, color: Colors.midGray, marginTop: -Spacing.sm },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
 
   // Citation
   citation: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.xs,

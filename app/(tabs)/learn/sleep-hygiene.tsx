@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
 
   // Progress card
   progressCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -382,7 +382,7 @@ const styles = StyleSheet.create({
   checkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,

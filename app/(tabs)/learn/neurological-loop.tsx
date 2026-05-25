@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
 
   // Highlight card
   highlightCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -374,7 +374,7 @@ const styles = StyleSheet.create({
 
   footer: {
     borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '30',
+    borderTopColor: Colors.calmWave + '33',
     paddingTop: Spacing.md,
   },
   footerText: {

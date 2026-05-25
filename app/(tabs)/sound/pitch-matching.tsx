@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
 
   // Instruction card
   instructionCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     color: Colors.midGray,
     marginTop: Spacing.xs,
     borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '30',
+    borderTopColor: Colors.calmWave + '33',
     paddingTop: Spacing.sm,
   },
 

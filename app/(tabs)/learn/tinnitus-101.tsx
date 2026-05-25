@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
 
   // Summary card at end of Section 4
   summaryCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     borderWidth: Border.width,
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
 
   footer: {
     borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '30',
+    borderTopColor: Colors.calmWave + '33',
     paddingTop: Spacing.md,
   },
   footerText: {

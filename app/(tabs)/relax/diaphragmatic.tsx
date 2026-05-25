@@ -128,7 +128,7 @@ const diag = StyleSheet.create({
   container: {
     alignItems: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
   },
@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
   },
   // Instruction card
   instructionCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,

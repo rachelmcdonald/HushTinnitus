@@ -112,7 +112,7 @@ function SoundCard({ sound, isActive, onPress }: SoundCardProps) {
 
 const card = StyleSheet.create({
   container: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     flexDirection: 'row',
@@ -349,7 +349,7 @@ function TimerSelector({
 
 const ts = StyleSheet.create({
   container: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -429,7 +429,7 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
 
 const nt = StyleSheet.create({
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -495,7 +495,7 @@ function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
 
 const pm = StyleSheet.create({
   container: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     flexDirection: 'row',
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   },
   sectionLabel: {
     ...Typography.micro,
-    color: Colors.midGray,
+    color: Colors.deepTide,
     marginBottom: Spacing.xs,
   },
 

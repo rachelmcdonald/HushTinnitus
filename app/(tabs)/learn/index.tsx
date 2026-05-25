@@ -132,7 +132,7 @@ const styles = StyleSheet.create({
   subtitle: { ...Typography.body, color: Colors.midGray },
   cardList: { gap: Spacing.sm },
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     flexDirection: 'row',
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   cardDisabled: {
     opacity: 0.55,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '30',
+    borderColor: Colors.calmWave + '33',
   },
   cardPressed: { opacity: 0.8 },
   cardBody: { flex: 1, gap: 4 },

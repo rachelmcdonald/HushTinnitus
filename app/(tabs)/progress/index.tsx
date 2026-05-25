@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
 
   sectionLabel: {
     ...Typography.micro,
-    color: Colors.midGray,
+    color: Colors.deepTide,
     marginTop: Spacing.sm,
     marginBottom: Spacing.xs,
   },
@@ -643,7 +643,7 @@ const styles = StyleSheet.create({
   logCardTitle: { ...Typography.heading2, color: Colors.white },
   logCardSub: { ...Typography.caption, color: Colors.white + 'BB' },
   logCardLogged: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderWidth: Border.width * 2,
     borderColor: Colors.calmWave,
   },
@@ -665,25 +665,25 @@ const styles = StyleSheet.create({
   statsRow: { flexDirection: 'row', gap: Spacing.md },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     alignItems: 'center',
     gap: Spacing.xs,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
   },
   statValue: { fontSize: 28, fontWeight: '400', color: Colors.deepTide },
   statLabel: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
 
   // TFI card
   tfiCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
   },
   tfiCardRow: {
     flexDirection: 'row',
@@ -701,12 +701,12 @@ const styles = StyleSheet.create({
   gradeBadgeText: { ...Typography.micro },
   tfiDate: { ...Typography.caption, color: Colors.midGray },
   tfiEmptyCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.xs,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
     opacity: 0.7,
   },
   tfiEmptyTitle: { ...Typography.heading2, color: Colors.midGray },
@@ -733,12 +733,12 @@ const styles = StyleSheet.create({
 
   // Chart cards (shared)
   chartCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
   },
   chartCardTitle: { ...Typography.heading2, color: Colors.darkText },
   chartEmpty: {
@@ -818,12 +818,12 @@ const styles = StyleSheet.create({
 
   // Export
   exportCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '20',
+    borderColor: Colors.calmWave + '33',
   },
   exportTitle: { ...Typography.heading2, color: Colors.darkText },
   exportBody: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },

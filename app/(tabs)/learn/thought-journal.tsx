@@ -196,7 +196,7 @@ const gate = StyleSheet.create({
     alignItems: 'center',
   },
   lockPill: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.chip,
     paddingHorizontal: Spacing.base,
     paddingVertical: Spacing.sm,
@@ -205,7 +205,7 @@ const gate = StyleSheet.create({
   },
   lockText: { ...Typography.heading2, color: Colors.softGold },
   preview: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -225,7 +225,7 @@ const gate = StyleSheet.create({
   previewPlaceholder: { ...Typography.body, color: Colors.midGray },
   // Features
   featureList: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -241,7 +241,7 @@ const gate = StyleSheet.create({
   featureText: { ...Typography.body, color: Colors.darkText, flex: 1 },
   // Citation
   citation: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
@@ -594,7 +594,7 @@ const flow = StyleSheet.create({
     paddingBottom: Spacing.sm,
     gap: Spacing.sm,
     borderBottomWidth: Border.width,
-    borderBottomColor: Colors.midGray + '20',
+    borderBottomColor: Colors.calmWave + '33',
   },
   backBtn: { alignSelf: 'flex-start' },
   backBtnPressed: { opacity: 0.6 },
@@ -616,7 +616,7 @@ const flow = StyleSheet.create({
     borderColor: Colors.midGray + '40',
     borderRadius: Radius.card,
     padding: Spacing.md,
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.tealLight,
     ...Typography.body,
     color: Colors.darkText,
     lineHeight: 24,
@@ -630,7 +630,7 @@ const flow = StyleSheet.create({
   },
   emotionTile: {
     width: '47.5%',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     paddingVertical: Spacing.base,
     paddingHorizontal: Spacing.md,
@@ -662,7 +662,7 @@ const flow = StyleSheet.create({
     paddingTop: Spacing.md,
     gap: Spacing.sm,
     borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '20',
+    borderTopColor: Colors.calmWave + '33',
     backgroundColor: Colors.warmSand,
   },
   primaryBtn: {
@@ -695,12 +695,12 @@ const flow = StyleSheet.create({
   // Comparison boxes
   comparison: { gap: Spacing.sm },
   compBox: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '30',
+    borderColor: Colors.calmWave + '33',
   },
   compBoxReframe: {
     borderColor: Colors.calmWave + '60',

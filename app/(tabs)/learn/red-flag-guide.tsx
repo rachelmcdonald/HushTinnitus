@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
   condSectionLabel: { ...Typography.micro, color: Colors.warmCoral },
   condBody: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
   condActionBox: {
-    backgroundColor: Colors.white + 'BB',
+    backgroundColor: Colors.warmSand + 'BB',
     borderRadius: Radius.chip,
     padding: Spacing.md,
     gap: Spacing.xs,
@@ -310,12 +310,12 @@ const styles = StyleSheet.create({
   referralSection: { gap: Spacing.md },
   referralIntro: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
   referralCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '30',
+    borderColor: Colors.calmWave + '33',
   },
   referralLabel: { ...Typography.micro, color: Colors.midGray },
   referralText: {
@@ -341,12 +341,12 @@ const styles = StyleSheet.create({
 
   // Disclaimer — exact Section 8.3 wording
   disclaimer: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.sm,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '30',
+    borderColor: Colors.calmWave + '33',
   },
   disclaimerHeading: { ...Typography.heading2, color: Colors.darkText },
   disclaimerText: {

@@ -367,10 +367,10 @@ const styles = StyleSheet.create({
   title: { ...Typography.display, color: Colors.darkText },
   subtitle: { ...Typography.body, color: Colors.midGray },
   section: { gap: Spacing.sm },
-  sectionLabel: { ...Typography.micro, color: Colors.midGray },
+  sectionLabel: { ...Typography.micro, color: Colors.deepTide },
 
   card: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     flexDirection: 'row',
@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
   cardDisabled: {
     opacity: 0.55,
     borderWidth: Border.width,
-    borderColor: Colors.midGray + '30',
+    borderColor: Colors.calmWave + '33',
   },
   cardPremiumGated: {
     backgroundColor: Colors.goldLight,

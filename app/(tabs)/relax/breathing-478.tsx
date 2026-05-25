@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
   // Phase guide row
   phaseGuide: {
     flexDirection: 'row',
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.md,
     gap: Spacing.xs,

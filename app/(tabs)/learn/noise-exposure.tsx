@@ -313,7 +313,7 @@ const styles = StyleSheet.create({
   // Threshold cards
   thresholdCards: { gap: Spacing.sm },
   thresholdCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.md,
     gap: 4,
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
 
   // Chart
   chart: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: Spacing.md,
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
 
   // Recommendation cards
   recCard: {
-    backgroundColor: Colors.white,
+    backgroundColor: Colors.warmSand,
     borderRadius: Radius.card,
     padding: Spacing.base,
     gap: 6,
