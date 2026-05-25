@@ -1,52 +1,43 @@
 import { Tabs } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { Colors, TabBar, Typography, Spacing } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/src/theme';
 
-type TabIconProps = {
-  focused: boolean;
-  label: string;
-  emoji: string;
-};
-
-function TabIcon({ focused, label, emoji }: TabIconProps) {
-  return (
-    <View style={styles.iconWrapper}>
-      <Text style={styles.emoji}>{emoji}</Text>
-      <Text
-        style={[
-          styles.label,
-          { color: focused ? TabBar.activeTintColor : TabBar.inactiveTintColor },
-        ]}
-      >
-        {label}
-      </Text>
-    </View>
-  );
-}
+const TAB_HEIGHT = 60;
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
+        tabBarShowLabel: true,
+        tabBarActiveTintColor: Colors.calmWave,
+        tabBarInactiveTintColor: Colors.midGray,
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+          letterSpacing: 0.55,
+          textTransform: 'uppercase',
+        },
         tabBarStyle: {
-          backgroundColor: TabBar.backgroundColor,
-          borderTopWidth: TabBar.borderTopWidth,
-          height: 64,
-          paddingBottom: Spacing.xs,
-          // Flat design — no shadow
+          backgroundColor: Colors.deepTide,
+          borderTopWidth: 0,
+          height: TAB_HEIGHT + insets.bottom,
+          paddingBottom: insets.bottom,
+          paddingTop: 0,
           elevation: 0,
           shadowOpacity: 0,
         },
-        tabBarShowLabel: false,
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Home" emoji="🏠" />
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
           ),
         }}
       />
@@ -54,8 +45,8 @@ export default function TabLayout() {
         name="sound"
         options={{
           title: 'Sound',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Sound" emoji="🔊" />
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'musical-notes' : 'musical-notes-outline'} size={24} color={color} />
           ),
         }}
       />
@@ -63,8 +54,8 @@ export default function TabLayout() {
         name="relax"
         options={{
           title: 'Relax',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Relax" emoji="🌿" />
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'leaf' : 'leaf-outline'} size={24} color={color} />
           ),
         }}
       />
@@ -72,35 +63,20 @@ export default function TabLayout() {
         name="learn"
         options={{
           title: 'Learn',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Learn" emoji="📖" />
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'book' : 'book-outline'} size={24} color={color} />
           ),
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
-          title: 'Progress',
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} label="Progress" emoji="📈" />
+          title: 'Track',
+          tabBarIcon: ({ focused, color }) => (
+            <Ionicons name={focused ? 'bar-chart' : 'bar-chart-outline'} size={24} color={color} />
           ),
         }}
       />
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  iconWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 2,
-    paddingTop: Spacing.xs,
-  },
-  emoji: {
-    fontSize: 20,
-  },
-  label: {
-    ...Typography.micro,
-  },
-});

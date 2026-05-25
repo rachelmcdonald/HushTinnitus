@@ -9,7 +9,9 @@
       "Bash(python3 *)",
       "Bash(unzip -p hush_tinnitus_handoff.docx word/document.xml)",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(eas build *)"
+      "Bash(eas build *)",
+      "Bash(node *)",
+      "Bash(npm install *)"
     ]
   }
 }
