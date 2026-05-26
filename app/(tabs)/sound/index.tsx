@@ -42,7 +42,7 @@ const NATURE_SOUNDS: SoundDef[] = [
   { id: 'stream', name: 'Stream' },
   { id: 'forest', name: 'Forest' },
   { id: 'fire',   name: 'Fire' },
-  { id: 'cafe',   name: 'Cafe ambience' },
+  { id: 'cafe',   name: 'Cafe\nAmbience' },
 ];
 
 const BINAURAL_SOUNDS: SoundDef[] = [
