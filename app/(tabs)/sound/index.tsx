@@ -296,57 +296,59 @@ function SoundCarousel({
 
   return (
     <View style={cr.wrapper}>
-      <FlatList
-        ref={listRef}
-        data={sounds}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onMomentumScrollEnd={(e) => {
-          const i = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
-          setIdx(Math.max(0, Math.min(sounds.length - 1, i)));
-        }}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <CarouselCard
-            sound={item}
-            isActive={currentSound === item.id}
-            isPaused={isPaused}
-            cardWidth={cardWidth}
-            onToggle={() => onToggle(item.id)}
-            onPauseResume={onPauseResume}
-          />
-        )}
-        getItemLayout={(_, index) => ({
-          length: cardWidth,
-          offset: cardWidth * index,
-          index,
-        })}
-      />
-
-      {/* Left arrow */}
-      {idx > 0 && (
+      {/* Row: [arrow 44px] [FlatList] [arrow 44px] — arrows never overlap card */}
+      <View style={cr.row}>
         <Pressable
-          style={[cr.arrowBtn, cr.arrowLeft]}
+          style={cr.arrowBtn}
           onPress={() => goTo(idx - 1)}
+          disabled={idx === 0}
           accessibilityRole="button"
           accessibilityLabel="Previous"
+          accessibilityState={{ disabled: idx === 0 }}
         >
-          <Text style={cr.arrowText}>‹</Text>
+          <Text style={[cr.arrowText, idx === 0 && cr.arrowHidden]}>‹</Text>
         </Pressable>
-      )}
 
-      {/* Right arrow */}
-      {idx < sounds.length - 1 && (
+        <FlatList
+          ref={listRef}
+          data={sounds}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          style={cr.list}
+          onMomentumScrollEnd={(e) => {
+            const i = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
+            setIdx(Math.max(0, Math.min(sounds.length - 1, i)));
+          }}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <CarouselCard
+              sound={item}
+              isActive={currentSound === item.id}
+              isPaused={isPaused}
+              cardWidth={cardWidth}
+              onToggle={() => onToggle(item.id)}
+              onPauseResume={onPauseResume}
+            />
+          )}
+          getItemLayout={(_, index) => ({
+            length: cardWidth,
+            offset: cardWidth * index,
+            index,
+          })}
+        />
+
         <Pressable
-          style={[cr.arrowBtn, cr.arrowRight]}
+          style={cr.arrowBtn}
           onPress={() => goTo(idx + 1)}
+          disabled={idx >= sounds.length - 1}
           accessibilityRole="button"
           accessibilityLabel="Next"
+          accessibilityState={{ disabled: idx >= sounds.length - 1 }}
         >
-          <Text style={cr.arrowText}>›</Text>
+          <Text style={[cr.arrowText, idx >= sounds.length - 1 && cr.arrowHidden]}>›</Text>
         </Pressable>
-      )}
+      </View>
 
       {/* Dot indicators */}
       {sounds.length > 1 && (
@@ -367,30 +369,32 @@ function SoundCarousel({
 }
 
 const cr = StyleSheet.create({
-  wrapper: { position: 'relative' },
+  wrapper: { gap: Spacing.xs },
+  // Arrows sit in a row on either side of the FlatList — never overlapping card content.
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  list: { flex: 1 },
   arrowBtn: {
-    position: 'absolute',
-    top: 0,
+    width: 44,          // minimum 44×44 tap target
     height: CARD_HEIGHT,
-    width: 32,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 2,
   },
-  arrowLeft:  { left: 0 },
-  arrowRight: { right: 0 },
   arrowText: {
-    fontSize: 32,
-    color: Colors.white,
-    fontWeight: '300',
+    fontSize: 20,
+    color: Colors.deepTide,
+    fontWeight: '400',
     opacity: 0.75,
-    lineHeight: 38,
+    lineHeight: 24,
   },
+  arrowHidden: { opacity: 0 },  // invisible but still reserves tap space for layout stability
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: Spacing.xs,
-    paddingTop: Spacing.sm,
+    paddingTop: Spacing.xs,
   },
   dot: {
     width: 6,
@@ -621,7 +625,9 @@ export default function SoundScreen() {
   const [upgradeVisible, setUpgradeVisible] = useState(false);
 
   const { width: screenWidth } = useWindowDimensions();
-  const cardWidth = screenWidth - Spacing.xl * 2;
+  // 44px on each side for the arrow tap targets, which sit outside the card area.
+  const ARROW_W = 44;
+  const cardWidth = screenWidth - Spacing.xl * 2 - ARROW_W * 2;
 
   function handleNotchedToggle() {
     if (!savedPitchHz) return;

@@ -102,6 +102,16 @@ class AudioEngine {
       this.ctx = new api.AudioContext();
     }
 
+    // Android (and some react-native-audio-api builds) may start the context in
+    // 'suspended' state. Buffer-based sounds silently queue audio that never
+    // plays until resumed; oscillators can bypass this on some implementations.
+    // Explicitly resume before building any nodes.
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch {}
+    }
+
+    console.log('[AudioEngine] play:', soundId, '| ctx.state:', this.ctx.state);
+
     const gain = this.ctx.createGain();
     gain.gain.value = volume;
 
@@ -120,10 +130,16 @@ class AudioEngine {
     }
     this.activeGain = gain;
 
-    if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
-      this.buildBinauralNodes(soundId, gain);
-    } else {
-      this.buildBufferNodes(soundId, gain);
+    try {
+      if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
+        this.buildBinauralNodes(soundId, gain);
+      } else {
+        this.buildBufferNodes(soundId, gain);
+      }
+    } catch (err) {
+      console.error('[AudioEngine] buildNodes failed for', soundId, err);
+      this.clearNodes();
+      return;
     }
 
     this._currentSound = soundId;
