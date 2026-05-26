@@ -1,12 +1,22 @@
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, Image } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
-// ─── Circular photo placeholder ───────────────────────────────────────────────
+const MICHAEL_PHOTO = require('@/assets/images/michael.jpg');
+const RACHEL_PHOTO = require('@/assets/images/rachel.jpg');
 
-function PhotoPlaceholder() {
-  return <View style={styles.photo} />;
+// ─── Shared sub-components ────────────────────────────────────────────────────
+
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
+function RoleBadge({ label }: { label: string }) {
+  return (
+    <View style={styles.badge}>
+      <Text style={styles.badgeText}>{label}</Text>
+    </View>
+  );
 }
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -28,85 +38,113 @@ export default function AboutScreen() {
           <Text style={styles.backLabel}>← Learn</Text>
         </Pressable>
 
-        <Text style={styles.screenTitle}>About Hush Tinnitus</Text>
-
-        {/* Section 1 — The Audiologist */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>The Audiologist</Text>
-          <PhotoPlaceholder />
-          <Text style={styles.personName}>[Audiologist name] — Registered Audiologist</Text>
-          <Text style={styles.body}>
-            As someone who has worked with tinnitus patients for [X] years, I saw
-            firsthand the gap between what clinical evidence supports and what people
-            could actually access day to day. Most patients left the clinic with a
-            leaflet and a long waiting list. That's not good enough.
-          </Text>
-          <Text style={styles.body}>
-            Hush Tinnitus was built to bridge that gap — to put evidence-based tinnitus
-            self-management in everyone's pocket, not just those who can afford extended
-            private care.
+        {/* ── Page header ── */}
+        <View style={styles.header}>
+          <Text style={styles.pageTitle}>About Hush Tinnitus</Text>
+          <Text style={styles.pageSubtitle}>
+            Built independently. Grounded in clinical experience.
           </Text>
         </View>
 
-        {/* Section 2 — The Developer */}
+        {/* ── Why We Created This App ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>The Developer</Text>
-          <PhotoPlaceholder />
-          <Text style={styles.personName}>[Developer name] — Software Engineer</Text>
+          <Text style={styles.sectionHeading}>Why We Created This App</Text>
           <Text style={styles.body}>
-            Built the technical foundations of Hush Tinnitus using React Native and
-            Expo, with AI-assisted development using Anthropic's Claude Code. Every
-            feature was designed to the audiologist's clinical specification, ensuring
-            the technical implementation remains evidence-aligned from the ground up.
+            We created this app because tinnitus support often feels fragmented,
+            overwhelming, or inaccessible.
+          </Text>
+          <Text style={styles.body}>
+            Over the years, working with many patients struggling not only with tinnitus
+            itself, but with the anxiety, frustration, sleep difficulties, and sense of
+            helplessness that can come with it — one thing became clear: how little
+            practical day-to-day support people often had outside of appointments.
+          </Text>
+          <Text style={styles.body}>
+            We wanted to build something calmer, simpler, and more genuinely useful —
+            something people could actually return to in everyday life.
           </Text>
         </View>
 
-        {/* Section 3 — Our Values */}
+        <Divider />
+
+        {/* ── Meet Michael ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Our Values</Text>
-          <View style={styles.valuesList}>
-            {[
-              'Evidence-based, not wellness-washing',
-              'Ethically priced — core features free forever',
-              'Built for sufferers, not for profit',
-            ].map((value) => (
-              <View key={value} style={styles.bulletRow}>
-                <View style={styles.bullet} />
-                <Text style={styles.bulletText}>{value}</Text>
-              </View>
-            ))}
+          <View style={styles.personHeader}>
+            <Image
+              source={MICHAEL_PHOTO}
+              style={styles.photo}
+              accessibilityLabel="Photo of Michael"
+            />
+            <Text style={styles.personName}>Michael</Text>
+            <Text style={styles.credentials1}>
+              BSc Audiology · 11 years clinical experience
+            </Text>
+            <Text style={styles.credentials2}>
+              NHS Scotland · Perth, Western Australia
+            </Text>
+            <RoleBadge label="Audiologist & Co-founder" />
           </View>
+          <Text style={styles.body}>
+            I trained and worked within the National Health Service in Scotland for
+            around eight years, progressing into a Senior and Specialist Audiologist role
+            working in Bone Conduction Hearing Implants and Vestibular Assessment
+            services.
+          </Text>
+          <Text style={styles.body}>
+            After moving to Perth, I continued working across private audiology,
+            government-funded services, and specialist implant care — including work with
+            the Ear Science Institute Australia in Bone Conduction and Cochlear Implant
+            services.
+          </Text>
         </View>
 
-        {/* Section 4 — Our Mission */}
+        <Divider />
+
+        {/* ── Meet Rachel ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Our Mission</Text>
+          <View style={styles.personHeader}>
+            <Image
+              source={RACHEL_PHOTO}
+              style={styles.photo}
+              accessibilityLabel="Photo of Rachel"
+            />
+            <Text style={styles.personName}>Rachel</Text>
+            <RoleBadge label="Developer" />
+          </View>
           <Text style={styles.body}>
-            Tinnitus affects roughly one in seven people, yet the current landscape of
-            support is fragmented: apps with expensive paywalls that gate the most basic
-            features, tools that lack clinical grounding, and no background audio support.
-            Meanwhile, waiting lists mean most patients go months without structured
-            guidance.
-          </Text>
-          <Text style={styles.body}>
-            Hush Tinnitus exists to change that. We believe the core tools — sound
-            therapy, guided breathing, mindfulness, and education — should be accessible
-            to everyone. Premium features help sustain the app, but never at the expense
-            of the people who need it most.
+            Rachel is the software developer who brought the app to life — leading the
+            development, design, functionality, and overall user experience. A huge part
+            of this project was making sure it didn't feel cold, corporate, or clinical.
           </Text>
         </View>
 
-        {/* Medical disclaimer */}
+        <Divider />
+
+        {/* ── Closing ── */}
+        <View style={styles.section}>
+          <Text style={[styles.body, styles.closing]}>
+            This app wasn't created by a large healthcare company or a marketing team.
+            It was built independently by the two of us — combining clinical experience
+            with thoughtful design and development — because we believed people deserved
+            something better.
+          </Text>
+          <Text style={[styles.body, styles.closing]}>
+            We hope it helps you feel more informed, more in control, and a little less
+            alone.
+          </Text>
+        </View>
+
+        {/* ── Medical disclaimer ── */}
         <View style={styles.disclaimerCard}>
           <Text style={styles.disclaimerTitle}>Medical Disclaimer</Text>
           <Text style={styles.disclaimerText}>
-            Hush Tinnitus is not a medical device and does not provide medical advice,
-            diagnosis, or treatment. All content is for educational and self-management
-            purposes only. If you experience sudden hearing loss, pulsatile tinnitus,
-            or tinnitus in one ear only, seek prompt medical assessment. Always consult
-            a qualified audiologist or physician for personalised advice. The app's
-            content is based on published evidence but does not replace professional
-            clinical judgement.
+            Hush Tinnitus provides self-management tools and educational content for
+            people living with tinnitus. It is not a medical device and is not intended
+            to diagnose, treat, cure, or prevent tinnitus or any medical condition.
+            Always consult a qualified healthcare professional — including a GP,
+            audiologist, or ENT specialist — before making changes to how you manage
+            your tinnitus. If your tinnitus started suddenly, is pulsatile, or is heard
+            only in one ear, seek medical advice promptly.
           </Text>
         </View>
       </ScrollView>
@@ -114,74 +152,147 @@ export default function AboutScreen() {
   );
 }
 
+// ─── Styles ───────────────────────────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
+  safe: { flex: 1, backgroundColor: '#F5F1EB' },
   scroll: {
     flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 32,
+    gap: 24,
   },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+  backBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingRight: 8 },
   backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+  backLabel: { fontSize: 14, color: '#0D4F5C' },
 
-  screenTitle: {
+  header: { alignItems: 'center', gap: 6 },
+  pageTitle: {
     fontSize: 20,
     fontWeight: '500' as const,
-    color: Colors.deepTide,
-    letterSpacing: -0.2,
+    color: '#0D4F5C',
+    textAlign: 'center',
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
   },
 
-  section: {
-    gap: Spacing.md,
-    paddingBottom: Spacing.base,
-    borderBottomWidth: Border.width,
-    borderBottomColor: Colors.calmWave + '33',
+  divider: {
+    height: 0.5,
+    backgroundColor: '#5DCAA54D',
   },
-  sectionTitle: { ...Typography.heading1, color: Colors.deepTide },
 
+  section: { gap: 12 },
+  sectionHeading: {
+    fontSize: 16,
+    fontWeight: '500' as const,
+    color: '#0D4F5C',
+  },
+  body: {
+    fontSize: 14,
+    color: '#1A2B2B',
+    lineHeight: 22,
+  },
+  closing: { fontStyle: 'italic' },
+
+  // Person header block (centred)
+  personHeader: {
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   photo: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.tealLight,
-    borderWidth: 2,
-    borderColor: Colors.calmWave + '60',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    borderWidth: 3,
+    borderColor: '#5DCAA5',
   },
-  personName: { ...Typography.heading2, color: Colors.darkText },
-  body: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+  photoPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#E1F5EE',
+    borderWidth: 3,
+    borderColor: '#5DCAA5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  photoInitial: {
+    fontSize: 28,
+    fontWeight: '500' as const,
+    color: '#0D4F5C',
+  },
+  personName: {
+    fontSize: 16,
+    fontWeight: '500' as const,
+    color: '#0D4F5C',
+    textAlign: 'center',
+  },
+  credentials1: {
+    fontSize: 12,
+    color: '#5DCAA5',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  credentials2: {
+    fontSize: 12,
+    color: '#666666',
+    textAlign: 'center',
+  },
 
-  valuesList: { gap: Spacing.sm },
-  bulletRow: {
+  // Role badge
+  badge: {
+    backgroundColor: '#E1F5EE',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginTop: 2,
+  },
+  badgeText: {
+    fontSize: 12,
+    color: '#085041',
+  },
+
+  // Values
+  valueRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: Spacing.md,
+    gap: 10,
   },
-  bullet: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.calmWave,
-    marginTop: 8,
-    flexShrink: 0,
+  checkmark: {
+    fontSize: 14,
+    color: '#5DCAA5',
+    lineHeight: 22,
   },
-  bulletText: { ...Typography.body, color: Colors.darkText, flex: 1, lineHeight: 24 },
+  valueText: {
+    fontSize: 14,
+    color: '#1A2B2B',
+    lineHeight: 22,
+    flex: 1,
+  },
 
+  // Disclaimer
   disclaimerCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
+    backgroundColor: '#F5F1EB',
+    borderRadius: 8,
+    padding: 12,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#5DCAA533',
   },
-  disclaimerTitle: { ...Typography.micro, color: Colors.deepTide },
+  disclaimerTitle: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: '#666666',
+  },
   disclaimerText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 20,
+    fontSize: 11,
+    color: '#666666',
+    lineHeight: 17,
   },
 });

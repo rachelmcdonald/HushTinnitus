@@ -11,7 +11,10 @@
       "Bash(echo \"EXIT: $?\")",
       "Bash(eas build *)",
       "Bash(node *)",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(find /mnt -name \"Michael.jpg\")",
+      "Read(//private/tmp/**)",
+      "Read(//Users/Rachel/**)"
     ]
   }
 }
