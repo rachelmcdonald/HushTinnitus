@@ -92,14 +92,9 @@ function AboutCard() {
       style={({ pressed }) => [styles.aboutCard, pressed && styles.cardPressed]}
       onPress={() => router.push('/about' as any)}
       accessibilityRole="button"
-      accessibilityLabel="About Hush Tinnitus — Meet the team"
+      accessibilityLabel="Meet the team"
     >
-      <Text style={styles.aboutHeading}>Built by clinicians, backed by research</Text>
-      <Text style={styles.aboutSubtitle}>
-        Created by a registered audiologist with clinical experience in tinnitus
-        management, developed to fill a real gap in tinnitus self-management.
-      </Text>
-      <Text style={styles.aboutLink}>Meet the team →</Text>
+      <Text style={styles.aboutHeading}>Meet the team</Text>
     </Pressable>
   );
 }
@@ -183,16 +178,14 @@ const styles = StyleSheet.create({
   },
   premiumBadgeText: { ...Typography.micro, fontSize: 9, color: Colors.softGold },
 
-  // About card
+  // About button
   aboutCard: {
     backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
+    borderRadius: 8,
+    padding: 14,
+    alignItems: 'center',
   },
-  aboutHeading: { ...Typography.heading2, color: Colors.white },
-  aboutSubtitle: { ...Typography.body, color: Colors.calmWave, lineHeight: 22 },
-  aboutLink: { ...Typography.body, color: Colors.calmWave, fontWeight: '500' as const },
+  aboutHeading: { fontSize: 16, fontWeight: '500' as const, color: Colors.white },
 
   disclaimer: {
     ...Typography.caption,
