@@ -1,7 +1,7 @@
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
+import Svg, { G, Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 
 // ─── Loop diagram ─────────────────────────────────────────────────────────────
@@ -25,6 +25,11 @@ import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
 //   │ Amplified percep. │──────────┘
 //   └──────────────────┘
 
+// Use a fixed viewBox so Android canvas size is always predictable.
+// The SVG element gets an explicit pixel width derived from the window.
+const WINDOW_W = Dimensions.get('window').width;
+const SVG_PADDING = Spacing.xl * 2 + Spacing.base * 2; // scroll + card padding
+
 const D_W = 280;         // SVG viewBox width
 const NODE_W = 194;      // node rectangle width
 const NODE_H = 48;       // node rectangle height
@@ -43,6 +48,11 @@ const RIGHT_EDGE = NODE_X + NODE_W;  // 237
 
 // Total height with a little padding at the bottom
 const D_H = N3_Y + NODE_H + 16;  // 298
+
+// Pixel dimensions for the SVG element — explicit values prevent Android from
+// misinterpreting "100%" as a huge number when computing the canvas allocation.
+const SVG_PX_W = Math.min(WINDOW_W - SVG_PADDING, D_W);
+const SVG_PX_H = Math.round(SVG_PX_W * (D_H / D_W));
 
 // Colours
 const NODE_FILL = Colors.calmWave;       // #5DCAA5
@@ -90,14 +100,17 @@ function LoopDiagram() {
 
   return (
     <View style={diagram.container}>
-      <Svg
-        width="100%"
-        viewBox={`0 0 ${D_W} ${D_H}`}
-        accessibilityLabel="The tinnitus neurological loop diagram"
-      >
+      <View style={diagram.svgWrapper}>
+        <Svg
+          width={SVG_PX_W}
+          height={SVG_PX_H}
+          viewBox={`0 0 ${D_W} ${D_H}`}
+          preserveAspectRatio="xMidYMid meet"
+          accessibilityLabel="The tinnitus neurological loop diagram"
+        >
         {/* ── Nodes ── */}
         {nodes.map((label, i) => (
-          <Svg key={`node-${i}`}>
+          <G key={`node-${i}`}>
             <Rect
               x={NODE_X}
               y={nodeYs[i]}
@@ -116,7 +129,7 @@ function LoopDiagram() {
             >
               {label}
             </SvgText>
-          </Svg>
+          </G>
         ))}
 
         {/* ── Downward arrows (0→1, 1→2, 2→3) ── */}
@@ -149,7 +162,8 @@ function LoopDiagram() {
         >
           cycle repeats
         </SvgText>
-      </Svg>
+        </Svg>
+      </View>
     </View>
   );
 }
@@ -159,6 +173,12 @@ const diagram = StyleSheet.create({
     backgroundColor: Colors.tealLight,
     borderRadius: Radius.card,
     padding: Spacing.base,
+    alignItems: 'center',
+  },
+  svgWrapper: {
+    width: SVG_PX_W,
+    height: SVG_PX_H,
+    overflow: 'hidden',
   },
 });
 
