@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,10 +9,11 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-import { Duration, Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Duration, Colors, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import UpgradeModal from '@/src/components/UpgradeModal';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,9 @@ function saveSession(durationSeconds: number) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function BoxBreathingScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const [upgradeVisible, setUpgradeVisible] = useState(false);
@@ -326,114 +330,119 @@ export default function BoxBreathingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.lg,
+    },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: colors.deepTide },
+    header: { gap: Spacing.sm },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  phaseArea: {
-    alignItems: 'center',
-    minHeight: 80,
-    justifyContent: 'center',
-    gap: 4,
-  },
-  phaseLabel: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    letterSpacing: -0.5,
-  },
-  phaseHint: { ...Typography.body, color: Colors.midGray },
-  countdown: {
-    fontSize: 52,
-    fontWeight: '300',
-    color: Colors.deepTide,
-    lineHeight: 60,
-  },
-  idleLabel: { ...Typography.body, color: Colors.midGray, textAlign: 'center' },
+    phaseArea: {
+      alignItems: 'center',
+      minHeight: 80,
+      justifyContent: 'center',
+      gap: 4,
+    },
+    phaseLabel: {
+      fontSize: 28,
+      fontWeight: '400',
+      color: Colors.deepTide,
+      letterSpacing: -0.5,
+    },
+    phaseHint: { ...typography.body, color: colors.textSecondary },
+    countdown: {
+      fontSize: 52,
+      fontWeight: '300',
+      color: Colors.deepTide,
+      lineHeight: 60,
+    },
+    idleLabel: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
 
-  // Box diagram with labels
-  boxWrapper: { alignItems: 'center', gap: Spacing.sm },
-  boxRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
+    // Box diagram with labels
+    boxWrapper: { alignItems: 'center', gap: Spacing.sm },
+    boxRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
 
-  // The square
-  box: {
-    width: SQUARE,
-    height: SQUARE,
-    borderWidth: 2,
-    borderColor: Colors.deepTide,
-    borderRadius: 4,
-    overflow: 'visible',
-    position: 'relative',
-    backgroundColor: Colors.tealLight,
-  },
+    // The square
+    box: {
+      width: SQUARE,
+      height: SQUARE,
+      borderWidth: 2,
+      borderColor: Colors.deepTide,
+      borderRadius: 4,
+      overflow: 'visible',
+      position: 'relative',
+      backgroundColor: colors.surfaceVariant,
+    },
 
-  // Corner guide marks
-  cornerMark: {
-    position: 'absolute',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.deepTide + '50',
-  },
+    // Corner guide marks
+    cornerMark: {
+      position: 'absolute',
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: Colors.deepTide + '50',
+    },
 
-  // Animated dot
-  dot: {
-    position: 'absolute',
-    width: DOT,
-    height: DOT,
-    borderRadius: HALF_DOT,
-    backgroundColor: Colors.calmWave,
-    shadowColor: Colors.calmWave,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+    // Animated dot
+    dot: {
+      position: 'absolute',
+      width: DOT,
+      height: DOT,
+      borderRadius: HALF_DOT,
+      backgroundColor: Colors.calmWave,
+      shadowColor: Colors.calmWave,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.5,
+      shadowRadius: 6,
+      elevation: 4,
+    },
 
-  // Side labels
-  sideLabel: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-  },
-  sideLabelTop:    { marginBottom: 2 },
-  sideLabelBottom: { marginTop: 2 },
-  sideLabelSide:   { width: 40, fontSize: 11 },
-  sideLabelActive: { color: Colors.deepTide, fontWeight: '600' },
+    // Side labels
+    sideLabel: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    sideLabelTop:    { marginBottom: 2 },
+    sideLabelBottom: { marginTop: 2 },
+    sideLabelSide:   { width: 40, fontSize: 11 },
+    sideLabelActive: { color: Colors.deepTide, fontWeight: '600' },
 
-  // Buttons
-  btn: {
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  btnStart:  { backgroundColor: Colors.deepTide },
-  btnStop:   { backgroundColor: Colors.warmCoral },
-  btnUnlock: { backgroundColor: Colors.softGold },
-  btnPressed: { opacity: 0.85 },
-  btnLabel: { ...Typography.heading2, color: Colors.white },
+    // Buttons
+    btn: {
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    btnStart:  { backgroundColor: Colors.deepTide },
+    btnStop:   { backgroundColor: Colors.warmCoral },
+    btnUnlock: { backgroundColor: Colors.softGold },
+    btnPressed: { opacity: 0.85 },
+    btnLabel: { ...typography.heading2, color: Colors.white },
 
-  tip: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-});
+    tip: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      fontStyle: 'italic',
+    },
+  });
+}

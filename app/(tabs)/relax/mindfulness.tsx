@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,8 +15,9 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Colors, Typography, Spacing, Radius } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TOTAL_SECONDS = 300;
 const RING_R = 100;
@@ -65,6 +66,9 @@ function saveSession(durationSeconds: number) {
 }
 
 export default function MindfulnessScreen() {
+  const { typography } = useTheme();
+  const styles = useMemo(() => makeStyles(typography), [typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const [upgradeVisible, setUpgradeVisible] = useState(false);
@@ -316,133 +320,135 @@ export default function MindfulnessScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.deepTide },
+function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: Colors.deepTide },
 
-  backBtn: { margin: Spacing.xl, marginBottom: 0, alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.calmWave },
+    backBtn: { margin: Spacing.xl, marginBottom: 0, alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.calmWave },
 
-  // ── Intro ─────────────────────────────────────────────────────────────────
-  introContent: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xxl,
-    justifyContent: 'center',
-    gap: Spacing.lg,
-  },
-  introHeader: { gap: Spacing.xs },
-  introTitle: { ...Typography.display, color: Colors.white },
-  introDuration: { ...Typography.caption, color: Colors.calmWave },
-  introBody: { ...Typography.body, color: Colors.white + 'B3', lineHeight: 26 },
-  beginBtn: {
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  beginBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
-  unlockBtn: {
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  unlockBtnLabel: { ...Typography.heading2, color: Colors.white },
+    // ── Intro ─────────────────────────────────────────────────────────────────
+    introContent: {
+      flex: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xxl,
+      justifyContent: 'center',
+      gap: Spacing.lg,
+    },
+    introHeader: { gap: Spacing.xs },
+    introTitle: { ...typography.display, color: Colors.white },
+    introDuration: { ...typography.caption, color: Colors.calmWave },
+    introBody: { ...typography.body, color: Colors.white + 'B3', lineHeight: 26 },
+    beginBtn: {
+      backgroundColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      marginTop: Spacing.md,
+    },
+    beginBtnLabel: { ...typography.heading2, color: Colors.deepTide },
+    unlockBtn: {
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      marginTop: Spacing.md,
+    },
+    unlockBtnLabel: { ...typography.heading2, color: Colors.white },
 
-  // ── Done ──────────────────────────────────────────────────────────────────
-  doneContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  doneCheck: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: Colors.calmWave,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneCheckMark: { fontSize: 32, color: Colors.deepTide, lineHeight: 40 },
-  doneTitle: { ...Typography.display, color: Colors.white, textAlign: 'center' },
-  doneBody: {
-    ...Typography.body,
-    color: Colors.white + 'B3',
-    textAlign: 'center',
-    lineHeight: 26,
-  },
-  doneBtn: {
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  doneBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
+    // ── Done ──────────────────────────────────────────────────────────────────
+    doneContent: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+      gap: Spacing.lg,
+    },
+    doneCheck: {
+      width: 72,
+      height: 72,
+      borderRadius: 36,
+      backgroundColor: Colors.calmWave,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    doneCheckMark: { fontSize: 32, color: Colors.deepTide, lineHeight: 40 },
+    doneTitle: { ...typography.display, color: Colors.white, textAlign: 'center' },
+    doneBody: {
+      ...typography.body,
+      color: Colors.white + 'B3',
+      textAlign: 'center',
+      lineHeight: 26,
+    },
+    doneBtn: {
+      backgroundColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      paddingHorizontal: Spacing.xl,
+      alignItems: 'center',
+      marginTop: Spacing.md,
+    },
+    doneBtnLabel: { ...typography.heading2, color: Colors.deepTide },
 
-  // ── Session ───────────────────────────────────────────────────────────────
-  sessionOuter: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: Spacing.xl,
-    paddingHorizontal: Spacing.xl,
-    overflow: 'hidden',
-  },
-  breathOrb: {
-    position: 'absolute',
-    width: 420,
-    height: 420,
-    borderRadius: 210,
-    backgroundColor: Colors.calmWave + '18',
-  },
-  ringArea: {
-    width: RING_SIZE,
-    height: RING_SIZE,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: Spacing.lg,
-  },
-  timerText: {
-    position: 'absolute',
-    fontSize: 30,
-    fontWeight: '300',
-    color: Colors.white,
-    letterSpacing: 1,
-  },
-  promptArea: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  promptText: {
-    fontSize: 20,
-    fontWeight: '300',
-    color: Colors.white,
-    textAlign: 'center',
-    lineHeight: 34,
-    letterSpacing: 0.2,
-  },
-  controls: { width: '100%', gap: Spacing.sm },
-  pauseBtn: {
-    borderWidth: 1,
-    borderColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  pauseBtnLabel: { ...Typography.heading2, color: Colors.calmWave },
-  endBtn: {
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  endBtnLabel: { ...Typography.body, color: Colors.white + '55' },
+    // ── Session ───────────────────────────────────────────────────────────────
+    sessionOuter: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingVertical: Spacing.xl,
+      paddingHorizontal: Spacing.xl,
+      overflow: 'hidden',
+    },
+    breathOrb: {
+      position: 'absolute',
+      width: 420,
+      height: 420,
+      borderRadius: 210,
+      backgroundColor: Colors.calmWave + '18',
+    },
+    ringArea: {
+      width: RING_SIZE,
+      height: RING_SIZE,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: Spacing.lg,
+    },
+    timerText: {
+      position: 'absolute',
+      fontSize: 30,
+      fontWeight: '300',
+      color: Colors.white,
+      letterSpacing: 1,
+    },
+    promptArea: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+    },
+    promptText: {
+      fontSize: 20,
+      fontWeight: '300',
+      color: Colors.white,
+      textAlign: 'center',
+      lineHeight: 34,
+      letterSpacing: 0.2,
+    },
+    controls: { width: '100%', gap: Spacing.sm },
+    pauseBtn: {
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    pauseBtnLabel: { ...typography.heading2, color: Colors.calmWave },
+    endBtn: {
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    endBtnLabel: { ...typography.body, color: Colors.white + '55' },
 
-  btnPressed: { opacity: 0.7 },
-});
+    btnPressed: { opacity: 0.7 },
+  });
+}

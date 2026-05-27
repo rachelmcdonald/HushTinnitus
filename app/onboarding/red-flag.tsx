@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type Answer = 'yes' | 'no' | null;
 
@@ -37,6 +38,9 @@ type QuestionCardProps = {
 };
 
 function QuestionCard({ question, answer, onAnswer }: QuestionCardProps) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={styles.card}>
       <Text style={styles.questionText}>{question}</Text>
@@ -79,6 +83,8 @@ function QuestionCard({ question, answer, onAnswer }: QuestionCardProps) {
 }
 
 export default function RedFlagScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [answers, setAnswers] = useState<Answers>({
     suddenOnset: null,
     pulsatile: null,
@@ -160,91 +166,96 @@ export default function RedFlagScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.huge,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xxl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.huge,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xxl,
+    },
 
-  // Header
-  header: {
-    gap: Spacing.sm,
-  },
-  title: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  subtitle: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+    // Header
+    header: {
+      gap: Spacing.sm,
+    },
+    title: {
+      ...typography.display,
+      color: colors.textPrimary,
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
 
-  // Question cards
-  questions: {
-    gap: Spacing.md,
-  },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  questionText: {
-    ...Typography.body,
-    color: Colors.darkText,
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    gap: Spacing.sm,
-  },
-  toggleButton: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '60',
-    alignItems: 'center',
-  },
-  toggleSelected: {
-    backgroundColor: Colors.deepTide,
-    borderColor: Colors.deepTide,
-  },
-  toggleLabel: {
-    ...Typography.heading2,
-    color: Colors.midGray,
-  },
-  toggleLabelSelected: {
-    color: Colors.white,
-  },
+    // Question cards
+    questions: {
+      gap: Spacing.md,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    questionText: {
+      ...typography.body,
+      color: colors.textPrimary,
+    },
+    toggleRow: {
+      flexDirection: 'row',
+      gap: Spacing.sm,
+    },
+    toggleButton: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.chip,
+      borderWidth: Border.width * 2,
+      borderColor: colors.textSecondary + '60',
+      alignItems: 'center',
+    },
+    toggleSelected: {
+      backgroundColor: colors.deepTide,
+      borderColor: colors.deepTide,
+    },
+    toggleLabel: {
+      ...typography.heading2,
+      color: colors.textSecondary,
+    },
+    toggleLabelSelected: {
+      color: colors.white,
+    },
 
-  // Footer
-  footer: {
-    gap: Spacing.md,
-  },
-  continueButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  continueButtonDisabled: {
-    backgroundColor: Colors.midGray + '40',
-  },
-  continueButtonPressed: {
-    opacity: 0.85,
-  },
-  continueLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-  continueLabelDisabled: {
-    color: Colors.midGray,
-  },
-});
+    // Footer
+    footer: {
+      gap: Spacing.md,
+    },
+    continueButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    continueButtonDisabled: {
+      backgroundColor: colors.textSecondary + '40',
+    },
+    continueButtonPressed: {
+      opacity: 0.85,
+    },
+    continueLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+    continueLabelDisabled: {
+      color: colors.textSecondary,
+    },
+  });
+}

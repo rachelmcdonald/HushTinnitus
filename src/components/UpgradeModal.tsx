@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
-import { Colors, Typography, Spacing, Radius } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const PREMIUM_FEATURES = [
   '3-source sound mixer',
@@ -16,6 +18,9 @@ type Props = {
 };
 
 export default function UpgradeModal({ visible, onClose }: Props) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <Modal
       visible={visible}
@@ -78,61 +83,66 @@ export default function UpgradeModal({ visible, onClose }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: Radius.modal,
-    borderTopRightRadius: Radius.modal,
-    overflow: 'hidden',
-  },
-  accentBar: {
-    height: 4,
-    backgroundColor: Colors.softGold,
-  },
-  content: {
-    padding: Spacing.xl,
-    gap: Spacing.base,
-  },
-  badgeRow: { alignItems: 'flex-start' },
-  badge: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.softGold,
-  },
-  badgeText: { ...Typography.micro, color: Colors.softGold },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
-  featureList: { gap: Spacing.sm },
-  featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
-  featureDot: {
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: Colors.softGold,
-    marginTop: 7,
-  },
-  featureText: { ...Typography.body, color: Colors.darkText, flex: 1 },
-  price: { ...Typography.heading2, color: Colors.darkText },
-  priceSub: { ...Typography.caption, color: Colors.midGray, marginTop: -Spacing.sm },
-  comingSoon: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-  },
-  comingSoonText: { ...Typography.body, color: Colors.softGold, textAlign: 'center' },
-  closeBtn: {
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    borderRadius: Radius.chip,
-    borderWidth: 1,
-    borderColor: Colors.midGray + '50',
-  },
-  closeBtnPressed: { opacity: 0.7 },
-  closeBtnLabel: { ...Typography.heading2, color: Colors.midGray },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'flex-end',
+    },
+    sheet: {
+      backgroundColor: colors.surface,
+      borderTopLeftRadius: Radius.modal,
+      borderTopRightRadius: Radius.modal,
+      overflow: 'hidden',
+    },
+    accentBar: {
+      height: 4,
+      backgroundColor: colors.softGold,
+    },
+    content: {
+      padding: Spacing.xl,
+      gap: Spacing.base,
+    },
+    badgeRow: { alignItems: 'flex-start' },
+    badge: {
+      backgroundColor: colors.goldLight,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.softGold,
+    },
+    badgeText: { ...typography.micro, color: colors.softGold },
+    title: { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
+    featureList: { gap: Spacing.sm },
+    featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+    featureDot: {
+      width: 6, height: 6, borderRadius: 3,
+      backgroundColor: colors.softGold,
+      marginTop: 7,
+    },
+    featureText: { ...typography.body, color: colors.textPrimary, flex: 1 },
+    price: { ...typography.heading2, color: colors.textPrimary },
+    priceSub: { ...typography.caption, color: colors.textSecondary, marginTop: -Spacing.sm },
+    comingSoon: {
+      backgroundColor: colors.goldLight,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+    },
+    comingSoonText: { ...typography.body, color: colors.softGold, textAlign: 'center' },
+    closeBtn: {
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      borderRadius: Radius.chip,
+      borderWidth: 1,
+      borderColor: colors.textSecondary + '50',
+    },
+    closeBtnPressed: { opacity: 0.7 },
+    closeBtnLabel: { ...typography.heading2, color: colors.textSecondary },
+  });
+}

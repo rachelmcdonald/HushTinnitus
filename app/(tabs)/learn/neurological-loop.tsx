@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { G, Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Loop diagram ─────────────────────────────────────────────────────────────
 //
@@ -54,14 +56,9 @@ const D_H = N3_Y + NODE_H + 16;  // 298
 const SVG_PX_W = Math.min(WINDOW_W - SVG_PADDING, D_W);
 const SVG_PX_H = Math.round(SVG_PX_W * (D_H / D_W));
 
-// Colours
-const NODE_FILL = Colors.calmWave;       // #5DCAA5
-const NODE_TEXT = Colors.deepTide;       // #0D4F5C
-const ARROW_COL = Colors.deepTide;       // #0D4F5C
-
 // ─── Downward arrowhead (tip pointing down) ───────────────────────────────────
 //   tip at (cx, yTip)
-function DownArrow({ cx, yTip }: { cx: number; yTip: number }) {
+function DownArrow({ cx, yTip, arrowColor }: { cx: number; yTip: number; arrowColor: string }) {
   return (
     <>
       <Line
@@ -69,18 +66,39 @@ function DownArrow({ cx, yTip }: { cx: number; yTip: number }) {
         y1={yTip - GAP}
         x2={cx}
         y2={yTip - 10}
-        stroke={ARROW_COL}
+        stroke={arrowColor}
         strokeWidth={2}
       />
       <Polygon
         points={`${cx - 6},${yTip - 10} ${cx + 6},${yTip - 10} ${cx},${yTip}`}
-        fill={ARROW_COL}
+        fill={arrowColor}
       />
     </>
   );
 }
 
 function LoopDiagram() {
+  const { colors } = useTheme();
+
+  // Colors moved inside component for theme reactivity
+  const NODE_FILL = colors.calmWave;
+  const NODE_TEXT = colors.deepTide;
+  const ARROW_COL = colors.deepTide;
+
+  const diagramStyles = useMemo(() => StyleSheet.create({
+    container: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      alignItems: 'center',
+    },
+    svgWrapper: {
+      width: SVG_PX_W,
+      height: SVG_PX_H,
+      overflow: 'hidden',
+    },
+  }), [colors]);
+
   const nodes = [
     'Tinnitus sound',
     'Attention',
@@ -99,8 +117,8 @@ function LoopDiagram() {
   const returnPath = `M ${RIGHT_EDGE},${n3MidY} L ${bendX},${n3MidY} L ${bendX},${n1MidY} L ${RIGHT_EDGE + 8},${n1MidY}`;
 
   return (
-    <View style={diagram.container}>
-      <View style={diagram.svgWrapper}>
+    <View style={diagramStyles.container}>
+      <View style={diagramStyles.svgWrapper}>
         <Svg
           width={SVG_PX_W}
           height={SVG_PX_H}
@@ -134,7 +152,7 @@ function LoopDiagram() {
 
         {/* ── Downward arrows (0→1, 1→2, 2→3) ── */}
         {[N1_Y, N2_Y, N3_Y].map((yTip) => (
-          <DownArrow key={`arr-${yTip}`} cx={MID_X} yTip={yTip} />
+          <DownArrow key={`arr-${yTip}`} cx={MID_X} yTip={yTip} arrowColor={ARROW_COL} />
         ))}
 
         {/* ── Return arrow: Amplified perception → Attention (dashed) ── */}
@@ -156,7 +174,7 @@ function LoopDiagram() {
           x={bendX + 4}
           y={(n3MidY + n1MidY) / 2}
           textAnchor="middle"
-          fill={Colors.midGray}
+          fill={colors.textSecondary}
           fontSize={9}
           transform={`rotate(90, ${bendX + 4}, ${(n3MidY + n1MidY) / 2})`}
         >
@@ -168,23 +186,12 @@ function LoopDiagram() {
   );
 }
 
-const diagram = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    alignItems: 'center',
-  },
-  svgWrapper: {
-    width: SVG_PX_W,
-    height: SVG_PX_H,
-    overflow: 'hidden',
-  },
-});
-
 // ─── Reusable content components ─────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -198,6 +205,8 @@ function BackButton() {
 }
 
 function Body({ children }: { children: React.ReactNode }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return <Text style={styles.body}>{children}</Text>;
 }
 
@@ -208,6 +217,9 @@ function NodeExplanation({
   label: string;
   children: string;
 }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={styles.nodeRow}>
       <View style={styles.nodeBadge}>
@@ -221,6 +233,9 @@ function NodeExplanation({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function NeurologicalLoopScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -332,75 +347,80 @@ export default function NeurologicalLoopScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+    header: { gap: Spacing.md },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  section: { gap: Spacing.md },
-  sectionHeading: { ...Typography.heading1, color: Colors.deepTide },
-  body: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
+    section: { gap: Spacing.md },
+    sectionHeading: { ...typography.heading1, color: colors.deepTide },
+    body: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
-  // Node explanation rows
-  nodeRow: { gap: Spacing.sm },
-  nodeBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  nodeBadgeText: { ...Typography.micro, color: Colors.deepTide },
-  nodeBody: { paddingLeft: Spacing.xs },
+    // Node explanation rows
+    nodeRow: { gap: Spacing.sm },
+    nodeBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    nodeBadgeText: { ...typography.micro, color: colors.deepTide },
+    nodeBody: { paddingLeft: Spacing.xs },
 
-  // Highlight card
-  highlightCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  highlightHeading: { ...Typography.heading2, color: Colors.deepTide },
-  highlightBody: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
+    // Highlight card
+    highlightCard: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.calmWave,
+    },
+    highlightHeading: { ...typography.heading2, color: colors.deepTide },
+    highlightBody: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
-  // Citation
-  citation: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  citationLabel: { ...Typography.micro, color: Colors.deepTide },
-  citationText: { ...Typography.caption, color: Colors.darkText, lineHeight: 20 },
-  citationItalic: { fontStyle: 'italic' },
-  citationNote: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+    // Citation
+    citation: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.calmWave,
+    },
+    citationLabel: { ...typography.micro, color: colors.deepTide },
+    citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
+    citationItalic: { fontStyle: 'italic' },
+    citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
-  footer: {
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    paddingTop: Spacing.md,
-  },
-  footerText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    footer: {
+      borderTopWidth: Border.width,
+      borderTopColor: colors.calmWave + '33',
+      paddingTop: Spacing.md,
+    },
+    footerText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

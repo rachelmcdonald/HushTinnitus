@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
-import { Colors, Typography, Spacing, Radius } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { getTodayLogs } from '@/src/storage/symptomLog';
 import { getRecentSessions } from '@/src/storage/soundSessions';
 import { getPreferences } from '@/src/storage/preferences';
@@ -94,6 +95,9 @@ function shouldShowTFICheckIn(prefs: ReturnType<typeof getPreferences>): { show:
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const [greeting, setGreeting] = useState(getGreeting);
   const [streak, setStreak] = useState(0);
   const [todayEntry, setTodayEntry] = useState<SymptomLog | null>(null);
@@ -147,7 +151,7 @@ export default function HomeScreen() {
           <Svg width={38} height={38} viewBox="0 0 38 38">
             <Path
               d="M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19"
-              stroke={Colors.calmWave}
+              stroke={colors.calmWave}
               strokeWidth={2.5}
               fill="none"
               strokeLinecap="round"
@@ -258,187 +262,192 @@ export default function HomeScreen() {
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  content: {
-    paddingHorizontal: Spacing.base,
-    paddingTop: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    scroll: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    content: {
+      paddingHorizontal: Spacing.base,
+      paddingTop: Spacing.xl,
+    },
 
-  // Greeting
-  greetingSection: {
-    marginBottom: Spacing.xl,
-  },
-  greetingText: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  greetingSubtitle: {
-    ...Typography.body,
-    color: Colors.midGray,
-    marginTop: Spacing.xs,
-  },
+    // Greeting
+    greetingSection: {
+      marginBottom: Spacing.xl,
+    },
+    greetingText: {
+      ...typography.display,
+      color: colors.textPrimary,
+    },
+    greetingSubtitle: {
+      ...typography.body,
+      color: colors.textSecondary,
+      marginTop: Spacing.xs,
+    },
 
-  // Cards (shared)
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
+    // Cards (shared)
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      marginBottom: Spacing.base,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
 
-  // Streak
-  streakRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    marginBottom: Spacing.sm,
-  },
-  streakNumbers: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: Spacing.xs,
-  },
-  streakCount: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: Colors.darkText,
-    lineHeight: 36,
-  },
-  streakLabel: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-  streakNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 18,
-  },
+    // Streak
+    streakRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      marginBottom: Spacing.sm,
+    },
+    streakNumbers: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      gap: Spacing.xs,
+    },
+    streakCount: {
+      fontSize: 32,
+      fontWeight: '700',
+      color: colors.textPrimary,
+      lineHeight: 36,
+    },
+    streakLabel: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
+    streakNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
 
-  // Today snapshot
-  snapshotCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    marginBottom: Spacing.base,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  snapshotTitle: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-    marginBottom: Spacing.md,
-  },
-  snapshotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-  },
-  snapshotRowLeft: {
-    flex: 1,
-  },
-  snapshotRowLabel: {
-    ...Typography.caption,
-    color: Colors.deepTide,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  snapshotRowValue: {
-    ...Typography.body,
-    color: Colors.darkText,
-  },
-  snapshotRowEmpty: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-  chevron: {
-    fontSize: 22,
-    color: Colors.deepTide,
-    marginLeft: Spacing.sm,
-  },
-  rowDivider: {
-    height: 1,
-    backgroundColor: Colors.calmWave,
-    opacity: 0.25,
-  },
+    // Today snapshot
+    snapshotCard: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      marginBottom: Spacing.base,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    snapshotTitle: {
+      ...typography.micro,
+      color: colors.deepTide,
+      marginBottom: Spacing.md,
+    },
+    snapshotRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+    },
+    snapshotRowLeft: {
+      flex: 1,
+    },
+    snapshotRowLabel: {
+      ...typography.caption,
+      color: colors.deepTide,
+      fontWeight: '500',
+      marginBottom: 2,
+    },
+    snapshotRowValue: {
+      ...typography.body,
+      color: colors.textPrimary,
+    },
+    snapshotRowEmpty: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
+    chevron: {
+      fontSize: 22,
+      color: colors.deepTide,
+      marginLeft: Spacing.sm,
+    },
+    rowDivider: {
+      height: 1,
+      backgroundColor: colors.calmWave,
+      opacity: 0.25,
+    },
 
-  // Section heading
-  sectionHeading: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-    marginBottom: Spacing.md,
-    marginTop: Spacing.xs,
-  },
+    // Section heading
+    sectionHeading: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+      marginBottom: Spacing.md,
+      marginTop: Spacing.xs,
+    },
 
-  // Recent sessions scroll
-  sessionScroll: {
-    paddingBottom: Spacing.base,
-    gap: Spacing.md,
-  },
-  sessionCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    width: 140,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  sessionDate: {
-    ...Typography.micro,
-    color: Colors.calmWave,
-    marginBottom: Spacing.xs,
-  },
-  sessionDuration: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-    marginBottom: Spacing.xs,
-  },
-  sessionSounds: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 16,
-  },
+    // Recent sessions scroll
+    sessionScroll: {
+      paddingBottom: Spacing.base,
+      gap: Spacing.md,
+    },
+    sessionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      width: 140,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    sessionDate: {
+      ...typography.micro,
+      color: colors.calmWave,
+      marginBottom: Spacing.xs,
+    },
+    sessionDuration: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+      marginBottom: Spacing.xs,
+    },
+    sessionSounds: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 16,
+    },
 
-  // Empty state
-  emptyText: {
-    ...Typography.body,
-    color: Colors.midGray,
-    textAlign: 'center',
-    paddingVertical: Spacing.sm,
-  },
+    // Empty state
+    emptyText: {
+      ...typography.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: Spacing.sm,
+    },
 
-  // TFI check-in
-  tfiCard: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    marginTop: Spacing.sm,
-    elevation: 0,
-    shadowOpacity: 0,
-  },
-  tfiTitle: {
-    ...Typography.heading2,
-    color: Colors.white,
-    marginBottom: Spacing.xs,
-  },
-  tfiBody: {
-    ...Typography.body,
-    color: Colors.white,
-    opacity: 0.85,
-    marginBottom: Spacing.md,
-  },
-  tfiCta: {
-    ...Typography.body,
-    color: Colors.calmWave,
-    fontWeight: '600',
-  },
+    // TFI check-in
+    tfiCard: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      marginTop: Spacing.sm,
+      elevation: 0,
+      shadowOpacity: 0,
+    },
+    tfiTitle: {
+      ...typography.heading2,
+      color: colors.white,
+      marginBottom: Spacing.xs,
+    },
+    tfiBody: {
+      ...typography.body,
+      color: colors.white,
+      opacity: 0.85,
+      marginBottom: Spacing.md,
+    },
+    tfiCta: {
+      ...typography.body,
+      color: colors.calmWave,
+      fontWeight: '600',
+    },
 
-  bottomSpacer: {
-    height: Spacing.xxl,
-  },
-});
+    bottomSpacer: {
+      height: Spacing.xxl,
+    },
+  });
+}

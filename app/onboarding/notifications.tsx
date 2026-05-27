@@ -2,7 +2,7 @@
 // expo-notifications throws at module-evaluation time in Expo Go SDK 53.
 // The only safe pattern is a dynamic import() inside the button handler.
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -16,7 +16,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Constants from 'expo-constants';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -40,6 +41,9 @@ const NOTIFICATION_ITEMS: NotificationItem[] = [
 ];
 
 function NotificationRow({ emoji, heading, body }: NotificationItem) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={styles.notifRow}>
       <Text style={styles.notifEmoji}>{emoji}</Text>
@@ -53,6 +57,8 @@ function NotificationRow({ emoji, heading, body }: NotificationItem) {
 
 export default function NotificationsScreen() {
   const { updatePreferences } = usePreferences();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [requesting, setRequesting] = useState(false);
   const [unavailableNote, setUnavailableNote] = useState(false);
 
@@ -133,7 +139,7 @@ export default function NotificationsScreen() {
             accessibilityLabel="Allow notifications"
           >
             {requesting ? (
-              <ActivityIndicator color={Colors.white} />
+              <ActivityIndicator color={colors.white} />
             ) : (
               <Text style={styles.allowLabel}>Allow notifications</Text>
             )}
@@ -157,63 +163,68 @@ export default function NotificationsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.huge,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  notifRow: { flexDirection: 'row', gap: Spacing.md, alignItems: 'flex-start' },
-  notifEmoji: { fontSize: 20, lineHeight: 28, width: 28, textAlign: 'center' },
-  notifText: { flex: 1, gap: 2 },
-  notifHeading: { ...Typography.heading2, color: Colors.darkText },
-  notifBody: { ...Typography.body, color: Colors.midGray },
-  divider: {
-    height: Border.width,
-    backgroundColor: Colors.midGray + '30',
-    marginTop: Spacing.md,
-  },
-  devNote: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  devNoteText: {
-    ...Typography.caption,
-    color: Colors.deepTide,
-    fontStyle: 'italic',
-  },
-  note: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
-  footer: { gap: Spacing.sm },
-  allowButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    minHeight: 52,
-    justifyContent: 'center',
-  },
-  allowButtonPressed: { opacity: 0.85 },
-  allowButtonDisabled: { opacity: 0.7 },
-  allowLabel: { ...Typography.heading2, color: Colors.white },
-  skipButton: { paddingVertical: Spacing.sm, alignItems: 'center' },
-  skipButtonPressed: { opacity: 0.6 },
-  skipLabel: { ...Typography.body, color: Colors.midGray },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.huge,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    header: { gap: Spacing.sm },
+    title: { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    notifRow: { flexDirection: 'row', gap: Spacing.md, alignItems: 'flex-start' },
+    notifEmoji: { fontSize: 20, lineHeight: 28, width: 28, textAlign: 'center' },
+    notifText: { flex: 1, gap: 2 },
+    notifHeading: { ...typography.heading2, color: colors.textPrimary },
+    notifBody: { ...typography.body, color: colors.textSecondary },
+    divider: {
+      height: Border.width,
+      backgroundColor: colors.textSecondary + '30',
+      marginTop: Spacing.md,
+    },
+    devNote: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.calmWave,
+    },
+    devNoteText: {
+      ...typography.caption,
+      color: colors.deepTide,
+      fontStyle: 'italic',
+    },
+    note: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
+    footer: { gap: Spacing.sm },
+    allowButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      minHeight: 52,
+      justifyContent: 'center',
+    },
+    allowButtonPressed: { opacity: 0.85 },
+    allowButtonDisabled: { opacity: 0.7 },
+    allowLabel: { ...typography.heading2, color: colors.white },
+    skipButton: { paddingVertical: Spacing.sm, alignItems: 'center' },
+    skipButtonPressed: { opacity: 0.6 },
+    skipLabel: { ...typography.body, color: colors.textSecondary },
+  });
+}

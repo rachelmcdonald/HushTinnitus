@@ -1,6 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Image } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const MICHAEL_PHOTO = require('@/assets/images/michael.jpg');
 const RACHEL_PHOTO = require('@/assets/images/rachel.jpg');
@@ -8,13 +11,21 @@ const RACHEL_PHOTO = require('@/assets/images/rachel.jpg');
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
 function Divider() {
-  return <View style={styles.divider} />;
+  const { colors } = useTheme();
+  return <View style={{ height: 0.5, backgroundColor: colors.calmWave + '4D' }} />;
 }
 
 function RoleBadge({ label }: { label: string }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.badge}>
-      <Text style={styles.badgeText}>{label}</Text>
+    <View style={{
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: 20,
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      marginTop: 2,
+    }}>
+      <Text style={{ fontSize: 12, color: '#085041' }}>{label}</Text>
     </View>
   );
 }
@@ -22,6 +33,9 @@ function RoleBadge({ label }: { label: string }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function AboutScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -154,145 +168,99 @@ export default function AboutScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#F5F1EB' },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 32,
-    gap: 24,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: 20,
+      paddingTop: 12,
+      paddingBottom: 32,
+      gap: 24,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingRight: 8 },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { fontSize: 14, color: '#0D4F5C' },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingRight: 8 },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { fontSize: 14, color: colors.deepTide },
 
-  header: { alignItems: 'center', gap: 6 },
-  pageTitle: {
-    fontSize: 20,
-    fontWeight: '500' as const,
-    color: '#0D4F5C',
-    textAlign: 'center',
-  },
-  pageSubtitle: {
-    fontSize: 14,
-    color: '#666666',
-    textAlign: 'center',
-  },
+    header: { alignItems: 'center', gap: 6 },
+    pageTitle: {
+      fontSize: 20,
+      fontWeight: '500' as const,
+      color: colors.deepTide,
+      textAlign: 'center',
+    },
+    pageSubtitle: {
+      fontSize: 14,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
 
-  divider: {
-    height: 0.5,
-    backgroundColor: '#5DCAA54D',
-  },
+    section: { gap: 12 },
+    sectionHeading: {
+      fontSize: 16,
+      fontWeight: '500' as const,
+      color: colors.deepTide,
+    },
+    body: {
+      fontSize: 14,
+      color: colors.textPrimary,
+      lineHeight: 22,
+    },
+    closing: { fontStyle: 'italic' },
 
-  section: { gap: 12 },
-  sectionHeading: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#0D4F5C',
-  },
-  body: {
-    fontSize: 14,
-    color: '#1A2B2B',
-    lineHeight: 22,
-  },
-  closing: { fontStyle: 'italic' },
+    // Person header block (centred)
+    personHeader: {
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 4,
+    },
+    photo: {
+      width: 100,
+      height: 100,
+      borderRadius: 50,
+      borderWidth: 3,
+      borderColor: colors.calmWave,
+    },
+    personName: {
+      fontSize: 16,
+      fontWeight: '500' as const,
+      color: colors.deepTide,
+      textAlign: 'center',
+    },
+    credentials1: {
+      fontSize: 12,
+      color: colors.calmWave,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+    credentials2: {
+      fontSize: 12,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
 
-  // Person header block (centred)
-  personHeader: {
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  photo: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    borderWidth: 3,
-    borderColor: '#5DCAA5',
-  },
-  photoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#E1F5EE',
-    borderWidth: 3,
-    borderColor: '#5DCAA5',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  photoInitial: {
-    fontSize: 28,
-    fontWeight: '500' as const,
-    color: '#0D4F5C',
-  },
-  personName: {
-    fontSize: 16,
-    fontWeight: '500' as const,
-    color: '#0D4F5C',
-    textAlign: 'center',
-  },
-  credentials1: {
-    fontSize: 12,
-    color: '#5DCAA5',
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  credentials2: {
-    fontSize: 12,
-    color: '#666666',
-    textAlign: 'center',
-  },
-
-  // Role badge
-  badge: {
-    backgroundColor: '#E1F5EE',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    marginTop: 2,
-  },
-  badgeText: {
-    fontSize: 12,
-    color: '#085041',
-  },
-
-  // Values
-  valueRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 10,
-  },
-  checkmark: {
-    fontSize: 14,
-    color: '#5DCAA5',
-    lineHeight: 22,
-  },
-  valueText: {
-    fontSize: 14,
-    color: '#1A2B2B',
-    lineHeight: 22,
-    flex: 1,
-  },
-
-  // Disclaimer
-  disclaimerCard: {
-    backgroundColor: '#F5F1EB',
-    borderRadius: 8,
-    padding: 12,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#5DCAA533',
-  },
-  disclaimerTitle: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: '#666666',
-  },
-  disclaimerText: {
-    fontSize: 11,
-    color: '#666666',
-    lineHeight: 17,
-  },
-});
+    // Disclaimer
+    disclaimerCard: {
+      backgroundColor: colors.background,
+      borderRadius: 8,
+      padding: 12,
+      gap: 6,
+      borderWidth: 1,
+      borderColor: colors.calmWave + '33',
+    },
+    disclaimerTitle: {
+      fontSize: 11,
+      fontWeight: '600' as const,
+      color: colors.textSecondary,
+    },
+    disclaimerText: {
+      fontSize: 11,
+      color: colors.textSecondary,
+      lineHeight: 17,
+    },
+  });
+}

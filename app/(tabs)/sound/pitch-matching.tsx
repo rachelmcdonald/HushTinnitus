@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
@@ -10,13 +10,17 @@ import {
   formatHz,
 } from '@/src/audio/PitchMatchEngine';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const SLIDER_STEPS = 1000;
 
 // ─── Back button ──────────────────────────────────────────────────────────────
 
 function BackButton() {
+  const { typography } = useTheme();
+  const back = useMemo(() => makeBackStyles(typography), [typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [back.button, pressed && back.pressed]}
@@ -29,15 +33,19 @@ function BackButton() {
   );
 }
 
-const back = StyleSheet.create({
-  button: { paddingVertical: Spacing.sm, paddingRight: Spacing.md, alignSelf: 'flex-start' },
-  pressed: { opacity: 0.6 },
-  label: { ...Typography.body, color: Colors.deepTide },
-});
+function makeBackStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    button: { paddingVertical: Spacing.sm, paddingRight: Spacing.md, alignSelf: 'flex-start' },
+    pressed: { opacity: 0.6 },
+    label: { ...typography.body, color: Colors.deepTide },
+  });
+}
 
 // ─── Frequency display ────────────────────────────────────────────────────────
 
 function FrequencyDisplay({ hz }: { hz: number }) {
+  const { colors, typography } = useTheme();
+  const freq = useMemo(() => makeFreqStyles(colors, typography), [colors, typography]);
   const label = formatHz(hz);
   return (
     <View style={freq.container}>
@@ -47,17 +55,22 @@ function FrequencyDisplay({ hz }: { hz: number }) {
   );
 }
 
-const freq = StyleSheet.create({
-  container: { alignItems: 'center', gap: Spacing.xs },
-  value: {
-    fontSize: 52,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    letterSpacing: -1,
-    lineHeight: 60,
-  },
-  range: { ...Typography.caption, color: Colors.midGray },
-});
+function makeFreqStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: { alignItems: 'center', gap: Spacing.xs },
+    value: {
+      fontSize: 52,
+      fontWeight: '400',
+      color: Colors.deepTide,
+      letterSpacing: -1,
+      lineHeight: 60,
+    },
+    range: { ...typography.caption, color: colors.textSecondary },
+  });
+}
 
 // ─── Play / Stop button ───────────────────────────────────────────────────────
 
@@ -68,6 +81,9 @@ function PlayStopButton({
   isPlaying: boolean;
   onPress: () => void;
 }) {
+  const { colors, typography } = useTheme();
+  const btn = useMemo(() => makeBtnStyles(colors, typography), [colors, typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -94,38 +110,45 @@ function PlayStopButton({
   );
 }
 
-const btn = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.xl,
-  },
-  containerPlaying: { backgroundColor: Colors.deepTide },
-  pressed: { opacity: 0.8 },
-  playTriangle: {
-    width: 0, height: 0,
-    borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
-    borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
-    borderLeftColor: Colors.deepTide,
-  },
-  stopIcon: { flexDirection: 'row', gap: 4, alignItems: 'center' },
-  stopBar: { width: 3, height: 14, borderRadius: 2, backgroundColor: Colors.white },
-  label: { ...Typography.heading2, color: Colors.deepTide },
-  labelPlaying: { color: Colors.white },
-});
+function makeBtnStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.md,
+      paddingHorizontal: Spacing.xl,
+    },
+    containerPlaying: { backgroundColor: Colors.deepTide },
+    pressed: { opacity: 0.8 },
+    playTriangle: {
+      width: 0, height: 0,
+      borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
+      borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
+      borderLeftColor: Colors.deepTide,
+    },
+    stopIcon: { flexDirection: 'row', gap: 4, alignItems: 'center' },
+    stopBar: { width: 3, height: 14, borderRadius: 2, backgroundColor: Colors.white },
+    label: { ...typography.heading2, color: Colors.deepTide },
+    labelPlaying: { color: Colors.white },
+  });
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function PitchMatchingScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { preferences, updatePreferences } = usePreferences();
   const savedHz = preferences?.matchedPitchHz ?? null;
 
-  // Initialise slider to the saved frequency (or 1 kHz)
   const [sliderValue, setSliderValue] = useState<number>(() =>
     hzToSlider(savedHz ?? 1000)
   );
@@ -133,14 +156,12 @@ export default function PitchMatchingScreen() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Stop the tone when leaving the screen
   useEffect(() => {
     return () => {
       pitchMatchEngine.stop();
     };
   }, []);
 
-  // If playing, update frequency in real-time as slider moves
   const handleSliderChange = useCallback(
     (value: number) => {
       const rounded = Math.round(value);
@@ -187,7 +208,6 @@ export default function PitchMatchingScreen() {
       >
         <BackButton />
 
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Pitch matching</Text>
           <Text style={styles.subtitle}>
@@ -197,10 +217,8 @@ export default function PitchMatchingScreen() {
           </Text>
         </View>
 
-        {/* Frequency display */}
         <FrequencyDisplay hz={hz} />
 
-        {/* Slider */}
         <View style={styles.sliderSection}>
           <View style={styles.sliderLabelRow}>
             <Text style={styles.sliderEndLabel}>100 Hz</Text>
@@ -223,10 +241,8 @@ export default function PitchMatchingScreen() {
           </Text>
         </View>
 
-        {/* Play/stop */}
         <PlayStopButton isPlaying={isPlaying} onPress={handlePlayStop} />
 
-        {/* How to use */}
         <View style={styles.instructionCard}>
           <Text style={styles.instructionHeading}>How to use</Text>
           <Text style={styles.instructionStep}>
@@ -248,7 +264,6 @@ export default function PitchMatchingScreen() {
           </Text>
         </View>
 
-        {/* Save button */}
         {saved ? (
           <View style={styles.savedBadge}>
             <Text style={styles.savedText}>
@@ -269,7 +284,6 @@ export default function PitchMatchingScreen() {
           </Pressable>
         )}
 
-        {/* Previously saved */}
         {savedHz !== null && savedHz !== hz && (
           <View style={styles.previousSaved}>
             <Text style={styles.previousSavedText}>
@@ -296,75 +310,75 @@ export default function PitchMatchingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  // Header
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
+    header: { gap: Spacing.sm },
+    title:    { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
 
-  // Slider section
-  sliderSection: { gap: Spacing.sm },
-  sliderLabelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  sliderEndLabel: { ...Typography.caption, color: Colors.midGray },
-  slider: { width: '100%', height: 40 },
-  sliderHint: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
+    sliderSection: { gap: Spacing.sm },
+    sliderLabelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    sliderEndLabel: { ...typography.caption, color: colors.textSecondary },
+    slider: { width: '100%', height: 40 },
+    sliderHint: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
 
-  // Instruction card
-  instructionCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  instructionHeading: { ...Typography.heading2, color: Colors.darkText },
-  instructionStep: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
-  instructionNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    marginTop: Spacing.xs,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    paddingTop: Spacing.sm,
-  },
+    instructionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    instructionHeading: { ...typography.heading2, color: colors.textPrimary },
+    instructionStep:    { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    instructionNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: Spacing.xs,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      paddingTop: Spacing.sm,
+    },
 
-  // Save
-  saveButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  saveButtonPressed: { opacity: 0.85 },
-  saveLabel: { ...Typography.heading2, color: Colors.white },
-  savedBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.base,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  savedText: { ...Typography.body, color: Colors.deepTide },
+    saveButton: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    saveButtonPressed: { opacity: 0.85 },
+    saveLabel: { ...typography.heading2, color: Colors.white },
+    savedBadge: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.base,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    savedText: { ...typography.body, color: Colors.deepTide },
 
-  // Previously saved
-  previousSaved: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  previousSavedText: { ...Typography.caption, color: Colors.midGray },
-  restoreLabel: { ...Typography.caption, color: Colors.deepTide, fontWeight: '500' },
-});
+    previousSaved: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    previousSavedText: { ...typography.caption, color: colors.textSecondary },
+    restoreLabel: { ...typography.caption, color: Colors.deepTide, fontWeight: '500' },
+  });
+}

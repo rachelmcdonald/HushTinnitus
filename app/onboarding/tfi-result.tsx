@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,7 +14,8 @@ import { TFIAssessment } from '@/src/types';
 import { getAssessmentById } from '@/src/storage/tfi';
 import { gradeFromScore } from '@/src/utils/tfiScoring';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, TFISeverityColors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Grade content — Section 5.3 ─────────────────────────────────────────────
 
@@ -75,29 +76,32 @@ function topTwoSubscales(subscales: TFIAssessment['subscales']): Set<SubscaleKey
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function GradeBadge({ grade }: { grade: TFIAssessment['grade'] }) {
-  const colors = severityColors(
+  const gradeColors = severityColors(
     { 'not-significant': 8, small: 24, moderate: 42, big: 63, 'very-big': 80 }[grade]
   );
+  const badgeStyles = useMemo(() => StyleSheet.create({
+    container: {
+      alignSelf: 'flex-start',
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      backgroundColor: gradeColors.background,
+    },
+    text: {
+      fontSize: 11,
+      fontWeight: '600' as const,
+      color: gradeColors.text,
+    },
+  }), [gradeColors]);
+
   return (
-    <View style={[badge.container, { backgroundColor: colors.background }]}>
-      <Text style={[badge.text, { color: colors.text }]}>
+    <View style={badgeStyles.container}>
+      <Text style={badgeStyles.text}>
         {GRADE_LABELS[grade]}
       </Text>
     </View>
   );
 }
-
-const badge = StyleSheet.create({
-  container: {
-    alignSelf: 'flex-start',
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  text: {
-    ...Typography.micro,
-  },
-});
 
 type BarRowProps = {
   label: string;
@@ -106,78 +110,136 @@ type BarRowProps = {
 };
 
 function BarRow({ label, score, isFocusArea }: BarRowProps) {
-  const colors = severityColors(score);
+  const { colors, typography } = useTheme();
+  const gradeColors = severityColors(score);
   const pct = Math.min(100, Math.max(0, score));
+  const barStyles = useMemo(() => StyleSheet.create({
+    row: {
+      gap: Spacing.xs,
+    },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    label: {
+      ...typography.caption,
+      color: colors.textPrimary,
+      flex: 1,
+    },
+    focusBadge: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: 4,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+    },
+    focusText: {
+      ...typography.micro,
+      fontSize: 9,
+      color: colors.deepTide,
+    },
+    track: {
+      height: 6,
+      backgroundColor: colors.textSecondary + '25',
+      borderRadius: 3,
+      overflow: 'hidden',
+    },
+    fill: {
+      height: '100%',
+      borderRadius: 3,
+    },
+    score: {
+      ...typography.caption,
+      fontWeight: '500' as const,
+    },
+  }), [colors, typography]);
 
   return (
-    <View style={bar.row}>
-      <View style={bar.labelRow}>
-        <Text style={bar.label}>{label}</Text>
+    <View style={barStyles.row}>
+      <View style={barStyles.labelRow}>
+        <Text style={barStyles.label}>{label}</Text>
         {isFocusArea && (
-          <View style={bar.focusBadge}>
-            <Text style={bar.focusText}>Focus area</Text>
+          <View style={barStyles.focusBadge}>
+            <Text style={barStyles.focusText}>Focus area</Text>
           </View>
         )}
       </View>
-      <View style={bar.track}>
+      <View style={barStyles.track}>
         <View
           style={[
-            bar.fill,
-            { width: `${pct}%`, backgroundColor: colors.text },
+            barStyles.fill,
+            { width: `${pct}%`, backgroundColor: gradeColors.text },
           ]}
         />
       </View>
-      <Text style={[bar.score, { color: colors.text }]}>
+      <Text style={[barStyles.score, { color: gradeColors.text }]}>
         {Math.round(score)}
       </Text>
     </View>
   );
 }
 
-const bar = StyleSheet.create({
-  row: {
-    gap: Spacing.xs,
-  },
-  labelRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  label: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    flex: 1,
-  },
-  focusBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: 4,
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  focusText: {
-    ...Typography.micro,
-    fontSize: 9,
-    color: Colors.deepTide,
-  },
-  track: {
-    height: 6,
-    backgroundColor: Colors.midGray + '25',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  score: {
-    ...Typography.caption,
-    fontWeight: '500',
-  },
-});
-
 // ─── Very big grade — referral note ──────────────────────────────────────────
 
 function VeryBigReferralCard({ totalScore }: { totalScore: number }) {
+  const { colors, typography } = useTheme();
+  const referralStyles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.coralLight,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    accentBorder: {
+      width: 3,
+      height: 18,
+      backgroundColor: colors.warmCoral,
+      borderRadius: 2,
+    },
+    heading: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+    },
+    body: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
+    noteBox: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+    },
+    noteText: {
+      ...typography.body,
+      color: colors.textPrimary,
+      lineHeight: 22,
+    },
+    copyButton: {
+      borderWidth: Border.width * 2,
+      borderColor: colors.warmCoral,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    copyButtonDone: {
+      borderColor: colors.calmWave,
+      backgroundColor: colors.surfaceVariant,
+    },
+    copyButtonPressed: { opacity: 0.7 },
+    copyLabel: {
+      ...typography.heading2,
+      color: colors.warmCoral,
+    },
+    copyLabelDone: {
+      color: colors.calmWave,
+    },
+  }), [colors, typography]);
+
   const [copied, setCopied] = useState(false);
   const note =
     `Dear Doctor,\n\n` +
@@ -194,91 +256,34 @@ function VeryBigReferralCard({ totalScore }: { totalScore: number }) {
   }
 
   return (
-    <View style={referral.card}>
-      <View style={referral.headerRow}>
-        <View style={referral.accentBorder} />
-        <Text style={referral.heading}>Referral note</Text>
+    <View style={referralStyles.card}>
+      <View style={referralStyles.headerRow}>
+        <View style={referralStyles.accentBorder} />
+        <Text style={referralStyles.heading}>Referral note</Text>
       </View>
-      <Text style={referral.body}>
+      <Text style={referralStyles.body}>
         Copy this to share with your doctor or receptionist.
       </Text>
-      <View style={referral.noteBox}>
-        <Text style={referral.noteText} selectable>{note}</Text>
+      <View style={referralStyles.noteBox}>
+        <Text style={referralStyles.noteText} selectable>{note}</Text>
       </View>
       <Pressable
         style={({ pressed }) => [
-          referral.copyButton,
-          copied && referral.copyButtonDone,
-          pressed && !copied && referral.copyButtonPressed,
+          referralStyles.copyButton,
+          copied && referralStyles.copyButtonDone,
+          pressed && !copied && referralStyles.copyButtonPressed,
         ]}
         onPress={handleCopy}
         accessibilityRole="button"
         accessibilityLabel={copied ? 'Copied' : 'Copy referral note to clipboard'}
       >
-        <Text style={[referral.copyLabel, copied && referral.copyLabelDone]}>
+        <Text style={[referralStyles.copyLabel, copied && referralStyles.copyLabelDone]}>
           {copied ? 'Copied ✓' : 'Copy to clipboard'}
         </Text>
       </Pressable>
     </View>
   );
 }
-
-const referral = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.coralLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  accentBorder: {
-    width: 3,
-    height: 18,
-    backgroundColor: Colors.warmCoral,
-    borderRadius: 2,
-  },
-  heading: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  body: {
-    ...Typography.caption,
-    color: Colors.midGray,
-  },
-  noteBox: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-  },
-  noteText: {
-    ...Typography.body,
-    color: Colors.darkText,
-    lineHeight: 22,
-  },
-  copyButton: {
-    borderWidth: Border.width * 2,
-    borderColor: Colors.warmCoral,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  copyButtonDone: {
-    borderColor: Colors.calmWave,
-    backgroundColor: Colors.tealLight,
-  },
-  copyButtonPressed: { opacity: 0.7 },
-  copyLabel: {
-    ...Typography.heading2,
-    color: Colors.warmCoral,
-  },
-  copyLabelDone: {
-    color: Colors.calmWave,
-  },
-});
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
@@ -292,6 +297,8 @@ type Params = {
 export default function TFIResultScreen() {
   const params = useLocalSearchParams<Params>();
   const { updatePreferences } = usePreferences();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [assessment, setAssessment] = useState<TFIAssessment | null>(null);
 
   useEffect(() => {
@@ -399,91 +406,96 @@ export default function TFIResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flexGrow: 1,
-    padding: Spacing.xl,
-    gap: Spacing.base,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      padding: Spacing.xl,
+      gap: Spacing.base,
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    loadingText: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
 
-  // Score card
-  scoreCard: {
-    borderRadius: Radius.card,
-    padding: Spacing.xl,
-    alignItems: 'flex-start',
-    gap: Spacing.md,
-  },
-  scoreNumber: {
-    fontSize: 72,
-    fontWeight: '400',
-    lineHeight: 80,
-    letterSpacing: -1.5,
-  },
-  scoreOf: {
-    ...Typography.body,
-    marginTop: -Spacing.md,
-  },
-  scoreMessage: {
-    ...Typography.body,
-    lineHeight: 24,
-    marginTop: Spacing.xs,
-  },
+    // Score card
+    scoreCard: {
+      borderRadius: Radius.card,
+      padding: Spacing.xl,
+      alignItems: 'flex-start',
+      gap: Spacing.md,
+    },
+    scoreNumber: {
+      fontSize: 72,
+      fontWeight: '400',
+      lineHeight: 80,
+      letterSpacing: -1.5,
+    },
+    scoreOf: {
+      ...typography.body,
+      marginTop: -Spacing.md,
+    },
+    scoreMessage: {
+      ...typography.body,
+      lineHeight: 24,
+      marginTop: Spacing.xs,
+    },
 
-  // Subscale chart card
-  chartCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  chartTitle: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  chartSubtitle: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    marginTop: -Spacing.sm,
-  },
-  chartRows: {
-    gap: Spacing.md,
-  },
-  focusNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '30',
-    paddingTop: Spacing.md,
-  },
+    // Subscale chart card
+    chartCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    chartTitle: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+    },
+    chartSubtitle: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: -Spacing.sm,
+    },
+    chartRows: {
+      gap: Spacing.md,
+    },
+    focusNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      borderTopWidth: Border.width,
+      borderTopColor: colors.textSecondary + '30',
+      paddingTop: Spacing.md,
+    },
 
-  // Footer
-  footer: {
-    marginTop: Spacing.sm,
-  },
-  ctaButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  ctaButtonPressed: {
-    opacity: 0.85,
-  },
-  ctaLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-});
+    // Footer
+    footer: {
+      marginTop: Spacing.sm,
+    },
+    ctaButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    ctaButtonPressed: {
+      opacity: 0.85,
+    },
+    ctaLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+  });
+}

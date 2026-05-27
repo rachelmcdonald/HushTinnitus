@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -9,7 +9,8 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-import { Duration, Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Duration, Colors, Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 
 // ─── Phase definitions ────────────────────────────────────────────────────────
@@ -62,6 +63,9 @@ function saveSession(durationSeconds: number) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function Breathing478Screen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [countdown, setCountdown] = useState(0);
@@ -72,12 +76,10 @@ export default function Breathing478Screen() {
   const isRunningRef = useRef(false);
   const sessionStartRef = useRef<number | null>(null);
 
-  // Animated circle style
   const animatedCircleStyle = useAnimatedStyle(() => ({
     transform: [{ scale: circleScale.value }],
   }));
 
-  // Clear any running interval
   function clearTimers() {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -85,7 +87,6 @@ export default function Breathing478Screen() {
     }
   }
 
-  // Start a countdown for a phase, calling onDone when it reaches zero
   function startCountdown(seconds: number, onDone: () => void) {
     clearTimers();
     setCountdown(seconds);
@@ -117,7 +118,6 @@ export default function Breathing478Screen() {
   const runHold = useCallback(() => {
     if (!isRunningRef.current) return;
     setPhase('hold');
-    // Circle stays expanded — no scale animation
     startCountdown(PHASES.hold.seconds, runExhale);
   }, [runExhale]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -157,7 +157,6 @@ export default function Breathing478Screen() {
     }
   }
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       isRunningRef.current = false;
@@ -217,13 +216,11 @@ export default function Breathing478Screen() {
 
         {/* Animated circle */}
         <View style={styles.circleContainer}>
-          {/* Outer glow ring */}
           <Animated.View style={[styles.circleGlow, animatedCircleStyle]} />
-          {/* Main circle */}
           <Animated.View style={[styles.circle, animatedCircleStyle]} />
         </View>
 
-        {/* Phase guide (shows durations) */}
+        {/* Phase guide */}
         <View style={styles.phaseGuide}>
           {(['inhale', 'hold', 'exhale'] as const).map((p) => (
             <View
@@ -277,106 +274,107 @@ export default function Breathing478Screen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.lg,
+    },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: colors.deepTide },
+    header: { gap: Spacing.sm },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  // Phase indicator
-  phaseArea: {
-    alignItems: 'center',
-    minHeight: 80,
-    justifyContent: 'center',
-    gap: 4,
-  },
-  phaseLabel: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    letterSpacing: -0.5,
-  },
-  phaseHint: { ...Typography.body, color: Colors.midGray },
-  countdown: {
-    fontSize: 52,
-    fontWeight: '300',
-    color: Colors.deepTide,
-    lineHeight: 60,
-  },
-  idleLabel: { ...Typography.body, color: Colors.midGray, textAlign: 'center' },
+    phaseArea: {
+      alignItems: 'center',
+      minHeight: 80,
+      justifyContent: 'center',
+      gap: 4,
+    },
+    phaseLabel: {
+      fontSize: 28,
+      fontWeight: '400',
+      color: colors.deepTide,
+      letterSpacing: -0.5,
+    },
+    phaseHint: { ...typography.body, color: colors.textSecondary },
+    countdown: {
+      fontSize: 52,
+      fontWeight: '300',
+      color: colors.deepTide,
+      lineHeight: 60,
+    },
+    idleLabel: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
 
-  // Circle animation area
-  circleContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: CIRCLE_BASE * EXPANDED_SCALE + 40,
-  },
-  circleGlow: {
-    position: 'absolute',
-    width: CIRCLE_BASE + 30,
-    height: CIRCLE_BASE + 30,
-    borderRadius: (CIRCLE_BASE + 30) / 2,
-    backgroundColor: Colors.calmWave + '25',
-  },
-  circle: {
-    width: CIRCLE_BASE,
-    height: CIRCLE_BASE,
-    borderRadius: CIRCLE_BASE / 2,
-    backgroundColor: Colors.calmWave,
-    shadowColor: Colors.calmWave,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
-  },
+    circleContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: CIRCLE_BASE * EXPANDED_SCALE + 40,
+    },
+    circleGlow: {
+      position: 'absolute',
+      width: CIRCLE_BASE + 30,
+      height: CIRCLE_BASE + 30,
+      borderRadius: (CIRCLE_BASE + 30) / 2,
+      backgroundColor: Colors.calmWave + '25',
+    },
+    circle: {
+      width: CIRCLE_BASE,
+      height: CIRCLE_BASE,
+      borderRadius: CIRCLE_BASE / 2,
+      backgroundColor: Colors.calmWave,
+      shadowColor: Colors.calmWave,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.3,
+      shadowRadius: 20,
+      elevation: 8,
+    },
 
-  // Phase guide row
-  phaseGuide: {
-    flexDirection: 'row',
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  phaseStep: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.chip,
-    gap: 2,
-  },
-  phaseStepActive: { backgroundColor: Colors.tealLight },
-  phaseStepLabel: { ...Typography.caption, color: Colors.midGray },
-  phaseStepLabelActive: { color: Colors.deepTide, fontWeight: '600' },
-  phaseStepCount: { ...Typography.heading2, color: Colors.midGray },
-  phaseStepCountActive: { color: Colors.deepTide },
+    phaseGuide: {
+      flexDirection: 'row',
+      backgroundColor: colors.background,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      gap: Spacing.xs,
+    },
+    phaseStep: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.chip,
+      gap: 2,
+    },
+    phaseStepActive: { backgroundColor: colors.surfaceVariant },
+    phaseStepLabel: { ...typography.caption, color: colors.textSecondary },
+    phaseStepLabelActive: { color: colors.deepTide, fontWeight: '600' },
+    phaseStepCount: { ...typography.heading2, color: colors.textSecondary },
+    phaseStepCountActive: { color: colors.deepTide },
 
-  // Buttons
-  btn: {
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  btnStart: { backgroundColor: Colors.deepTide },
-  btnStop: { backgroundColor: Colors.warmCoral },
-  btnPressed: { opacity: 0.85 },
-  btnLabel: { ...Typography.heading2, color: Colors.white },
+    btn: {
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    btnStart: { backgroundColor: Colors.deepTide },
+    btnStop: { backgroundColor: Colors.warmCoral },
+    btnPressed: { opacity: 0.85 },
+    btnLabel: { ...typography.heading2, color: Colors.white },
 
-  tip: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
-});
+    tip: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      lineHeight: 20,
+      fontStyle: 'italic',
+    },
+  });
+}

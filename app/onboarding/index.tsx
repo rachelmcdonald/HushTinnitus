@@ -1,16 +1,20 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
-import { Colors, Typography, Spacing, Radius, Duration } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // Logo mark — Section 4.1
 // Settling waveform: sound waves that rise and fall, resolving to calm centre
 function LogoMark({ size = 88 }: { size?: number }) {
+  const { colors } = useTheme();
+
   return (
     <View
       style={[
-        styles.logoMark,
+        { backgroundColor: colors.deepTide, justifyContent: 'center', alignItems: 'center' },
         { width: size, height: size, borderRadius: size * 0.26 },
       ]}
     >
@@ -22,14 +26,14 @@ function LogoMark({ size = 88 }: { size?: number }) {
         {/* Waveform path — stroke #5DCAA5 per spec Section 4.1 */}
         <Path
           d="M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19"
-          stroke={Colors.calmWave}
+          stroke={colors.calmWave}
           strokeWidth="1.8"
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         {/* Centre dot — fill #E1F5EE per spec Section 4.1 */}
-        <Circle cx="19" cy="19" r="1.8" fill={Colors.tealLight} />
+        <Circle cx="19" cy="19" r="1.8" fill={colors.tealLight} />
       </Svg>
     </View>
   );
@@ -38,15 +42,20 @@ function LogoMark({ size = 88 }: { size?: number }) {
 // Wordmark — Section 4.1
 // "Hush" regular weight deep tide / "Tinnitus" medium weight calm wave, lowercase
 function Wordmark() {
+  const { colors, typography } = useTheme();
+
   return (
-    <View style={styles.wordmarkRow}>
-      <Text style={styles.wordmarkHush}>hush </Text>
-      <Text style={styles.wordmarkTinnitus}>tinnitus</Text>
+    <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+      <Text style={{ ...typography.display, color: colors.deepTide }}>hush </Text>
+      <Text style={{ ...typography.display, fontWeight: '500', color: colors.calmWave }}>tinnitus</Text>
     </View>
   );
 }
 
 export default function WelcomeScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   function handleGetStarted() {
     router.push('/onboarding/red-flag');
   }
@@ -90,75 +99,62 @@ export default function WelcomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  container: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    justifyContent: 'space-between',
-    paddingTop: Spacing.huge * 2,
-    paddingBottom: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    container: {
+      flex: 1,
+      paddingHorizontal: Spacing.xl,
+      justifyContent: 'space-between',
+      paddingTop: Spacing.huge * 2,
+      paddingBottom: Spacing.xl,
+    },
 
-  // Brand block
-  brandBlock: {
-    alignItems: 'center',
-    gap: Spacing.base,
-  },
-  logoMark: {
-    backgroundColor: Colors.deepTide,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  wordmarkRow: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  wordmarkHush: {
-    ...Typography.display,
-    color: Colors.deepTide,
-  },
-  wordmarkTinnitus: {
-    ...Typography.display,
-    fontWeight: '500',
-    color: Colors.calmWave,
-  },
-  tagline: {
-    ...Typography.body,
-    color: Colors.midGray,
-    textAlign: 'center',
-  },
+    // Brand block
+    brandBlock: {
+      alignItems: 'center',
+      gap: Spacing.base,
+    },
 
-  // Purpose block
-  purposeBlock: {
-    alignItems: 'center',
-    paddingHorizontal: Spacing.sm,
-  },
-  purpose: {
-    ...Typography.body,
-    color: Colors.darkText,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
+    // Purpose block
+    purposeBlock: {
+      alignItems: 'center',
+      paddingHorizontal: Spacing.sm,
+    },
+    tagline: {
+      ...typography.body,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    purpose: {
+      ...typography.body,
+      color: colors.textPrimary,
+      textAlign: 'center',
+      lineHeight: 24,
+    },
 
-  // CTA block
-  ctaBlock: {
-    gap: Spacing.md,
-  },
-  ctaButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  ctaButtonPressed: {
-    opacity: 0.85,
-  },
-  ctaLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-});
+    // CTA block
+    ctaBlock: {
+      gap: Spacing.md,
+    },
+    ctaButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    ctaButtonPressed: {
+      opacity: 0.85,
+    },
+    ctaLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+  });
+}

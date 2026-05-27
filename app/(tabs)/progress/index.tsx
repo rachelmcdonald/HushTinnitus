@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   Platform, Alert, useWindowDimensions, ActivityIndicator,
@@ -13,8 +13,9 @@ import {
 } from '@/src/storage/symptomLog';
 import { getAllAssessments } from '@/src/storage/tfi';
 import { TFIAssessment, SymptomLog } from '@/src/types';
-import { Colors, TFISeverityColors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import PremiumGate from '@/src/components/PremiumGate';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Grade helpers ────────────────────────────────────────────────────────────
 
@@ -76,7 +77,6 @@ function SymptomLineChart({
 
   return (
     <Svg width={chartWidth} height={height}>
-      {/* Gridlines at 0, 5, 10 */}
       {[0, 5, maxValue].map((v) => {
         const y = padY + h - (v / maxValue) * h;
         return (
@@ -132,20 +132,17 @@ function TFITrendChart({
 
   const polyline = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  // MCID reference: baseline score - 13
   const mcidTarget = Math.max(0, assessments[0].totalScore - 13);
   const mcidY = padY + h - (mcidTarget / 100) * h;
 
   return (
     <Svg width={chartWidth} height={height}>
-      {/* MCID dotted line */}
       <SvgLine
         x1={padX} y1={mcidY} x2={padX + w} y2={mcidY}
         stroke={Colors.calmWave}
         strokeWidth={1.5}
         strokeDasharray="5,4"
       />
-      {/* Trend line */}
       <Polyline
         points={polyline}
         fill="none"
@@ -154,7 +151,6 @@ function TFITrendChart({
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      {/* Dots with score */}
       {pts.map((p, i) => (
         <Svg key={i}>
           <Circle cx={p.x} cy={p.y} r={6} fill={Colors.deepTide} />
@@ -277,12 +273,19 @@ function getRetestWeek(
 // ─── Section label ────────────────────────────────────────────────────────────
 
 function SectionLabel({ label }: { label: string }) {
-  return <Text style={styles.sectionLabel}>{label}</Text>;
+  const { typography } = useTheme();
+  const s = useMemo(() => StyleSheet.create({
+    text: { ...typography.micro, color: Colors.deepTide, marginTop: Spacing.sm, marginBottom: Spacing.xs },
+  }), [typography]);
+  return <Text style={s.text}>{label}</Text>;
 }
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function ProgressScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const { width } = useWindowDimensions();
@@ -313,7 +316,6 @@ export default function ProgressScreen() {
       setTriggerStats(getTriggerStats());
       setSessionStats(getSessionStats());
 
-      // Most recent log for today (getTodayLogs returns DESC order)
       const todayLogs = getTodayLogs();
       setTodayEntry(todayLogs[0] ?? null);
     }, [])
@@ -340,7 +342,6 @@ export default function ProgressScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Progress</Text>
           <Text style={styles.subtitle}>
@@ -428,7 +429,6 @@ export default function ProgressScreen() {
               })}
             </Text>
 
-            {/* Retest prompt */}
             {retestWeek && (
               <View style={styles.retestPrompt}>
                 <Text style={styles.retestText}>
@@ -516,7 +516,6 @@ export default function ProgressScreen() {
                     Dotted line = MCID target (13-point improvement considered clinically meaningful)
                   </Text>
                 </View>
-                {/* Highlight if MCID achieved */}
                 {assessments.length >= 2 &&
                   assessments[0].totalScore - assessments[assessments.length - 1].totalScore >= 13 && (
                     <View style={styles.mcidAchieved}>
@@ -609,239 +608,237 @@ export default function ProgressScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.md,
-  },
-  header: { gap: Spacing.xs, marginBottom: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.md,
+    },
+    header: { gap: Spacing.xs, marginBottom: Spacing.sm },
+    title:    { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
 
-  sectionLabel: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-    marginTop: Spacing.sm,
-    marginBottom: Spacing.xs,
-  },
+    // Log today
+    logCard: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    logCardPressed: { opacity: 0.9 },
+    logCardLeft: { flex: 1, gap: 2 },
+    logCardTitle: { ...typography.heading2, color: Colors.white },
+    logCardSub: { ...typography.caption, color: Colors.white + 'BB' },
+    logCardLogged: {
+      backgroundColor: colors.background,
+      borderWidth: Border.width * 2,
+      borderColor: Colors.calmWave,
+    },
+    logCardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+    logCardCheckmark: { ...typography.body, color: Colors.calmWave, fontWeight: '600' as const },
+    logCardTitleLogged: { ...typography.heading2, color: colors.textPrimary },
+    logCardSummary: { ...typography.caption, color: colors.textSecondary },
+    logCardBadge: {
+      backgroundColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    logCardBadgeDone: { backgroundColor: colors.surfaceVariant },
+    logCardBadgeText: { ...typography.micro, color: Colors.white },
+    logCardBadgeTextDone: { color: Colors.deepTide },
 
-  // Log today
-  logCard: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  logCardPressed: { opacity: 0.9 },
-  logCardLeft: { flex: 1, gap: 2 },
-  logCardTitle: { ...Typography.heading2, color: Colors.white },
-  logCardSub: { ...Typography.caption, color: Colors.white + 'BB' },
-  logCardLogged: {
-    backgroundColor: Colors.warmSand,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.calmWave,
-  },
-  logCardTitleRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  logCardCheckmark: { ...Typography.body, color: Colors.calmWave, fontWeight: '600' as const },
-  logCardTitleLogged: { ...Typography.heading2, color: Colors.darkText },
-  logCardSummary: { ...Typography.caption, color: Colors.midGray },
-  logCardBadge: {
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  logCardBadgeDone: { backgroundColor: Colors.tealLight },
-  logCardBadgeText: { ...Typography.micro, color: Colors.white },
-  logCardBadgeTextDone: { color: Colors.deepTide },
+    // Stats
+    statsRow: { flexDirection: 'row', gap: Spacing.md },
+    statCard: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      alignItems: 'center',
+      gap: Spacing.xs,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    statValue: { fontSize: 28, fontWeight: '400', color: Colors.deepTide },
+    statLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
 
-  // Stats
-  statsRow: { flexDirection: 'row', gap: Spacing.md },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    alignItems: 'center',
-    gap: Spacing.xs,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  statValue: { fontSize: 28, fontWeight: '400', color: Colors.deepTide },
-  statLabel: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
+    // TFI card
+    tfiCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    tfiCardRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+    },
+    tfiScore: { fontSize: 40, fontWeight: '400', color: Colors.deepTide, lineHeight: 44 },
+    tfiScoreOf: { ...typography.caption, color: colors.textSecondary },
+    gradeBadge: {
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      alignSelf: 'flex-end',
+    },
+    gradeBadgeText: { ...typography.micro },
+    tfiDate: { ...typography.caption, color: colors.textSecondary },
+    tfiEmptyCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.xs,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+      opacity: 0.7,
+    },
+    tfiEmptyTitle: { ...typography.heading2, color: colors.textSecondary },
+    tfiEmptyBody:  { ...typography.body, color: colors.textSecondary },
 
-  // TFI card
-  tfiCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  tfiCardRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  tfiScore: { fontSize: 40, fontWeight: '400', color: Colors.deepTide, lineHeight: 44 },
-  tfiScoreOf: { ...Typography.caption, color: Colors.midGray },
-  gradeBadge: {
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    alignSelf: 'flex-end',
-  },
-  gradeBadgeText: { ...Typography.micro },
-  tfiDate: { ...Typography.caption, color: Colors.midGray },
-  tfiEmptyCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.xs,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-    opacity: 0.7,
-  },
-  tfiEmptyTitle: { ...Typography.heading2, color: Colors.midGray },
-  tfiEmptyBody: { ...Typography.body, color: Colors.midGray },
+    // Retest prompt
+    retestPrompt: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    retestText: { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    retestBtn: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    retestBtnPressed: { opacity: 0.85 },
+    retestBtnLabel: { ...typography.heading2, color: Colors.white },
 
-  // Retest prompt
-  retestPrompt: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  retestText: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
-  retestBtn: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  retestBtnPressed: { opacity: 0.85 },
-  retestBtnLabel: { ...Typography.heading2, color: Colors.white },
+    // Chart cards (shared)
+    chartCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    chartCardTitle: { ...typography.heading2, color: colors.textPrimary },
+    chartEmpty: {
+      ...typography.body,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      textAlign: 'center',
+      paddingVertical: Spacing.xl,
+    },
 
-  // Chart cards (shared)
-  chartCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  chartCardTitle: { ...Typography.heading2, color: Colors.darkText },
-  chartEmpty: {
-    ...Typography.body,
-    color: Colors.midGray,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    paddingVertical: Spacing.xl,
-  },
+    // Chart legend
+    chartLegend: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+      flexWrap: 'wrap',
+    },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+    legendDot:  { width: 8, height: 8, borderRadius: 4 },
+    legendLabel: { ...typography.caption, color: colors.textSecondary },
+    legendScale: { ...typography.caption, color: colors.textSecondary, marginLeft: 'auto' as any },
 
-  // Chart legend
-  chartLegend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flexWrap: 'wrap',
-  },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendLabel: { ...Typography.caption, color: Colors.midGray },
-  legendScale: { ...Typography.caption, color: Colors.midGray, marginLeft: 'auto' as any },
+    // TFI trend labels
+    tfiTrendLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    tfiTrendLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
+    tfiTrendScore: { ...typography.body, color: Colors.deepTide, fontWeight: '500' as const },
+    mcidNote: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: Spacing.xs,
+      marginTop: -Spacing.xs,
+    },
+    mcidNoteText: { ...typography.caption, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+    mcidAchieved: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    mcidAchievedText: { ...typography.body, color: Colors.deepTide, lineHeight: 22 },
 
-  // TFI trend labels
-  tfiTrendLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  tfiTrendLabel: { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
-  tfiTrendScore: { ...Typography.body, color: Colors.deepTide, fontWeight: '500' as const },
-  mcidNote: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.xs,
-    marginTop: -Spacing.xs,
-  },
-  mcidNoteText: { ...Typography.caption, color: Colors.midGray, flex: 1, lineHeight: 18 },
-  mcidAchieved: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  mcidAchievedText: { ...Typography.body, color: Colors.deepTide, lineHeight: 22 },
+    // Trigger patterns
+    triggerList: { gap: Spacing.sm },
+    triggerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    triggerTag: {
+      ...typography.caption,
+      color: colors.textPrimary,
+      width: 72,
+      textTransform: 'capitalize',
+    },
+    triggerBarTrack: {
+      flex: 1,
+      height: 6,
+      backgroundColor: colors.textSecondary + '25',
+      borderRadius: 3,
+      overflow: 'hidden',
+    },
+    triggerBarFill: {
+      height: '100%',
+      backgroundColor: Colors.warmCoral,
+      borderRadius: 3,
+    },
+    triggerValue: { ...typography.caption, color: colors.textPrimary, width: 24, textAlign: 'right' },
+    triggerCount: { ...typography.caption, color: colors.textSecondary, width: 32 },
+    triggerNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      lineHeight: 18,
+      marginTop: Spacing.xs,
+    },
 
-  // Trigger patterns
-  triggerList: { gap: Spacing.sm },
-  triggerRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  triggerTag: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    width: 72,
-    textTransform: 'capitalize',
-  },
-  triggerBarTrack: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.midGray + '25',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  triggerBarFill: {
-    height: '100%',
-    backgroundColor: Colors.warmCoral,
-    borderRadius: 3,
-  },
-  triggerValue: { ...Typography.caption, color: Colors.darkText, width: 24, textAlign: 'right' },
-  triggerCount: { ...Typography.caption, color: Colors.midGray, width: 32 },
-  triggerNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    fontStyle: 'italic',
-    lineHeight: 18,
-    marginTop: Spacing.xs,
-  },
+    // Export
+    exportCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    exportTitle: { ...typography.heading2, color: colors.textPrimary },
+    exportBody:  { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
+    exportBtn: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    exportBtnLoading: { opacity: 0.7 },
+    exportBtnPressed: { opacity: 0.85 },
+    exportBtnLabel: { ...typography.heading2, color: Colors.white },
 
-  // Export
-  exportCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  exportTitle: { ...Typography.heading2, color: Colors.darkText },
-  exportBody: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },
-  exportBtn: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  exportBtnLoading: { opacity: 0.7 },
-  exportBtnPressed: { opacity: 0.85 },
-  exportBtnLabel: { ...Typography.heading2, color: Colors.white },
-
-  footerDisclaimer: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    marginTop: Spacing.md,
-  },
-});
+    footerDisclaimer: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+      marginTop: Spacing.md,
+    },
+  });
+}

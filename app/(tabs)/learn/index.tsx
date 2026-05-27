@@ -1,8 +1,10 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Typography, Spacing, Radius } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Content catalogue ────────────────────────────────────────────────────────
 
@@ -63,6 +65,9 @@ const GRID_ITEMS: GridItem[] = [
 // ─── Grid card ────────────────────────────────────────────────────────────────
 
 function GridCard({ item, width }: { item: GridItem; width: number }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.gridCard, { width }, pressed && styles.cardPressed]}
@@ -71,7 +76,7 @@ function GridCard({ item, width }: { item: GridItem; width: number }) {
       accessibilityLabel={`Open ${item.title}`}
     >
       <View style={styles.gridCardTop}>
-        <Ionicons name={item.icon} size={22} color={Colors.deepTide} />
+        <Ionicons name={item.icon} size={22} color={colors.deepTide} />
         {item.premium && (
           <View style={styles.premiumBadge}>
             <Text style={styles.premiumBadgeText}>Premium</Text>
@@ -87,6 +92,9 @@ function GridCard({ item, width }: { item: GridItem; width: number }) {
 // ─── About card ───────────────────────────────────────────────────────────────
 
 function AboutCard() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [styles.aboutCard, pressed && styles.cardPressed]}
@@ -103,6 +111,8 @@ function AboutCard() {
 
 export default function LearnScreen() {
   const { width } = useWindowDimensions();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const cardWidth = (width - Spacing.xl * 2 - Spacing.sm) / 2;
 
   return (
@@ -135,62 +145,67 @@ export default function LearnScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
+    header: { gap: Spacing.sm },
+    title: { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
 
-  // Grid
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  gridCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-    minHeight: 110,
-  },
-  cardPressed: { opacity: 0.8 },
-  gridCardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  gridCardTitle: { ...Typography.heading2, color: Colors.darkText },
-  gridCardDesc: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
-  premiumBadge: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: 4,
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-  },
-  premiumBadgeText: { ...Typography.micro, fontSize: 9, color: Colors.softGold },
+    // Grid
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    gridCard: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      gap: Spacing.xs,
+      minHeight: 110,
+    },
+    cardPressed: { opacity: 0.8 },
+    gridCardTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    gridCardTitle: { ...typography.heading2, color: colors.textPrimary },
+    gridCardDesc: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
+    premiumBadge: {
+      backgroundColor: colors.goldLight,
+      borderRadius: 4,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+    },
+    premiumBadgeText: { ...typography.micro, fontSize: 9, color: colors.softGold },
 
-  // About button
-  aboutCard: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: 8,
-    padding: 14,
-    alignItems: 'center',
-  },
-  aboutHeading: { fontSize: 16, fontWeight: '500' as const, color: Colors.white },
+    // About button
+    aboutCard: {
+      backgroundColor: colors.deepTide,
+      borderRadius: 8,
+      padding: 14,
+      alignItems: 'center',
+    },
+    aboutHeading: { fontSize: 16, fontWeight: '500' as const, color: colors.white },
 
-  disclaimer: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    disclaimer: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

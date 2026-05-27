@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   FlatList, useWindowDimensions,
@@ -18,7 +18,8 @@ import { formatHz } from '@/src/audio/PitchMatchEngine';
 import NowPlayingBar from '@/src/components/NowPlayingBar';
 import UpgradeModal from '@/src/components/UpgradeModal';
 import { isAudioAvailable } from '@/src/audio/AudioEngine';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
 
@@ -55,7 +56,7 @@ const TIMER_OPTIONS = [15, 30, 60, 90] as const;
 // ─── Card constant ────────────────────────────────────────────────────────────
 
 const CARD_HEIGHT = 120;
-const CARD_DARK   = '#0D2B33';   // darker end of gradient
+const CARD_DARK   = '#0D2B33';
 
 // ─── Session timer bar ────────────────────────────────────────────────────────
 
@@ -66,6 +67,9 @@ function SessionTimerBar({
   selected: number | null;
   onSelect: (min: number | null) => void;
 }) {
+  const { colors, typography } = useTheme();
+  const tmr = useMemo(() => makeTmrStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={tmr.container}>
       <Text style={tmr.label}>Session timer</Text>
@@ -98,36 +102,45 @@ function SessionTimerBar({
   );
 }
 
-const tmr = StyleSheet.create({
-  container: { gap: Spacing.sm },
-  label: { ...Typography.micro, color: Colors.deepTide },
-  pills: { flexDirection: 'row', gap: Spacing.sm },
-  pill: {
-    flex: 1,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.chip,
-    alignItems: 'center',
-    backgroundColor: Colors.warmSand,
-    borderWidth: 1.5,
-    borderColor: Colors.deepTide,
-  },
-  pillActive: {
-    backgroundColor: Colors.calmWave,
-    borderColor: Colors.calmWave,
-  },
-  pillLabel:       { ...Typography.micro, color: Colors.deepTide },
-  pillLabelActive: { color: Colors.white },
-});
+function makeTmrStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: { gap: Spacing.sm },
+    label: { ...typography.micro, color: Colors.deepTide },
+    pills: { flexDirection: 'row', gap: Spacing.sm },
+    pill: {
+      flex: 1,
+      paddingVertical: Spacing.sm,
+      borderRadius: Radius.chip,
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderWidth: 1.5,
+      borderColor: Colors.deepTide,
+    },
+    pillActive: {
+      backgroundColor: Colors.calmWave,
+      borderColor: Colors.calmWave,
+    },
+    pillLabel:       { ...typography.micro, color: Colors.deepTide },
+    pillLabelActive: { color: Colors.white },
+  });
+}
 
 // ─── Section heading ──────────────────────────────────────────────────────────
 
 function SectionHeading({ label }: { label: string }) {
+  const { typography } = useTheme();
+  const sh = useMemo(() => makeShStyles(typography), [typography]);
   return <Text style={sh.text}>{label}</Text>;
 }
 
-const sh = StyleSheet.create({
-  text: { ...Typography.micro, color: Colors.deepTide },
-});
+function makeShStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    text: { ...typography.micro, color: Colors.deepTide },
+  });
+}
 
 // ─── Carousel card ────────────────────────────────────────────────────────────
 
@@ -174,11 +187,9 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
       accessibilityLabel={a11yLabel}
       accessibilityState={{ selected: isActive }}
     >
-      {/* Gradient simulation — lighter left half */}
       <View style={cc.gradientLeft} />
 
       <View style={cc.row}>
-        {/* Animated waveform */}
         <Animated.View style={waveStyle}>
           <Svg width={90} height={36} viewBox="4 9 30 20">
             <Path
@@ -192,10 +203,8 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
           </Svg>
         </Animated.View>
 
-        {/* Sound name */}
         <Text style={cc.name} numberOfLines={2}>{sound.name}</Text>
 
-        {/* Play / pause button */}
         <View style={cc.playBtn}>
           {isActive && !isPaused ? (
             <View style={cc.pauseIcon}>
@@ -208,7 +217,6 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
         </View>
       </View>
 
-      {/* Bottom accent stripe when active */}
       {isActive && <View style={cc.activeStripe} />}
     </Pressable>
   );
@@ -285,6 +293,9 @@ type CarouselProps = {
 function SoundCarousel({
   sounds, currentSound, isPaused, onToggle, onPauseResume, cardWidth,
 }: CarouselProps) {
+  const { colors } = useTheme();
+  const cr = useMemo(() => makeCrStyles(colors), [colors]);
+
   const listRef = useRef<FlatList<SoundDef>>(null);
   const [idx, setIdx] = useState(0);
 
@@ -296,7 +307,6 @@ function SoundCarousel({
 
   return (
     <View style={cr.wrapper}>
-      {/* Row: [arrow 44px] [FlatList] [arrow 44px] — arrows never overlap card */}
       <View style={cr.row}>
         <Pressable
           style={cr.arrowBtn}
@@ -350,7 +360,6 @@ function SoundCarousel({
         </Pressable>
       </View>
 
-      {/* Dot indicators */}
       {sounds.length > 1 && (
         <View style={cr.dots}>
           {sounds.map((s, i) => (
@@ -368,42 +377,43 @@ function SoundCarousel({
   );
 }
 
-const cr = StyleSheet.create({
-  wrapper: { gap: Spacing.xs },
-  // Arrows sit in a row on either side of the FlatList — never overlapping card content.
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  list: { flex: 1 },
-  arrowBtn: {
-    width: 44,          // minimum 44×44 tap target
-    height: CARD_HEIGHT,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  arrowText: {
-    fontSize: 20,
-    color: Colors.deepTide,
-    fontWeight: '400',
-    opacity: 0.75,
-    lineHeight: 24,
-  },
-  arrowHidden: { opacity: 0 },  // invisible but still reserves tap space for layout stability
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.xs,
-    paddingTop: Spacing.xs,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.midGray + '50',
-  },
-  dotActive: { backgroundColor: Colors.calmWave },
-});
+function makeCrStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return StyleSheet.create({
+    wrapper: { gap: Spacing.xs },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    list: { flex: 1 },
+    arrowBtn: {
+      width: 44,
+      height: CARD_HEIGHT,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    arrowText: {
+      fontSize: 20,
+      color: Colors.deepTide,
+      fontWeight: '400',
+      opacity: 0.75,
+      lineHeight: 24,
+    },
+    arrowHidden: { opacity: 0 },
+    dots: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: Spacing.xs,
+      paddingTop: Spacing.xs,
+    },
+    dot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: colors.textSecondary + '50',
+    },
+    dotActive: { backgroundColor: Colors.calmWave },
+  });
+}
 
 // ─── Premium teaser ───────────────────────────────────────────────────────────
 
@@ -421,6 +431,9 @@ const PREMIUM_FEATURES = [
 ] as const;
 
 function PremiumTeaser({ onGetPremium }: { onGetPremium: () => void }) {
+  const { colors, typography } = useTheme();
+  const pt = useMemo(() => makePtStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={pt.wrapper}>
       <ScrollView
@@ -449,35 +462,43 @@ function PremiumTeaser({ onGetPremium }: { onGetPremium: () => void }) {
   );
 }
 
-const pt = StyleSheet.create({
-  wrapper: { gap: Spacing.md },
-  scroll:  { gap: Spacing.md, paddingRight: Spacing.sm },
-  card: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    width: 190,
-    gap: Spacing.xs,
-    borderWidth: Border.width,
-    borderColor: Colors.softGold + '50',
-  },
-  lockIcon:    { fontSize: 18 },
-  cardTitle:   { ...Typography.heading2, color: Colors.darkText },
-  cardSubtitle:{ ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
-  moreLabel:   { ...Typography.caption, color: Colors.midGray, textAlign: 'center' },
-  btn: {
-    backgroundColor: Colors.softGold,
-    borderRadius: 8,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  btnPressed: { opacity: 0.85 },
-  btnLabel:   { ...Typography.heading2, color: Colors.white },
-});
+function makePtStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    wrapper: { gap: Spacing.md },
+    scroll:  { gap: Spacing.md, paddingRight: Spacing.sm },
+    card: {
+      backgroundColor: Colors.goldLight,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      width: 190,
+      gap: Spacing.xs,
+      borderWidth: Border.width,
+      borderColor: Colors.softGold + '50',
+    },
+    lockIcon:     { fontSize: 18 },
+    cardTitle:    { ...typography.heading2, color: colors.textPrimary },
+    cardSubtitle: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
+    moreLabel:    { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
+    btn: {
+      backgroundColor: Colors.softGold,
+      borderRadius: 8,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    btnPressed: { opacity: 0.85 },
+    btnLabel:   { ...typography.heading2, color: Colors.white },
+  });
+}
 
 // ─── Pitch matching entry (tool, not sound) ───────────────────────────────────
 
 function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
+  const { typography } = useTheme();
+  const pm = useMemo(() => makePmStyles(typography), [typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [pm.container, pressed && pm.pressed]}
@@ -498,21 +519,23 @@ function PitchMatchingEntry({ savedHz }: { savedHz: number | null }) {
   );
 }
 
-const pm = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-  },
-  pressed: { opacity: 0.85 },
-  body:  { flex: 1, gap: 4 },
-  title:    { ...Typography.heading2, color: Colors.white },
-  subtitle: { ...Typography.body, color: Colors.calmWave },
-  arrow: { ...Typography.heading1, color: Colors.calmWave },
-});
+function makePmStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.md,
+    },
+    pressed: { opacity: 0.85 },
+    body:     { flex: 1, gap: 4 },
+    title:    { ...typography.heading2, color: Colors.white },
+    subtitle: { ...typography.body, color: Colors.calmWave },
+    arrow:    { ...typography.heading1, color: Colors.calmWave },
+  });
+}
 
 // ─── Notched therapy card (tool, not sound) ───────────────────────────────────
 
@@ -523,6 +546,9 @@ type NotchedCardProps = {
 };
 
 function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProps) {
+  const { typography } = useTheme();
+  const nt = useMemo(() => makeNtStyles(typography), [typography]);
+
   return (
     <View style={nt.card}>
       <View style={nt.headerRow}>
@@ -561,52 +587,54 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
   );
 }
 
-const nt = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  titleBlock: { flex: 1, gap: 2 },
-  title:     { ...Typography.heading2, color: Colors.white },
-  frequency: { ...Typography.caption, color: Colors.calmWave },
-  toggle: {
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.white + '40',
-    minWidth: 52,
-    alignItems: 'center',
-  },
-  toggleActive: {
-    backgroundColor: Colors.calmWave,
-    borderColor: Colors.calmWave,
-  },
-  togglePressed:    { opacity: 0.7 },
-  toggleLabel:      { ...Typography.micro, color: Colors.white },
-  toggleLabelActive:{ color: Colors.deepTide },
-  body: { ...Typography.body, color: Colors.calmWave + 'CC', lineHeight: 22 },
-  activeBadge: {
-    backgroundColor: Colors.calmWave + '22',
-    borderRadius: Radius.chip,
-    padding: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  activeBadgeText: { ...Typography.caption, color: Colors.calmWave },
-});
+function makeNtStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      gap: Spacing.md,
+    },
+    titleBlock:       { flex: 1, gap: 2 },
+    title:            { ...typography.heading2, color: Colors.white },
+    frequency:        { ...typography.caption, color: Colors.calmWave },
+    toggle: {
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.chip,
+      borderWidth: Border.width * 2,
+      borderColor: Colors.white + '40',
+      minWidth: 52,
+      alignItems: 'center',
+    },
+    toggleActive:      { backgroundColor: Colors.calmWave, borderColor: Colors.calmWave },
+    togglePressed:     { opacity: 0.7 },
+    toggleLabel:       { ...typography.micro, color: Colors.white },
+    toggleLabelActive: { color: Colors.deepTide },
+    body:              { ...typography.body, color: Colors.calmWave + 'CC', lineHeight: 22 },
+    activeBadge: {
+      backgroundColor: Colors.calmWave + '22',
+      borderRadius: Radius.chip,
+      padding: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    activeBadgeText: { ...typography.caption, color: Colors.calmWave },
+  });
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function SoundScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const {
     currentSound,
     isPlaying,
@@ -625,7 +653,6 @@ export default function SoundScreen() {
   const [upgradeVisible, setUpgradeVisible] = useState(false);
 
   const { width: screenWidth } = useWindowDimensions();
-  // 44px on each side for the arrow tap targets, which sit outside the card area.
   const ARROW_W = 44;
   const cardWidth = screenWidth - Spacing.xl * 2 - ARROW_W * 2;
 
@@ -657,7 +684,6 @@ export default function SoundScreen() {
       >
         <Text style={styles.title}>Sound</Text>
 
-        {/* Expo Go / no dev build notice */}
         {!isAudioAvailable() && (
           <View style={styles.devNotice}>
             <Text style={styles.devNoticeText}>
@@ -666,22 +692,18 @@ export default function SoundScreen() {
           </View>
         )}
 
-        {/* 1 — Session timer */}
         <SessionTimerBar selected={selectedTimer} onSelect={setTimer} />
 
-        {/* 2 — Background noise */}
         <View style={styles.section}>
           <SectionHeading label="Background noise" />
           <SoundCarousel sounds={NOISE_SOUNDS} {...carouselProps} />
         </View>
 
-        {/* 3 — Nature sounds */}
         <View style={styles.section}>
           <SectionHeading label="Nature sounds" />
           <SoundCarousel sounds={NATURE_SOUNDS} {...carouselProps} />
         </View>
 
-        {/* 4 — Binaural beats */}
         <View style={styles.section}>
           <SectionHeading label="Binaural beats" />
           <SoundCarousel sounds={BINAURAL_SOUNDS} {...carouselProps} />
@@ -691,13 +713,11 @@ export default function SoundScreen() {
           </Text>
         </View>
 
-        {/* 5 — Premium teaser */}
         <View style={styles.section}>
           <SectionHeading label="Unlock Premium" />
           <PremiumTeaser onGetPremium={() => setUpgradeVisible(true)} />
         </View>
 
-        {/* 6 — Pitch matching & notched therapy */}
         <View style={styles.section}>
           <SectionHeading label="Pitch matching & therapy" />
           <PitchMatchingEntry savedHz={savedPitchHz} />
@@ -713,7 +733,6 @@ export default function SoundScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Fixed Now Playing bar */}
       {isPlaying && currentSound && (
         <NowPlayingBar
           currentSound={currentSound}
@@ -733,35 +752,40 @@ export default function SoundScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: { flex: 1 },
-  scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  title: { ...Typography.display, color: Colors.darkText },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: { flex: 1 },
+    scrollContent: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    title: { ...typography.display, color: colors.textPrimary },
 
-  section: { gap: Spacing.sm },
+    section: { gap: Spacing.sm },
 
-  binauralNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 18,
-    fontStyle: 'italic',
-    paddingHorizontal: Spacing.xs,
-  },
+    binauralNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 18,
+      fontStyle: 'italic',
+      paddingHorizontal: Spacing.xs,
+    },
 
-  devNotice: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.softGold,
-  },
-  devNoticeText: { ...Typography.caption, color: Colors.softGold },
+    devNotice: {
+      backgroundColor: Colors.goldLight,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.softGold,
+    },
+    devNoticeText: { ...typography.caption, color: Colors.softGold },
 
-  bottomSpacer: { height: Spacing.xxl },
-});
+    bottomSpacer: { height: Spacing.xxl },
+  });
+}

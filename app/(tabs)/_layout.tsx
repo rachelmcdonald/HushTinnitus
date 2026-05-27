@@ -1,12 +1,15 @@
-import { Tabs } from 'expo-router';
+import { Pressable } from 'react-native';
+import { Tabs, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TAB_HEIGHT = 60;
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -36,6 +39,24 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
+          headerShown: true,
+          headerTitle: '',
+          headerStyle: { backgroundColor: colors.background },
+          headerShadowVisible: false,
+          headerRight: () => (
+            <Pressable
+              onPress={() => router.push('/settings' as any)}
+              style={{ paddingRight: 16, paddingVertical: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+            >
+              <Ionicons
+                name="settings-outline"
+                size={22}
+                color={colors.deepTide}
+              />
+            </Pressable>
+          ),
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'home' : 'home-outline'} size={24} color={color} />
           ),

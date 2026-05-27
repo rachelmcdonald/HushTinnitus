@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import UpgradeModal from '@/src/components/UpgradeModal';
 
 // ─── Premium session catalogue ────────────────────────────────────────────────
@@ -26,6 +27,8 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function RelaxScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [upgradeVisible, setUpgradeVisible] = useState(false);
 
   return (
@@ -104,91 +107,93 @@ export default function RelaxScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  header: {
-    gap: Spacing.sm,
-    paddingHorizontal: Spacing.xl,
-  },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
+    header: {
+      gap: Spacing.sm,
+      paddingHorizontal: Spacing.xl,
+    },
+    title: { ...typography.display, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
 
-  // Free card — 4-7-8
-  freeCard: {
-    marginHorizontal: Spacing.xl,
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.card,
-    padding: Spacing.xl,
-  },
-  freeCardPressed: { opacity: 0.88 },
-  freeCardContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.base,
-  },
-  freeCardText: { flex: 1, gap: Spacing.xs },
-  freeCardTitle: { ...Typography.heading1, color: Colors.white },
-  freeCardSubtitle: { ...Typography.body, color: Colors.calmWave },
-  freeCardMeta: { ...Typography.caption, color: Colors.calmWave + 'AA' },
-  freePlayBtn: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Colors.calmWave,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  freePlayIcon: { fontSize: 18, color: Colors.deepTide, marginLeft: 3 },
+    // Free card — 4-7-8
+    freeCard: {
+      marginHorizontal: Spacing.xl,
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.card,
+      padding: Spacing.xl,
+    },
+    freeCardPressed: { opacity: 0.88 },
+    freeCardContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.base,
+    },
+    freeCardText: { flex: 1, gap: Spacing.xs },
+    freeCardTitle: { ...typography.heading1, color: colors.white },
+    freeCardSubtitle: { ...typography.body, color: colors.calmWave },
+    freeCardMeta: { ...typography.caption, color: colors.calmWave + 'AA' },
+    freePlayBtn: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: colors.calmWave,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    freePlayIcon: { fontSize: 18, color: colors.deepTide, marginLeft: 3 },
 
-  // Premium section
-  premiumSection: { gap: Spacing.base },
-  sectionLabel: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-    paddingHorizontal: Spacing.xl,
-  },
+    // Premium section
+    premiumSection: { gap: Spacing.base },
+    sectionLabel: {
+      ...typography.micro,
+      color: colors.deepTide,
+      paddingHorizontal: Spacing.xl,
+    },
 
-  // Carousel
-  carousel: {
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.sm,
-  },
-  premiumCard: {
-    width: 160,
-    height: 100,
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.card,
-    borderWidth: 1,
-    borderColor: Colors.softGold + '60',
-    padding: Spacing.md,
-    justifyContent: 'space-between',
-  },
-  premiumCardPressed: { opacity: 0.8 },
-  lockIcon: { fontSize: 16 },
-  premiumCardTitle: { ...Typography.heading2, color: Colors.darkText },
-  premiumCardDuration: { ...Typography.caption, color: Colors.midGray },
+    // Carousel
+    carousel: {
+      paddingHorizontal: Spacing.xl,
+      gap: Spacing.sm,
+    },
+    premiumCard: {
+      width: 160,
+      height: 100,
+      backgroundColor: colors.goldLight,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: colors.softGold + '60',
+      padding: Spacing.md,
+      justifyContent: 'space-between',
+    },
+    premiumCardPressed: { opacity: 0.8 },
+    lockIcon: { fontSize: 16 },
+    premiumCardTitle: { ...typography.heading2, color: colors.darkText },
+    premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
-  moreCaption: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    paddingHorizontal: Spacing.xl,
-  },
+    moreCaption: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingHorizontal: Spacing.xl,
+    },
 
-  getPremiumBtn: {
-    marginHorizontal: Spacing.xl,
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  getPremiumBtnPressed: { opacity: 0.85 },
-  getPremiumLabel: { ...Typography.heading2, color: Colors.white },
-});
+    getPremiumBtn: {
+      marginHorizontal: Spacing.xl,
+      backgroundColor: colors.softGold,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    getPremiumBtnPressed: { opacity: 0.85 },
+    getPremiumLabel: { ...typography.heading2, color: colors.white },
+  });
+}

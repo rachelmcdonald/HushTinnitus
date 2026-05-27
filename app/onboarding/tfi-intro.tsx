@@ -1,11 +1,16 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type InfoRowProps = { emoji: string; heading: string; body: string };
 
 function InfoRow({ emoji, heading, body }: InfoRowProps) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoEmoji}>{emoji}</Text>
@@ -18,6 +23,9 @@ function InfoRow({ emoji, heading, body }: InfoRowProps) {
 }
 
 export default function TFIIntroScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   function handleStart() {
     router.push('/onboarding/tfi-questionnaire');
   }
@@ -94,104 +102,109 @@ export default function TFIIntroScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.huge,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.huge,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  // Header
-  header: {
-    gap: Spacing.md,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  badgeText: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-  },
-  title: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  subtitle: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+    // Header
+    header: {
+      gap: Spacing.md,
+    },
+    badge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    badgeText: {
+      ...typography.micro,
+      color: colors.deepTide,
+    },
+    title: {
+      ...typography.display,
+      color: colors.textPrimary,
+    },
+    subtitle: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
 
-  // Info card
-  infoCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    gap: Spacing.md,
-    alignItems: 'flex-start',
-  },
-  infoEmoji: {
-    fontSize: 20,
-    lineHeight: 28,
-    width: 28,
-    textAlign: 'center',
-  },
-  infoText: {
-    flex: 1,
-    gap: 2,
-  },
-  infoHeading: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  infoBody: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-  divider: {
-    height: Border.width,
-    backgroundColor: Colors.midGray + '30',
-  },
+    // Info card
+    infoCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    infoRow: {
+      flexDirection: 'row',
+      gap: Spacing.md,
+      alignItems: 'flex-start',
+    },
+    infoEmoji: {
+      fontSize: 20,
+      lineHeight: 28,
+      width: 28,
+      textAlign: 'center',
+    },
+    infoText: {
+      flex: 1,
+      gap: 2,
+    },
+    infoHeading: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+    },
+    infoBody: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
+    divider: {
+      height: Border.width,
+      backgroundColor: colors.textSecondary + '30',
+    },
 
-  // Footer
-  footer: {
-    gap: Spacing.sm,
-  },
-  startButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  startButtonPressed: {
-    opacity: 0.85,
-  },
-  startLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-  skipButton: {
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  skipButtonPressed: {
-    opacity: 0.6,
-  },
-  skipLabel: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
-});
+    // Footer
+    footer: {
+      gap: Spacing.sm,
+    },
+    startButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    startButtonPressed: {
+      opacity: 0.85,
+    },
+    startLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+    skipButton: {
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    skipButtonPressed: {
+      opacity: 0.6,
+    },
+    skipLabel: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
+  });
+}

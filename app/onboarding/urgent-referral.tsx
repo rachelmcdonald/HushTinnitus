@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,7 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type Params = {
   suddenOnset: string;
@@ -54,6 +55,9 @@ function buildReferralNote(
 
 export default function UrgentReferralScreen() {
   const params = useLocalSearchParams<Params>();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const suddenOnset = params.suddenOnset === 'true';
   const pulsatile = params.pulsatile === 'true';
   const unilateral = params.unilateral === 'true';
@@ -160,132 +164,137 @@ export default function UrgentReferralScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.huge,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.huge,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  // Header
-  header: {
-    gap: Spacing.sm,
-  },
-  title: {
-    ...Typography.display,
-    color: Colors.darkText,
-  },
-  body: {
-    ...Typography.body,
-    color: Colors.midGray,
-  },
+    // Header
+    header: {
+      gap: Spacing.sm,
+    },
+    title: {
+      ...typography.display,
+      color: colors.textPrimary,
+    },
+    body: {
+      ...typography.body,
+      color: colors.textSecondary,
+    },
 
-  // Alert card — coralLight background, warmCoral left border accent only
-  alertCard: {
-    backgroundColor: Colors.coralLight,
-    borderRadius: Radius.card,
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
-  alertBorder: {
-    width: 4,
-    backgroundColor: Colors.warmCoral,
-  },
-  alertContent: {
-    flex: 1,
-    padding: Spacing.base,
-    gap: Spacing.xs,
-  },
-  alertLabel: {
-    ...Typography.micro,
-    color: Colors.warmCoral,
-    marginBottom: Spacing.xs,
-  },
-  alertItem: {
-    ...Typography.body,
-    color: Colors.darkText,
-  },
-  alertFootnote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    marginTop: Spacing.sm,
-  },
+    // Alert card — coralLight background, warmCoral left border accent only
+    alertCard: {
+      backgroundColor: colors.coralLight,
+      borderRadius: Radius.card,
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+    alertBorder: {
+      width: 4,
+      backgroundColor: colors.warmCoral,
+    },
+    alertContent: {
+      flex: 1,
+      padding: Spacing.base,
+      gap: Spacing.xs,
+    },
+    alertLabel: {
+      ...typography.micro,
+      color: colors.warmCoral,
+      marginBottom: Spacing.xs,
+    },
+    alertItem: {
+      ...typography.body,
+      color: colors.textPrimary,
+    },
+    alertFootnote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: Spacing.sm,
+    },
 
-  // Referral note card
-  referralCard: {
-    backgroundColor: Colors.white,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  referralHeading: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-  },
-  referralSubheading: {
-    ...Typography.caption,
-    color: Colors.midGray,
-  },
-  referralTextBox: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.midGray + '40',
-  },
-  referralText: {
-    ...Typography.body,
-    color: Colors.darkText,
-    lineHeight: 22,
-  },
-  copyButton: {
-    borderWidth: Border.width * 2,
-    borderColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  copyButtonCopied: {
-    borderColor: Colors.calmWave,
-    backgroundColor: Colors.tealLight,
-  },
-  copyButtonPressed: {
-    opacity: 0.7,
-  },
-  copyLabel: {
-    ...Typography.heading2,
-    color: Colors.deepTide,
-  },
-  copyLabelCopied: {
-    color: Colors.calmWave,
-  },
+    // Referral note card
+    referralCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    referralHeading: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+    },
+    referralSubheading: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
+    referralTextBox: {
+      backgroundColor: colors.background,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: colors.textSecondary + '40',
+    },
+    referralText: {
+      ...typography.body,
+      color: colors.textPrimary,
+      lineHeight: 22,
+    },
+    copyButton: {
+      borderWidth: Border.width * 2,
+      borderColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    copyButtonCopied: {
+      borderColor: colors.calmWave,
+      backgroundColor: colors.surfaceVariant,
+    },
+    copyButtonPressed: {
+      opacity: 0.7,
+    },
+    copyLabel: {
+      ...typography.heading2,
+      color: colors.deepTide,
+    },
+    copyLabelCopied: {
+      color: colors.calmWave,
+    },
 
-  // Footer
-  footer: {
-    gap: Spacing.md,
-  },
-  reassurance: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-  },
-  continueButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  continueButtonPressed: {
-    opacity: 0.85,
-  },
-  continueLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-});
+    // Footer
+    footer: {
+      gap: Spacing.md,
+    },
+    reassurance: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+    },
+    continueButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    continueButtonPressed: {
+      opacity: 0.85,
+    },
+    continueLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+  });
+}

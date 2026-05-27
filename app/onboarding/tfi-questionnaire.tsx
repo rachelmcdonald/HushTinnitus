@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -13,63 +13,68 @@ import { TFI_QUESTIONS } from '@/src/data/tfiQuestions';
 import { scoreTFI } from '@/src/utils/tfiScoring';
 import { getInitialDraftState, saveDraft, clearDraft, buildAndSaveAssessment } from '@/src/storage/tfi';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TOTAL = TFI_QUESTIONS.length; // 25
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
+  const { colors } = useTheme();
   const pct = ((current + 1) / total) * 100;
+  const progressStyles = useMemo(() => StyleSheet.create({
+    track: {
+      height: 3,
+      backgroundColor: colors.textSecondary + '30',
+      borderRadius: 2,
+      overflow: 'hidden',
+    },
+    fill: {
+      height: '100%',
+      backgroundColor: colors.calmWave,
+      borderRadius: 2,
+    },
+  }), [colors]);
+
   return (
-    <View style={progress.track}>
-      <View style={[progress.fill, { width: `${pct}%` }]} />
+    <View style={progressStyles.track}>
+      <View style={[progressStyles.fill, { width: `${pct}%` }]} />
     </View>
   );
 }
-
-const progress = StyleSheet.create({
-  track: {
-    height: 3,
-    backgroundColor: Colors.midGray + '30',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  fill: {
-    height: '100%',
-    backgroundColor: Colors.calmWave,
-    borderRadius: 2,
-  },
-});
 
 // ─── Subscale badge ───────────────────────────────────────────────────────────
 
 function SubscaleBadge({ label }: { label: string }) {
+  const { colors, typography } = useTheme();
+  const badgeStyles = useMemo(() => StyleSheet.create({
+    container: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    text: {
+      ...typography.micro,
+      color: colors.deepTide,
+    },
+  }), [colors, typography]);
+
   return (
-    <View style={badge.container}>
-      <Text style={badge.text}>{label}</Text>
+    <View style={badgeStyles.container}>
+      <Text style={badgeStyles.text}>{label}</Text>
     </View>
   );
 }
-
-const badge = StyleSheet.create({
-  container: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  text: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-  },
-});
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function TFIQuestionnaireScreen() {
   const { updatePreferences } = usePreferences();
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const [responses, setResponses] = useState<number[]>(() =>
     Platform.OS === 'web' ? Array(25).fill(5) : getInitialDraftState().responses
@@ -186,9 +191,9 @@ export default function TFIQuestionnaireScreen() {
             step={1}
             value={sliderValue}
             onValueChange={(val) => setSliderValue(Math.round(val))}
-            minimumTrackTintColor={Colors.calmWave}
-            maximumTrackTintColor={Colors.midGray + '40'}
-            thumbTintColor={Colors.deepTide}
+            minimumTrackTintColor={colors.calmWave}
+            maximumTrackTintColor={colors.textSecondary + '40'}
+            thumbTintColor={colors.deepTide}
             accessibilityLabel={question.text}
           />
           {/* Anchor labels */}
@@ -241,139 +246,144 @@ export default function TFIQuestionnaireScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: Colors.warmSand,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
 
-  // Header
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: {
-    paddingVertical: Spacing.xs,
-    paddingRight: Spacing.sm,
-  },
-  backLabel: {
-    ...Typography.body,
-    color: Colors.deepTide,
-  },
-  backPlaceholder: {
-    width: 60,
-  },
-  counter: {
-    ...Typography.caption,
-    color: Colors.midGray,
-  },
+    // Header
+    header: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.md,
+      gap: Spacing.md,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    backButton: {
+      paddingVertical: Spacing.xs,
+      paddingRight: Spacing.sm,
+    },
+    backLabel: {
+      ...typography.body,
+      color: colors.deepTide,
+    },
+    backPlaceholder: {
+      width: 60,
+    },
+    counter: {
+      ...typography.caption,
+      color: colors.textSecondary,
+    },
 
-  // Content
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  questionText: {
-    ...Typography.heading1,
-    color: Colors.darkText,
-    lineHeight: 30,
-  },
+    // Content
+    content: {
+      flex: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    questionText: {
+      ...typography.heading1,
+      color: colors.textPrimary,
+      lineHeight: 30,
+    },
 
-  // Value display
-  valueDisplay: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-  },
-  valueNumber: {
-    fontSize: 52,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    lineHeight: 60,
-  },
-  valueMax: {
-    ...Typography.heading1,
-    color: Colors.midGray,
-  },
+    // Value display
+    valueDisplay: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'center',
+    },
+    valueNumber: {
+      fontSize: 52,
+      fontWeight: '400',
+      color: colors.deepTide,
+      lineHeight: 60,
+    },
+    valueMax: {
+      ...typography.heading1,
+      color: colors.textSecondary,
+    },
 
-  // Slider
-  sliderContainer: {
-    gap: Spacing.xs,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  anchors: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  anchorText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    maxWidth: '45%',
-  },
+    // Slider
+    sliderContainer: {
+      gap: Spacing.xs,
+    },
+    slider: {
+      width: '100%',
+      height: 40,
+    },
+    anchors: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    anchorText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      maxWidth: '45%',
+    },
 
-  // Tick marks
-  ticks: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  tick: {
-    ...Typography.caption,
-    color: Colors.midGray + '80',
-    textAlign: 'center',
-    minWidth: 16,
-  },
-  tickActive: {
-    color: Colors.deepTide,
-    fontWeight: '500',
-  },
+    // Tick marks
+    ticks: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    tick: {
+      ...typography.caption,
+      color: colors.textSecondary + '80',
+      textAlign: 'center',
+      minWidth: 16,
+    },
+    tickActive: {
+      color: colors.deepTide,
+      fontWeight: '500',
+    },
 
-  // Q1/Q2 zero note
-  zeroNote: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  zeroNoteText: {
-    ...Typography.caption,
-    color: Colors.deepTide,
-    lineHeight: 18,
-  },
+    // Q1/Q2 zero note
+    zeroNote: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: colors.calmWave,
+    },
+    zeroNoteText: {
+      ...typography.caption,
+      color: colors.deepTide,
+      lineHeight: 18,
+    },
 
-  // Footer
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    paddingTop: Spacing.md,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '20',
-  },
-  nextButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  nextButtonPressed: {
-    opacity: 0.85,
-  },
-  nextLabel: {
-    ...Typography.heading2,
-    color: Colors.white,
-  },
-});
+    // Footer
+    footer: {
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      paddingTop: Spacing.md,
+      borderTopWidth: Border.width,
+      borderTopColor: colors.textSecondary + '20',
+    },
+    nextButton: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    nextButtonPressed: {
+      opacity: 0.85,
+    },
+    nextLabel: {
+      ...typography.heading2,
+      color: colors.white,
+    },
+  });
+}

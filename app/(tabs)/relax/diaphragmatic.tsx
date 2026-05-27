@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,10 +11,11 @@ import Animated, {
   cancelAnimation,
   Easing,
 } from 'react-native-reanimated';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import UpgradeModal from '@/src/components/UpgradeModal';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Timing ───────────────────────────────────────────────────────────────────
 
@@ -52,6 +53,9 @@ function saveSession(durationSeconds: number) {
 //    moves more on inhale). No image files.
 
 function BellyDiagram({ isAnimating }: { isAnimating: boolean }) {
+  const { colors, typography } = useTheme();
+  const diag = useMemo(() => makeDiagStyles(colors, typography), [colors, typography]);
+
   const bellyScale = useSharedValue(BELLY_SCALE_MIN);
   const chestScale = useSharedValue(0.96);
 
@@ -126,73 +130,78 @@ function BellyDiagram({ isAnimating }: { isAnimating: boolean }) {
   );
 }
 
-const diag = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    gap: Spacing.sm,
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-  },
-  head: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.warmSand,
-    borderWidth: 2,
-    borderColor: Colors.deepTide + '40',
-  },
-  body: {
-    width: '100%',
-    flexDirection: 'row',
-    gap: Spacing.sm,
-    justifyContent: 'center',
-  },
-  chestRegion: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: Spacing.sm,
-  },
-  chestOval: {
-    width: 80,
-    height: 50,
-    borderRadius: 40,
-    backgroundColor: Colors.midGray + '25',
-    borderWidth: 2,
-    borderColor: Colors.midGray + '50',
-  },
-  bellyRegion: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 4,
-    paddingVertical: Spacing.sm,
-  },
-  bellyOval: {
-    width: 90,
-    height: 60,
-    borderRadius: 45,
-    backgroundColor: Colors.calmWave + '35',
-    borderWidth: 2,
-    borderColor: Colors.calmWave,
-  },
-  bodyLabel: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    fontWeight: '600',
-  },
-  bodyLabelBelly: { color: Colors.deepTide },
-  bodyLabelHint: { ...Typography.micro, color: Colors.midGray, fontSize: 9 },
-  arrowRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    paddingTop: Spacing.xs,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '25',
-  },
-  arrowText: { ...Typography.caption, color: Colors.deepTide, fontSize: 11 },
-});
+function makeDiagStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: {
+      alignItems: 'center',
+      gap: Spacing.sm,
+      backgroundColor: colors.background,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+    },
+    head: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: colors.background,
+      borderWidth: 2,
+      borderColor: Colors.deepTide + '40',
+    },
+    body: {
+      width: '100%',
+      flexDirection: 'row',
+      gap: Spacing.sm,
+      justifyContent: 'center',
+    },
+    chestRegion: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: Spacing.sm,
+    },
+    chestOval: {
+      width: 80,
+      height: 50,
+      borderRadius: 40,
+      backgroundColor: Colors.midGray + '25',
+      borderWidth: 2,
+      borderColor: Colors.midGray + '50',
+    },
+    bellyRegion: {
+      flex: 1,
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: Spacing.sm,
+    },
+    bellyOval: {
+      width: 90,
+      height: 60,
+      borderRadius: 45,
+      backgroundColor: Colors.calmWave + '35',
+      borderWidth: 2,
+      borderColor: Colors.calmWave,
+    },
+    bodyLabel: {
+      ...typography.caption,
+      color: colors.textPrimary,
+      fontWeight: '600',
+    },
+    bodyLabelBelly: { color: Colors.deepTide },
+    bodyLabelHint: { ...typography.micro, color: colors.textSecondary, fontSize: 9 },
+    arrowRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+      width: '100%',
+      paddingTop: Spacing.xs,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.midGray + '25',
+    },
+    arrowText: { ...typography.caption, color: Colors.deepTide, fontSize: 11 },
+  });
+}
 
 // ─── Practice oval (practice mode) ───────────────────────────────────────────
 
@@ -252,6 +261,9 @@ const oval = StyleSheet.create({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function DiaphragmaticScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const [upgradeVisible, setUpgradeVisible] = useState(false);
@@ -481,95 +493,100 @@ export default function DiaphragmaticScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  header: { gap: Spacing.sm },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  section: { gap: Spacing.md },
-  sectionHeading: { ...Typography.heading1, color: Colors.deepTide },
-  diagramCaption: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 18,
-    fontStyle: 'italic',
-  },
-  // Instruction card
-  instructionCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
-  stepNumber: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: Colors.calmWave,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-    marginTop: 1,
-  },
-  stepNumberText: { ...Typography.caption, color: Colors.white, fontWeight: '700' },
-  stepText: { ...Typography.body, color: Colors.darkText, flex: 1, lineHeight: 22 },
-  // Practice section
-  practiceDesc: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  // Buttons
-  btn: {
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  btnStart:  { backgroundColor: Colors.deepTide },
-  btnStop:   { backgroundColor: Colors.warmCoral },
-  btnUnlock: { backgroundColor: Colors.softGold },
-  btnPressed: { opacity: 0.85 },
-  btnLabel: { ...Typography.heading2, color: Colors.white },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: colors.deepTide },
+    header: { gap: Spacing.sm },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+    section: { gap: Spacing.md },
+    sectionHeading: { ...typography.heading1, color: colors.deepTide },
+    diagramCaption: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 18,
+      fontStyle: 'italic',
+    },
+    // Instruction card
+    instructionCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
+    stepNumber: {
+      width: 24,
+      height: 24,
+      borderRadius: 12,
+      backgroundColor: Colors.calmWave,
+      alignItems: 'center',
+      justifyContent: 'center',
+      flexShrink: 0,
+      marginTop: 1,
+    },
+    stepNumberText: { ...typography.caption, color: Colors.white, fontWeight: '700' },
+    stepText: { ...typography.body, color: colors.textPrimary, flex: 1, lineHeight: 22 },
+    // Practice section
+    practiceDesc: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+    // Buttons
+    btn: {
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    btnStart:  { backgroundColor: Colors.deepTide },
+    btnStop:   { backgroundColor: Colors.warmCoral },
+    btnUnlock: { backgroundColor: Colors.softGold },
+    btnPressed: { opacity: 0.85 },
+    btnLabel: { ...typography.heading2, color: Colors.white },
 
-  // ── Practice screen ──
-  practiceScreen: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.lg,
-    justifyContent: 'space-between',
-  },
-  practiceCue: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  phaseLabel: {
-    fontSize: 28,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    letterSpacing: -0.5,
-  },
-  phaseHint: { ...Typography.body, color: Colors.midGray, textAlign: 'center' },
-  countdown: {
-    fontSize: 52,
-    fontWeight: '300',
-    color: Colors.deepTide,
-    lineHeight: 60,
-  },
-  durationRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.sm,
-    alignItems: 'center',
-  },
-  durationLabel: { ...Typography.caption, color: Colors.midGray },
-  durationSep: { ...Typography.caption, color: Colors.midGray },
-});
+    // ── Practice screen ──
+    practiceScreen: {
+      flex: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.lg,
+      justifyContent: 'space-between',
+    },
+    practiceCue: {
+      alignItems: 'center',
+      gap: 4,
+    },
+    phaseLabel: {
+      fontSize: 28,
+      fontWeight: '400',
+      color: Colors.deepTide,
+      letterSpacing: -0.5,
+    },
+    phaseHint: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
+    countdown: {
+      fontSize: 52,
+      fontWeight: '300',
+      color: Colors.deepTide,
+      lineHeight: 60,
+    },
+    durationRow: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: Spacing.sm,
+      alignItems: 'center',
+    },
+    durationLabel: { ...typography.caption, color: colors.textSecondary },
+    durationSep: { ...typography.caption, color: colors.textSecondary },
+  });
+}

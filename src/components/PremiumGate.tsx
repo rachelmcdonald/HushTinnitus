@@ -1,10 +1,11 @@
 // Wraps any Premium feature. When the user is not premium, the feature is
 // visible (soft-dimmed) with a gold badge and lock. Tapping anywhere shows
 // the upgrade modal.
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import UpgradeModal from './UpgradeModal';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type Props = {
   isPremium: boolean;
@@ -13,6 +14,9 @@ type Props = {
 };
 
 export default function PremiumGate({ isPremium, featureName, children }: Props) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const [modalVisible, setModalVisible] = useState(false);
 
   if (isPremium) {
@@ -50,35 +54,40 @@ export default function PremiumGate({ isPremium, featureName, children }: Props)
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: Radius.card,
-    overflow: 'hidden',
-    borderWidth: Border.width * 2,
-    borderColor: Colors.softGold + '80',
-  },
-  preview: {
-    opacity: 0.35,
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.goldLight + 'CC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: Spacing.xs,
-  },
-  lockBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    backgroundColor: Colors.white,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.softGold,
-  },
-  lockIcon: { fontSize: 14 },
-  lockLabel: { ...Typography.heading2, color: Colors.softGold },
-  lockHint: { ...Typography.caption, color: Colors.softGold },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: {
+      borderRadius: Radius.card,
+      overflow: 'hidden',
+      borderWidth: Border.width * 2,
+      borderColor: Colors.softGold + '80',
+    },
+    preview: {
+      opacity: 0.35,
+    },
+    overlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: Colors.goldLight + 'CC',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: Spacing.xs,
+    },
+    lockBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      borderWidth: 1,
+      borderColor: Colors.softGold,
+    },
+    lockIcon: { fontSize: 14 },
+    lockLabel: { ...typography.heading2, color: Colors.softGold },
+    lockHint: { ...typography.caption, color: Colors.softGold },
+  });
+}

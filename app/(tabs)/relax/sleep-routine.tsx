@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,10 +13,11 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import UpgradeModal from '@/src/components/UpgradeModal';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
@@ -91,6 +92,9 @@ function saveSession(durationSeconds: number) {
 // ─── Stage indicator ──────────────────────────────────────────────────────────
 
 function StageIndicator({ active }: { active: 1 | 2 | 3 }) {
+  const { typography } = useTheme();
+  const si = useMemo(() => makeStageIndicatorStyles(typography), [typography]);
+
   const steps = [
     { n: 1 as const, label: 'Breathing' },
     { n: 2 as const, label: 'Body scan' },
@@ -121,45 +125,50 @@ function StageIndicator({ active }: { active: 1 | 2 | 3 }) {
   );
 }
 
-const si = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 0,
-  },
-  stepWrapper: { flexDirection: 'row', alignItems: 'center' },
-  connector: {
-    width: 32,
-    height: 1,
-    backgroundColor: Colors.white + '30',
-    marginBottom: 18,
-  },
-  connectorDone: { backgroundColor: Colors.calmWave + '70' },
-  step: { alignItems: 'center', gap: 4 },
-  dot: {
-    width: 26, height: 26, borderRadius: 13,
-    borderWidth: 1,
-    borderColor: Colors.white + '40',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  dotActive: {
-    borderColor: Colors.calmWave,
-    backgroundColor: Colors.calmWave + '20',
-  },
-  dotDone: {
-    borderColor: Colors.calmWave,
-    backgroundColor: Colors.calmWave,
-  },
-  dotText: { fontSize: 11, fontWeight: '500' as const, color: Colors.white + '60' },
-  dotTextActive: { color: Colors.white },
-  label: { ...Typography.caption, color: Colors.white + '50', fontSize: 10 },
-  labelActive: { color: Colors.calmWave },
-});
+function makeStageIndicatorStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 0,
+    },
+    stepWrapper: { flexDirection: 'row', alignItems: 'center' },
+    connector: {
+      width: 32,
+      height: 1,
+      backgroundColor: Colors.white + '30',
+      marginBottom: 18,
+    },
+    connectorDone: { backgroundColor: Colors.calmWave + '70' },
+    step: { alignItems: 'center', gap: 4 },
+    dot: {
+      width: 26, height: 26, borderRadius: 13,
+      borderWidth: 1,
+      borderColor: Colors.white + '40',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    dotActive: {
+      borderColor: Colors.calmWave,
+      backgroundColor: Colors.calmWave + '20',
+    },
+    dotDone: {
+      borderColor: Colors.calmWave,
+      backgroundColor: Colors.calmWave,
+    },
+    dotText: { fontSize: 11, fontWeight: '500' as const, color: Colors.white + '60' },
+    dotTextActive: { color: Colors.white },
+    label: { ...typography.caption, color: Colors.white + '50', fontSize: 10 },
+    labelActive: { color: Colors.calmWave },
+  });
+}
 
 // ─── Screen ────────────────────────────────────────────────────────────────────
 
 export default function SleepRoutineScreen() {
+  const { typography } = useTheme();
+  const styles = useMemo(() => makeStyles(typography), [typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
 
@@ -606,219 +615,221 @@ export default function SleepRoutineScreen() {
 
 // ─── Styles ────────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.deepTide },
+function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: Colors.deepTide },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.calmWave },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.calmWave },
 
-  // ── Intro ─────────────────────────────────────────────────────────────────
-  introScroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  introHeader: { gap: Spacing.xs },
-  introBadgeRow: { flexDirection: 'row' },
-  premiumBadge: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderWidth: Border.width,
-    borderColor: Colors.softGold,
-  },
-  premiumBadgeText: { ...Typography.micro, color: Colors.softGold },
-  introTitle: { ...Typography.display, color: Colors.white },
-  introDuration: { ...Typography.caption, color: Colors.calmWave },
-  introBody: { ...Typography.body, color: Colors.white + 'B3', lineHeight: 26 },
-  introNote: {
-    ...Typography.caption,
-    color: Colors.white + '70',
-    lineHeight: 20,
-    fontStyle: 'italic',
-  },
+    // ── Intro ─────────────────────────────────────────────────────────────────
+    introScroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.lg,
+    },
+    introHeader: { gap: Spacing.xs },
+    introBadgeRow: { flexDirection: 'row' },
+    premiumBadge: {
+      backgroundColor: Colors.goldLight,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 3,
+      borderWidth: Border.width,
+      borderColor: Colors.softGold,
+    },
+    premiumBadgeText: { ...typography.micro, color: Colors.softGold },
+    introTitle: { ...typography.display, color: Colors.white },
+    introDuration: { ...typography.caption, color: Colors.calmWave },
+    introBody: { ...typography.body, color: Colors.white + 'B3', lineHeight: 26 },
+    introNote: {
+      ...typography.caption,
+      color: Colors.white + '70',
+      lineHeight: 20,
+      fontStyle: 'italic',
+    },
 
-  stagePreview: {
-    gap: Spacing.md,
-    backgroundColor: Colors.white + '08',
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-  },
-  stagePreviewRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
-  stagePreviewNum: {
-    width: 28, height: 28, borderRadius: 14,
-    backgroundColor: Colors.calmWave + '30',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  stagePreviewNumText: { ...Typography.heading2, color: Colors.calmWave },
-  stagePreviewContent: { flex: 1, gap: 2 },
-  stagePreviewLabel: { ...Typography.heading2, color: Colors.white },
-  stagePreviewDetail: { ...Typography.caption, color: Colors.white + '70' },
+    stagePreview: {
+      gap: Spacing.md,
+      backgroundColor: Colors.white + '08',
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+    },
+    stagePreviewRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md },
+    stagePreviewNum: {
+      width: 28, height: 28, borderRadius: 14,
+      backgroundColor: Colors.calmWave + '30',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    stagePreviewNumText: { ...typography.heading2, color: Colors.calmWave },
+    stagePreviewContent: { flex: 1, gap: 2 },
+    stagePreviewLabel: { ...typography.heading2, color: Colors.white },
+    stagePreviewDetail: { ...typography.caption, color: Colors.white + '70' },
 
-  beginBtn: {
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  beginBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
-  unlockBtn: {
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  unlockBtnLabel: { ...Typography.heading2, color: Colors.white },
+    beginBtn: {
+      backgroundColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    beginBtnLabel: { ...typography.heading2, color: Colors.deepTide },
+    unlockBtn: {
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    unlockBtnLabel: { ...typography.heading2, color: Colors.white },
 
-  // ── Done ──────────────────────────────────────────────────────────────────
-  doneContent: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    gap: Spacing.lg,
-  },
-  doneCheck: {
-    width: 72, height: 72, borderRadius: 36,
-    backgroundColor: Colors.calmWave,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  doneCheckMark: { fontSize: 32, color: Colors.deepTide, lineHeight: 40 },
-  doneTitle: { ...Typography.display, color: Colors.white, textAlign: 'center' },
-  doneBody: { ...Typography.body, color: Colors.white + 'B3', textAlign: 'center', lineHeight: 26 },
-  doneBtn: {
-    backgroundColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing.xl,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  doneBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
+    // ── Done ──────────────────────────────────────────────────────────────────
+    doneContent: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.xl,
+      gap: Spacing.lg,
+    },
+    doneCheck: {
+      width: 72, height: 72, borderRadius: 36,
+      backgroundColor: Colors.calmWave,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    doneCheckMark: { fontSize: 32, color: Colors.deepTide, lineHeight: 40 },
+    doneTitle: { ...typography.display, color: Colors.white, textAlign: 'center' },
+    doneBody: { ...typography.body, color: Colors.white + 'B3', textAlign: 'center', lineHeight: 26 },
+    doneBtn: {
+      backgroundColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      paddingHorizontal: Spacing.xl,
+      alignItems: 'center',
+      marginTop: Spacing.md,
+    },
+    doneBtnLabel: { ...typography.heading2, color: Colors.deepTide },
 
-  // ── Session ───────────────────────────────────────────────────────────────
-  session: {
-    flex: 1,
-    paddingTop: Spacing.lg,
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.base,
-  },
-  stageContent: { flex: 1 },
-  stageInner: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    overflow: 'hidden',
-  },
-  stageTimeLabel: {
-    fontSize: 22,
-    fontWeight: '300' as const,
-    color: Colors.white + '80',
-    letterSpacing: 1,
-  },
+    // ── Session ───────────────────────────────────────────────────────────────
+    session: {
+      flex: 1,
+      paddingTop: Spacing.lg,
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.base,
+    },
+    stageContent: { flex: 1 },
+    stageInner: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'space-around',
+      overflow: 'hidden',
+    },
+    stageTimeLabel: {
+      fontSize: 22,
+      fontWeight: '300' as const,
+      color: Colors.white + '80',
+      letterSpacing: 1,
+    },
 
-  // Stage 1 — box breathing circle
-  circleContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: CIRCLE_BASE * EXPANDED_SCALE + 40,
-    height: CIRCLE_BASE * EXPANDED_SCALE + 40,
-  },
-  circleGlow: {
-    position: 'absolute',
-    width: CIRCLE_BASE + 30,
-    height: CIRCLE_BASE + 30,
-    borderRadius: (CIRCLE_BASE + 30) / 2,
-    backgroundColor: Colors.calmWave + '20',
-  },
-  circle: {
-    width: CIRCLE_BASE,
-    height: CIRCLE_BASE,
-    borderRadius: CIRCLE_BASE / 2,
-    backgroundColor: Colors.calmWave + '60',
-  },
-  boxPhaseDisplay: { alignItems: 'center', gap: 4 },
-  boxPhaseLabel: {
-    fontSize: 26,
-    fontWeight: '400' as const,
-    color: Colors.white,
-    letterSpacing: -0.3,
-  },
-  boxPhaseHint: { ...Typography.body, color: Colors.white + '80' },
-  boxCountdown: {
-    fontSize: 48,
-    fontWeight: '300' as const,
-    color: Colors.calmWave,
-    lineHeight: 56,
-  },
+    // Stage 1 — box breathing circle
+    circleContainer: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      width: CIRCLE_BASE * EXPANDED_SCALE + 40,
+      height: CIRCLE_BASE * EXPANDED_SCALE + 40,
+    },
+    circleGlow: {
+      position: 'absolute',
+      width: CIRCLE_BASE + 30,
+      height: CIRCLE_BASE + 30,
+      borderRadius: (CIRCLE_BASE + 30) / 2,
+      backgroundColor: Colors.calmWave + '20',
+    },
+    circle: {
+      width: CIRCLE_BASE,
+      height: CIRCLE_BASE,
+      borderRadius: CIRCLE_BASE / 2,
+      backgroundColor: Colors.calmWave + '60',
+    },
+    boxPhaseDisplay: { alignItems: 'center', gap: 4 },
+    boxPhaseLabel: {
+      fontSize: 26,
+      fontWeight: '400' as const,
+      color: Colors.white,
+      letterSpacing: -0.3,
+    },
+    boxPhaseHint: { ...typography.body, color: Colors.white + '80' },
+    boxCountdown: {
+      fontSize: 48,
+      fontWeight: '300' as const,
+      color: Colors.calmWave,
+      lineHeight: 56,
+    },
 
-  // Stage 2 — body scan
-  breathOrb: {
-    position: 'absolute',
-    width: 380,
-    height: 380,
-    borderRadius: 190,
-    backgroundColor: Colors.calmWave + '12',
-  },
-  scanPromptArea: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Spacing.md,
-  },
-  scanPromptText: {
-    fontSize: 19,
-    fontWeight: '300' as const,
-    color: Colors.white,
-    textAlign: 'center',
-    lineHeight: 32,
-  },
+    // Stage 2 — body scan
+    breathOrb: {
+      position: 'absolute',
+      width: 380,
+      height: 380,
+      borderRadius: 190,
+      backgroundColor: Colors.calmWave + '12',
+    },
+    scanPromptArea: {
+      flex: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Spacing.md,
+    },
+    scanPromptText: {
+      fontSize: 19,
+      fontWeight: '300' as const,
+      color: Colors.white,
+      textAlign: 'center',
+      lineHeight: 32,
+    },
 
-  // Stage 3 — sound prompt
-  soundPromptArea: {
-    flex: 1,
-    justifyContent: 'center',
-    gap: Spacing.lg,
-    paddingHorizontal: Spacing.xs,
-  },
-  soundPromptTitle: {
-    ...Typography.heading1,
-    color: Colors.calmWave,
-    textAlign: 'center',
-  },
-  soundPromptBody: {
-    ...Typography.body,
-    color: Colors.white + 'B3',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  soundBtn: {
-    backgroundColor: Colors.calmWave + '25',
-    borderWidth: 1,
-    borderColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    marginTop: Spacing.md,
-  },
-  soundBtnLabel: { ...Typography.heading2, color: Colors.calmWave },
+    // Stage 3 — sound prompt
+    soundPromptArea: {
+      flex: 1,
+      justifyContent: 'center',
+      gap: Spacing.lg,
+      paddingHorizontal: Spacing.xs,
+    },
+    soundPromptTitle: {
+      ...typography.heading1,
+      color: Colors.calmWave,
+      textAlign: 'center',
+    },
+    soundPromptBody: {
+      ...typography.body,
+      color: Colors.white + 'B3',
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    soundBtn: {
+      backgroundColor: Colors.calmWave + '25',
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      marginTop: Spacing.md,
+    },
+    soundBtnLabel: { ...typography.heading2, color: Colors.calmWave },
 
-  // Controls
-  controls: { gap: Spacing.sm },
-  pauseBtn: {
-    borderWidth: 1,
-    borderColor: Colors.calmWave,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  pauseBtnLabel: { ...Typography.heading2, color: Colors.calmWave },
-  endBtn: { paddingVertical: Spacing.sm, alignItems: 'center' },
-  endBtnLabel: { ...Typography.body, color: Colors.white + '55' },
+    // Controls
+    controls: { gap: Spacing.sm },
+    pauseBtn: {
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    pauseBtnLabel: { ...typography.heading2, color: Colors.calmWave },
+    endBtn: { paddingVertical: Spacing.sm, alignItems: 'center' },
+    endBtnLabel: { ...typography.body, color: Colors.white + '55' },
 
-  btnPressed: { opacity: 0.7 },
-});
+    btnPressed: { opacity: 0.7 },
+  });
+}

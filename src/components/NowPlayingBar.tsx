@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { SoundSource } from '@/src/types';
 import { soundDisplayName } from '@/src/hooks/useAudioPlayback';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TIMER_OPTIONS = [15, 30, 60, 90] as const;
 
@@ -30,6 +32,9 @@ export default function NowPlayingBar({
   onStop,
   onSetTimer,
 }: Props) {
+  const { typography } = useTheme();
+  const styles = useMemo(() => makeStyles(typography), [typography]);
+
   const isFading = timeRemaining !== null && timeRemaining > 0 && timeRemaining <= 10;
   const name = soundDisplayName(currentSound);
 
@@ -113,106 +118,108 @@ export default function NowPlayingBar({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.deepTide,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.base,
-    gap: Spacing.sm,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '30',
-  },
+function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    container: {
+      backgroundColor: Colors.deepTide,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.base,
+      gap: Spacing.sm,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '30',
+    },
 
-  // Top row
-  topRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.md,
-  },
-  nameRow: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: Colors.calmWave,
-  },
-  dotPaused: { backgroundColor: Colors.midGray },
-  dotFading: { backgroundColor: Colors.softGold },
-  soundName: {
-    ...Typography.heading2,
-    color: Colors.white,
-    flex: 1,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  iconBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: Radius.chip,
-    backgroundColor: Colors.calmWave + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  iconBtnPressed: { opacity: 0.7 },
+    // Top row
+    topRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: Spacing.md,
+    },
+    nameRow: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    dot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: Colors.calmWave,
+    },
+    dotPaused: { backgroundColor: Colors.midGray },
+    dotFading: { backgroundColor: Colors.softGold },
+    soundName: {
+      ...typography.heading2,
+      color: Colors.white,
+      flex: 1,
+    },
+    controls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    iconBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: Radius.chip,
+      backgroundColor: Colors.calmWave + '20',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    iconBtnPressed: { opacity: 0.7 },
 
-  // Play icon
-  playTriangle: {
-    width: 0, height: 0,
-    borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 10,
-    borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
-    borderLeftColor: Colors.white,
-    marginLeft: 2,
-  },
+    // Play icon
+    playTriangle: {
+      width: 0, height: 0,
+      borderTopWidth: 6, borderBottomWidth: 6, borderLeftWidth: 10,
+      borderTopColor: Colors.transparent, borderBottomColor: Colors.transparent,
+      borderLeftColor: Colors.white,
+      marginLeft: 2,
+    },
 
-  // Pause icon
-  pauseIcon: { flexDirection: 'row', gap: 3, alignItems: 'center' },
-  pauseBar: { width: 3, height: 12, borderRadius: 1.5, backgroundColor: Colors.white },
+    // Pause icon
+    pauseIcon: { flexDirection: 'row', gap: 3, alignItems: 'center' },
+    pauseBar: { width: 3, height: 12, borderRadius: 1.5, backgroundColor: Colors.white },
 
-  // Stop icon
-  stopSquare: {
-    width: 12, height: 12,
-    borderRadius: 2,
-    backgroundColor: Colors.white,
-  },
+    // Stop icon
+    stopSquare: {
+      width: 12, height: 12,
+      borderRadius: 2,
+      backgroundColor: Colors.white,
+    },
 
-  // Timer row
-  timerRow: {
-    minHeight: 24,
-    justifyContent: 'center',
-  },
-  countdown: {
-    ...Typography.body,
-    color: Colors.calmWave,
-  },
-  countdownFading: { color: Colors.softGold },
-  chipRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.xs,
-    flexWrap: 'wrap',
-  },
-  timerLabel: { ...Typography.caption, color: Colors.calmWave },
-  chip: {
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 3,
-    borderRadius: Radius.chip,
-    borderWidth: Border.width * 2,
-    borderColor: Colors.calmWave + '50',
-  },
-  chipActive: {
-    backgroundColor: Colors.calmWave,
-    borderColor: Colors.calmWave,
-  },
-  chipText: { ...Typography.micro, color: Colors.calmWave },
-  chipTextActive: { color: Colors.deepTide },
-});
+    // Timer row
+    timerRow: {
+      minHeight: 24,
+      justifyContent: 'center',
+    },
+    countdown: {
+      ...typography.body,
+      color: Colors.calmWave,
+    },
+    countdownFading: { color: Colors.softGold },
+    chipRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.xs,
+      flexWrap: 'wrap',
+    },
+    timerLabel: { ...typography.caption, color: Colors.calmWave },
+    chip: {
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 3,
+      borderRadius: Radius.chip,
+      borderWidth: Border.width * 2,
+      borderColor: Colors.calmWave + '50',
+    },
+    chipActive: {
+      backgroundColor: Colors.calmWave,
+      borderColor: Colors.calmWave,
+    },
+    chipText: { ...typography.micro, color: Colors.calmWave },
+    chipTextActive: { color: Colors.deepTide },
+  });
+}
