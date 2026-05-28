@@ -1,11 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
-
 // ─── Premium session catalogue ────────────────────────────────────────────────
 
 type PremiumSession = {
@@ -29,7 +27,6 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
 export default function RelaxScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
-  const [upgradeVisible, setUpgradeVisible] = useState(false);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -78,7 +75,7 @@ export default function RelaxScreen() {
               <Pressable
                 key={item.id}
                 style={({ pressed }) => [styles.premiumCard, pressed && styles.premiumCardPressed]}
-                onPress={() => setUpgradeVisible(true)}
+                onPress={() => router.push('/premium' as any)}
                 accessibilityRole="button"
                 accessibilityLabel={`${item.title} — Premium`}
               >
@@ -93,7 +90,7 @@ export default function RelaxScreen() {
 
           <Pressable
             style={({ pressed }) => [styles.getPremiumBtn, pressed && styles.getPremiumBtnPressed]}
-            onPress={() => setUpgradeVisible(true)}
+            onPress={() => router.push('/premium' as any)}
             accessibilityRole="button"
             accessibilityLabel="Get Premium"
           >
@@ -102,7 +99,6 @@ export default function RelaxScreen() {
         </View>
       </ScrollView>
 
-      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
     </SafeAreaView>
   );
 }

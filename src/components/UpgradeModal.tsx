@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+import { router } from 'expo-router';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -20,6 +21,11 @@ type Props = {
 export default function UpgradeModal({ visible, onClose }: Props) {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
+  function handleGetPremium() {
+    onClose();
+    router.push('/premium' as any);
+  }
 
   return (
     <Modal
@@ -57,24 +63,24 @@ export default function UpgradeModal({ visible, onClose }: Props) {
             </View>
 
             <Text style={styles.price}>AU$8.99 / month · AU$59.99 / year</Text>
-            <Text style={styles.priceSub}>
-              Cancel any time. No commitment required.
-            </Text>
 
-            {/* Payment flow is built in Phase 7. */}
-            <View style={styles.comingSoon}>
-              <Text style={styles.comingSoonText}>
-                In-app purchase coming soon — stay tuned.
-              </Text>
-            </View>
+            {/* Primary CTA — navigates to the full upgrade screen */}
+            <Pressable
+              style={({ pressed }) => [styles.premiumBtn, pressed && styles.premiumBtnPressed]}
+              onPress={handleGetPremium}
+              accessibilityRole="button"
+              accessibilityLabel="Get Premium"
+            >
+              <Text style={styles.premiumBtnLabel}>Get Premium</Text>
+            </Pressable>
 
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel="Maybe later"
             >
-              <Text style={styles.closeBtnLabel}>Close</Text>
+              <Text style={styles.closeBtnLabel}>Maybe later</Text>
             </Pressable>
           </View>
         </Pressable>
@@ -128,21 +134,19 @@ function makeStyles(
     },
     featureText: { ...typography.body, color: colors.textPrimary, flex: 1 },
     price: { ...typography.heading2, color: colors.textPrimary },
-    priceSub: { ...typography.caption, color: colors.textSecondary, marginTop: -Spacing.sm },
-    comingSoon: {
-      backgroundColor: colors.goldLight,
+    premiumBtn: {
+      backgroundColor: colors.deepTide,
       borderRadius: Radius.chip,
-      padding: Spacing.md,
-    },
-    comingSoonText: { ...typography.body, color: colors.softGold, textAlign: 'center' },
-    closeBtn: {
       paddingVertical: Spacing.base,
       alignItems: 'center',
-      borderRadius: Radius.chip,
-      borderWidth: 1,
-      borderColor: colors.textSecondary + '50',
+    },
+    premiumBtnPressed: { opacity: 0.85 },
+    premiumBtnLabel: { ...typography.heading2, color: colors.white },
+    closeBtn: {
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
     },
     closeBtnPressed: { opacity: 0.7 },
-    closeBtnLabel: { ...typography.heading2, color: colors.textSecondary },
+    closeBtnLabel: { ...typography.caption, color: colors.textSecondary },
   });
 }

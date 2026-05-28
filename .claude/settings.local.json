@@ -15,7 +15,8 @@
       "Bash(find /mnt -name \"Michael.jpg\")",
       "Read(//private/tmp/**)",
       "Read(//Users/Rachel/**)",
-      "Bash(pip install *)"
+      "Bash(pip install *)",
+      "Bash(npm list *)"
     ]
   }
 }

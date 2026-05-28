@@ -16,7 +16,6 @@ import { usePreferences } from '@/src/context/PreferencesContext';
 import { audioEngine } from '@/src/audio/AudioEngine';
 import { formatHz } from '@/src/audio/PitchMatchEngine';
 import NowPlayingBar from '@/src/components/NowPlayingBar';
-import UpgradeModal from '@/src/components/UpgradeModal';
 import { isAudioAvailable } from '@/src/audio/AudioEngine';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -650,7 +649,6 @@ export default function SoundScreen() {
   const { preferences } = usePreferences();
   const savedPitchHz = preferences?.matchedPitchHz ?? null;
   const [notchedActive, setNotchedActive] = useState(false);
-  const [upgradeVisible, setUpgradeVisible] = useState(false);
 
   const { width: screenWidth } = useWindowDimensions();
   const ARROW_W = 44;
@@ -715,7 +713,7 @@ export default function SoundScreen() {
 
         <View style={styles.section}>
           <SectionHeading label="Unlock Premium" />
-          <PremiumTeaser onGetPremium={() => setUpgradeVisible(true)} />
+          <PremiumTeaser onGetPremium={() => router.push('/premium' as any)} />
         </View>
 
         <View style={styles.section}>
@@ -745,7 +743,6 @@ export default function SoundScreen() {
         />
       )}
 
-      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
     </SafeAreaView>
   );
 }
