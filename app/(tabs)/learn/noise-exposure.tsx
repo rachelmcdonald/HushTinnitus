@@ -1,7 +1,9 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── dB reference data ────────────────────────────────────────────────────────
 
@@ -25,18 +27,11 @@ const NOISE_LEVELS: NoiseEntry[] = [
   { label: 'Emergency siren (nearby)', db: 115 },
 ];
 
-const MAX_DB = 120; // scale all bars relative to this maximum
-
-// ─── Colour thresholds ────────────────────────────────────────────────────────
-//
-//  < 70 dB  — generally safe for extended exposure
-//  70–84 dB — extended exposure may cause fatigue; awareness recommended
-//  85–99 dB — hearing protection recommended (NIOSH / EU directive threshold)
-// 100+ dB  — hearing protection strongly recommended; limit exposure duration
+const MAX_DB = 120;
 
 function barColor(db: number): string {
   if (db >= 100) return Colors.warmCoral;
-  if (db >= 85)  return '#D4824A'; // muted amber-coral for warning
+  if (db >= 85)  return '#D4824A';
   if (db >= 70)  return Colors.softGold;
   return Colors.calmWave;
 }
@@ -50,6 +45,8 @@ function riskLabel(db: number): string | null {
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -73,6 +70,8 @@ function ThresholdCard({
   range: string;
   description: string;
 }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={[styles.thresholdCard, { borderLeftColor: color }]}>
       <View style={styles.thresholdHeader}>
@@ -85,18 +84,19 @@ function ThresholdCard({
 }
 
 function ChartRow({ entry }: { entry: NoiseEntry }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const pct = Math.min(entry.db / MAX_DB, 1);
   const color = barColor(entry.db);
   const risk = riskLabel(entry.db);
 
   return (
     <View style={styles.chartRow}>
-      {/* Label */}
       <Text style={styles.chartLabel} numberOfLines={1}>
         {entry.label}
       </Text>
 
-      {/* Bar track */}
       <View style={styles.barTrack}>
         <View
           style={[
@@ -107,7 +107,6 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
             },
           ]}
         />
-        {/* 85 dB threshold line */}
         <View
           style={[
             styles.thresholdLine,
@@ -116,10 +115,8 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
         />
       </View>
 
-      {/* dB value */}
       <Text style={[styles.dbValue, { color }]}>{entry.db}</Text>
 
-      {/* Risk badge */}
       <View style={styles.riskBadgeSlot}>
         {risk && (
           <View style={[styles.riskBadge, { backgroundColor: color + '20' }]}>
@@ -134,6 +131,9 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function NoiseExposureScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -151,7 +151,6 @@ export default function NoiseExposureScreen() {
           </Text>
         </View>
 
-        {/* Threshold summary cards */}
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>Exposure thresholds</Text>
           <View style={styles.thresholdCards}>
@@ -182,11 +181,9 @@ export default function NoiseExposureScreen() {
           </View>
         </View>
 
-        {/* Bar chart */}
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>Common sound levels</Text>
 
-          {/* Legend */}
           <View style={styles.legend}>
             <View style={styles.legendItem}>
               <View style={[styles.legendDot, { backgroundColor: Colors.calmWave }]} />
@@ -219,7 +216,6 @@ export default function NoiseExposureScreen() {
           </Text>
         </View>
 
-        {/* Practical recommendations */}
         <View style={styles.section}>
           <Text style={styles.sectionHeading}>Practical hearing protection</Text>
 
@@ -260,7 +256,6 @@ export default function NoiseExposureScreen() {
           </View>
         </View>
 
-        {/* Tinnitus note */}
         <View style={styles.infoCard}>
           <Text style={styles.infoHeading}>Tinnitus and noise exposure</Text>
           <Text style={styles.infoBody}>
@@ -289,138 +284,139 @@ export default function NoiseExposureScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel:      { ...typography.body, color: Colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+    header: { gap: Spacing.md },
+    title:  { ...typography.display, color: colors.textPrimary },
+    lead:   { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  section: { gap: Spacing.md },
-  sectionHeading: { ...Typography.heading1, color: Colors.deepTide },
+    section:        { gap: Spacing.md },
+    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
 
-  // Threshold cards
-  thresholdCards: { gap: Spacing.sm },
-  thresholdCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    gap: 4,
-    borderLeftWidth: 3,
-  },
-  thresholdHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  thresholdLabel: { ...Typography.heading2 },
-  thresholdRange: { ...Typography.caption, color: Colors.midGray },
-  thresholdDesc: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+    // Threshold cards
+    thresholdCards: { gap: Spacing.sm },
+    thresholdCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      gap: 4,
+      borderLeftWidth: 3,
+    },
+    thresholdHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    thresholdLabel:  { ...typography.heading2 },
+    thresholdRange:  { ...typography.caption, color: colors.textSecondary },
+    thresholdDesc:   { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
-  // Legend
-  legend: {
-    flexDirection: 'row',
-    gap: Spacing.base,
-    flexWrap: 'wrap',
-  },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
-  legendDot: { width: 10, height: 10, borderRadius: 5 },
-  legendText: { ...Typography.caption, color: Colors.midGray },
+    // Legend
+    legend:     { flexDirection: 'row', gap: Spacing.base, flexWrap: 'wrap' },
+    legendItem: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs },
+    legendDot:  { width: 10, height: 10, borderRadius: 5 },
+    legendText: { ...typography.caption, color: colors.textSecondary },
 
-  // Chart
-  chart: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-  },
-  chartRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-    minHeight: 32,
-  },
-  chartLabel: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    width: 120,
-    flexShrink: 0,
-  },
-  barTrack: {
-    flex: 1,
-    height: 14,
-    backgroundColor: Colors.midGray + '20',
-    borderRadius: 7,
-    overflow: 'visible',
-    position: 'relative',
-  },
-  barFill: {
-    height: '100%',
-    borderRadius: 7,
-    minWidth: 4,
-  },
-  thresholdLine: {
-    position: 'absolute',
-    top: -3,
-    bottom: -3,
-    width: 1.5,
-    backgroundColor: Colors.midGray + '80',
-  },
-  dbValue: {
-    ...Typography.caption,
-    fontWeight: '600',
-    width: 28,
-    textAlign: 'right',
-    flexShrink: 0,
-  },
-  riskBadgeSlot: { width: 64, flexShrink: 0 },
-  riskBadge: {
-    borderRadius: 4,
-    paddingHorizontal: Spacing.xs,
-    paddingVertical: 2,
-    alignSelf: 'flex-start',
-  },
-  riskBadgeText: { ...Typography.micro, fontSize: 9 },
-  chartNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
+    // Chart
+    chart: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+    },
+    chartRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+      minHeight: 32,
+    },
+    chartLabel: {
+      ...typography.caption,
+      color: colors.textPrimary,
+      width: 120,
+      flexShrink: 0,
+    },
+    barTrack: {
+      flex: 1,
+      height: 14,
+      backgroundColor: colors.textSecondary + '20',
+      borderRadius: 7,
+      overflow: 'visible',
+      position: 'relative',
+    },
+    barFill: {
+      height: '100%',
+      borderRadius: 7,
+      minWidth: 4,
+    },
+    thresholdLine: {
+      position: 'absolute',
+      top: -3,
+      bottom: -3,
+      width: 1.5,
+      backgroundColor: colors.textSecondary + '80',
+    },
+    dbValue: {
+      ...typography.caption,
+      fontWeight: '600',
+      width: 28,
+      textAlign: 'right',
+      flexShrink: 0,
+    },
+    riskBadgeSlot: { width: 64, flexShrink: 0 },
+    riskBadge: {
+      borderRadius: 4,
+      paddingHorizontal: Spacing.xs,
+      paddingVertical: 2,
+      alignSelf: 'flex-start',
+    },
+    riskBadgeText: { ...typography.micro, fontSize: 9 },
+    chartNote: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      fontStyle: 'italic',
+      lineHeight: 18,
+    },
 
-  // Recommendation cards
-  recCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: 6,
-  },
-  recHeading: { ...Typography.heading2, color: Colors.deepTide },
-  recBody: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
+    // Recommendation cards
+    recCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: 6,
+    },
+    recHeading: { ...typography.heading2, color: Colors.deepTide },
+    recBody:    { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
 
-  // Tinnitus info card
-  infoCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  infoHeading: { ...Typography.heading2, color: Colors.deepTide },
-  infoBody: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
+    // Tinnitus info card
+    infoCard: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    infoHeading: { ...typography.heading2, color: Colors.deepTide },
+    infoBody:    { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
-  footer: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    footer: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

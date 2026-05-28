@@ -4,7 +4,8 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 import { getDb } from '@/src/storage/database';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Checklist data ───────────────────────────────────────────────────────────
 //
@@ -189,6 +190,8 @@ function useSleepHygiene() {
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -210,6 +213,9 @@ function ChecklistItemRow({
   isChecked: boolean;
   onToggle: () => void;
 }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <Pressable
       style={({ pressed }) => [
@@ -241,6 +247,9 @@ function ChecklistItemRow({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function SleepHygieneScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { sortedItems, checked, toggleItem, isPersonalised, completedCount } =
     useSleepHygiene();
 
@@ -328,113 +337,118 @@ export default function SleepHygieneScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+    header: { gap: Spacing.md },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  // Progress card
-  progressCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  progressRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  progressLabel: { ...Typography.body, color: Colors.darkText },
-  progressPct: { ...Typography.heading2, color: Colors.deepTide },
-  progressTrack: {
-    height: 6,
-    backgroundColor: Colors.midGray + '25',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.calmWave,
-    borderRadius: 3,
-  },
-  personalisedNote: {
-    ...Typography.caption,
-    color: Colors.deepTide,
-    fontStyle: 'italic',
-  },
+    // Progress card
+    progressCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    progressRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    progressLabel: { ...typography.body, color: colors.textPrimary },
+    progressPct: { ...typography.heading2, color: Colors.deepTide },
+    progressTrack: {
+      height: 6,
+      backgroundColor: colors.textSecondary + '25',
+      borderRadius: 3,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      backgroundColor: Colors.calmWave,
+      borderRadius: 3,
+    },
+    personalisedNote: {
+      ...typography.caption,
+      color: Colors.deepTide,
+      fontStyle: 'italic',
+    },
 
-  // Checklist
-  checklist: { gap: Spacing.sm },
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.transparent,
-  },
-  checkRowDone: {
-    backgroundColor: Colors.tealLight,
-    borderColor: Colors.calmWave + '50',
-  },
-  checkRowPressed: { opacity: 0.8 },
+    // Checklist
+    checklist: { gap: Spacing.sm },
+    checkRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: Colors.transparent,
+    },
+    checkRowDone: {
+      backgroundColor: colors.surfaceVariant,
+      borderColor: Colors.calmWave + '50',
+    },
+    checkRowPressed: { opacity: 0.8 },
 
-  checkbox: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: Colors.midGray + '60',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 1,
-    flexShrink: 0,
-  },
-  checkboxChecked: {
-    backgroundColor: Colors.calmWave,
-    borderColor: Colors.calmWave,
-  },
-  checkmark: { color: Colors.white, fontSize: 13, fontWeight: '700' },
+    checkbox: {
+      width: 22,
+      height: 22,
+      borderRadius: 6,
+      borderWidth: 2,
+      borderColor: colors.textSecondary + '60',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginTop: 1,
+      flexShrink: 0,
+    },
+    checkboxChecked: {
+      backgroundColor: Colors.calmWave,
+      borderColor: Colors.calmWave,
+    },
+    checkmark: { color: Colors.white, fontSize: 13, fontWeight: '700' },
 
-  checkBody: { flex: 1, gap: 4 },
-  checkText: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
-  checkTextDone: { color: Colors.deepTide },
-  checkDetail: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+    checkBody: { flex: 1, gap: 4 },
+    checkText: { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    checkTextDone: { color: Colors.deepTide },
+    checkDetail: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
-  // Citation
-  citation: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  citationLabel: { ...Typography.micro, color: Colors.deepTide },
-  citationText: { ...Typography.caption, color: Colors.darkText, lineHeight: 20 },
-  citationItalic: { fontStyle: 'italic' },
-  citationNote: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
+    // Citation
+    citation: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
+    citationItalic: { fontStyle: 'italic' },
+    citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
-  footer: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    footer: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

@@ -1,11 +1,15 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Reusable content components ─────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -21,6 +25,8 @@ function BackButton() {
 type SectionProps = { heading: string; children: React.ReactNode };
 
 function Section({ heading, children }: SectionProps) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={styles.section}>
       <Text style={styles.sectionHeading}>{heading}</Text>
@@ -30,10 +36,14 @@ function Section({ heading, children }: SectionProps) {
 }
 
 function Body({ children }: { children: React.ReactNode }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return <Text style={styles.body}>{children}</Text>;
 }
 
 function BulletPoint({ children }: { children: string }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={styles.bulletRow}>
       <View style={styles.bulletDot} />
@@ -43,6 +53,8 @@ function BulletPoint({ children }: { children: string }) {
 }
 
 function CitationCard() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={styles.citation}>
       <Text style={styles.citationLabel}>Evidence citation</Text>
@@ -63,6 +75,9 @@ function CitationCard() {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function Tinnitus101Screen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -79,7 +94,6 @@ export default function Tinnitus101Screen() {
           </Text>
         </View>
 
-        {/* ─── Section 1 ─── */}
         <Section heading="What is tinnitus?">
           <Body>
             Tinnitus is the perception of sound — most often a ringing, buzzing,
@@ -95,7 +109,6 @@ export default function Tinnitus101Screen() {
           </Body>
         </Section>
 
-        {/* ─── Section 2 ─── */}
         <Section heading="Why does it happen?">
           <Body>
             The inner ear contains tiny hair cells that convert sound vibrations into
@@ -113,7 +126,6 @@ export default function Tinnitus101Screen() {
           </Body>
         </Section>
 
-        {/* ─── Section 3: Habituation model ─── */}
         <Section heading="The habituation model">
           <Body>
             Research by Jastreboff (1990) helped explain why some people are
@@ -138,7 +150,6 @@ export default function Tinnitus101Screen() {
           <CitationCard />
         </Section>
 
-        {/* ─── Section 4 ─── */}
         <Section heading="What supports the process">
           <Body>
             Habituation does not require eliminating the sound. It happens when
@@ -190,85 +201,75 @@ export default function Tinnitus101Screen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel:      { ...typography.body, color: Colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+    header: { gap: Spacing.md },
+    title:  { ...typography.display, color: colors.textPrimary },
+    lead:   { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  section: { gap: Spacing.md },
-  sectionHeading: { ...Typography.heading1, color: Colors.deepTide },
-  body: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
+    section:        { gap: Spacing.md },
+    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
+    body:           { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
-  bulletList: { gap: Spacing.sm, paddingLeft: Spacing.xs },
-  bulletRow: { flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' },
-  bulletDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.calmWave,
-    marginTop: 9,
-  },
-  bulletText: { flex: 1 },
+    bulletList: { gap: Spacing.sm, paddingLeft: Spacing.xs },
+    bulletRow:  { flexDirection: 'row', gap: Spacing.sm, alignItems: 'flex-start' },
+    bulletDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: Colors.calmWave,
+      marginTop: 9,
+    },
+    bulletText: { flex: 1 },
 
-  // Jastreboff 1990 citation card
-  citation: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  citationLabel: {
-    ...Typography.micro,
-    color: Colors.deepTide,
-  },
-  citationText: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    lineHeight: 20,
-  },
-  citationItalic: {
-    fontStyle: 'italic',
-  },
-  citationNote: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 18,
-  },
+    citation: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    citationLabel:  { ...typography.micro, color: Colors.deepTide },
+    citationText:   { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
+    citationItalic: { fontStyle: 'italic' },
+    citationNote:   { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
-  // Summary card at end of Section 4
-  summaryCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '50',
-  },
-  summaryText: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
+    summaryCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '50',
+    },
+    summaryText: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
-  footer: {
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    paddingTop: Spacing.md,
-  },
-  footerText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    footer: {
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      paddingTop: Spacing.md,
+    },
+    footerText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

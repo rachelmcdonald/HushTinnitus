@@ -232,7 +232,7 @@ export default function PitchMatchingScreen() {
             value={sliderValue}
             onValueChange={handleSliderChange}
             minimumTrackTintColor={Colors.calmWave}
-            maximumTrackTintColor={Colors.midGray + '40'}
+            maximumTrackTintColor={colors.textSecondary + '40'}
             thumbTintColor={Colors.deepTide}
             accessibilityLabel={`Frequency ${formatHz(hz)}`}
           />

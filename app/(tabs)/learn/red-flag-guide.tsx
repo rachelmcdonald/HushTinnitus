@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Referral text ────────────────────────────────────────────────────────────
 //
@@ -80,6 +81,8 @@ const CONDITIONS: Condition[] = [
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -93,6 +96,8 @@ function BackButton() {
 }
 
 function ConditionCard({ condition }: { condition: Condition }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -132,6 +137,8 @@ function ConditionCard({ condition }: { condition: Condition }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function RedFlagGuideScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [copied, setCopied] = useState(false);
 
   async function handleCopyReferral() {
@@ -236,129 +243,134 @@ export default function RedFlagGuideScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
+    header: { gap: Spacing.md },
+    title: { ...typography.display, color: colors.textPrimary },
+    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
-  // Reassurance banner — warm, neutral colours
-  reassurance: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  reassuranceText: { ...Typography.body, color: Colors.deepTide, lineHeight: 24 },
+    // Reassurance banner — warm, neutral colours
+    reassurance: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    reassuranceText: { ...typography.body, color: Colors.deepTide, lineHeight: 24 },
 
-  section: { gap: Spacing.sm },
-  sectionHeading: { ...Typography.heading1, color: Colors.deepTide },
+    section: { gap: Spacing.sm },
+    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
 
-  // Condition card — coral light background, coral LEFT BORDER ONLY
-  condCard: {
-    backgroundColor: Colors.coralLight,
-    borderRadius: Radius.card,
-    flexDirection: 'row',
-    overflow: 'hidden',
-  },
-  condAccent: {
-    width: 4,
-    backgroundColor: Colors.warmCoral,  // accent only, not background
-  },
-  condContent: {
-    flex: 1,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-  },
-  condHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  condHeading: { ...Typography.heading2, color: Colors.darkText, flex: 1 },
-  condChevron: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },
-  condDescription: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
-  condDivider: {
-    height: Border.width,
-    backgroundColor: Colors.warmCoral + '30',
-  },
-  condSectionLabel: { ...Typography.micro, color: Colors.warmCoral },
-  condBody: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
-  condActionBox: {
-    backgroundColor: Colors.warmSand + 'BB',
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-  },
-  condActionLabel: { ...Typography.micro, color: Colors.deepTide },
+    // Condition card — coral light background, coral LEFT BORDER ONLY
+    condCard: {
+      backgroundColor: Colors.coralLight,
+      borderRadius: Radius.card,
+      flexDirection: 'row',
+      overflow: 'hidden',
+    },
+    condAccent: {
+      width: 4,
+      backgroundColor: Colors.warmCoral,  // accent only, not background
+    },
+    condContent: {
+      flex: 1,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    condHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: Spacing.sm,
+    },
+    condHeading: { ...typography.heading2, color: colors.textPrimary, flex: 1 },
+    condChevron: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
+    condDescription: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
+    condDivider: {
+      height: Border.width,
+      backgroundColor: Colors.warmCoral + '30',
+    },
+    condSectionLabel: { ...typography.micro, color: Colors.warmCoral },
+    condBody: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
+    condActionBox: {
+      backgroundColor: colors.background + 'BB',
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      gap: Spacing.xs,
+    },
+    condActionLabel: { ...typography.micro, color: Colors.deepTide },
 
-  // Referral section
-  referralSection: { gap: Spacing.md },
-  referralIntro: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  referralCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  referralLabel: { ...Typography.micro, color: Colors.midGray },
-  referralText: {
-    ...Typography.body,
-    color: Colors.darkText,
-    lineHeight: 24,
-    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
-  },
-  copyBtn: {
-    borderWidth: Border.width * 2,
-    borderColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.sm,
-    alignItems: 'center',
-  },
-  copyBtnCopied: {
-    borderColor: Colors.calmWave,
-    backgroundColor: Colors.tealLight,
-  },
-  copyBtnPressed: { opacity: 0.7 },
-  copyBtnLabel: { ...Typography.heading2, color: Colors.deepTide },
-  copyBtnLabelCopied: { color: Colors.calmWave },
+    // Referral section
+    referralSection: { gap: Spacing.md },
+    referralIntro: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+    referralCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    referralLabel: { ...typography.micro, color: colors.textSecondary },
+    referralText: {
+      ...typography.body,
+      color: colors.textPrimary,
+      lineHeight: 24,
+      fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    },
+    copyBtn: {
+      borderWidth: Border.width * 2,
+      borderColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    copyBtnCopied: {
+      borderColor: Colors.calmWave,
+      backgroundColor: Colors.tealLight,
+    },
+    copyBtnPressed: { opacity: 0.7 },
+    copyBtnLabel: { ...typography.heading2, color: Colors.deepTide },
+    copyBtnLabelCopied: { color: Colors.calmWave },
 
-  // Disclaimer — exact Section 8.3 wording
-  disclaimer: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  disclaimerHeading: { ...Typography.heading2, color: Colors.darkText },
-  disclaimerText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 20,
-  },
+    // Disclaimer — exact Section 8.3 wording
+    disclaimer: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    disclaimerHeading: { ...typography.heading2, color: colors.textPrimary },
+    disclaimerText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 20,
+    },
 
-  footer: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-});
+    footer: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+  });
+}

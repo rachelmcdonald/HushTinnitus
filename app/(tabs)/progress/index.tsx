@@ -51,6 +51,7 @@ function SymptomLineChart({
   series: ChartSeries[];
   maxValue?: number;
 }) {
+  const { colors } = useTheme();
   const height = 100;
   const padX = 8;
   const padY = 10;
@@ -83,7 +84,7 @@ function SymptomLineChart({
           <SvgLine
             key={v}
             x1={padX} y1={y} x2={padX + w} y2={y}
-            stroke={Colors.midGray + '20'}
+            stroke={colors.textSecondary + '20'}
             strokeWidth={1}
           />
         );

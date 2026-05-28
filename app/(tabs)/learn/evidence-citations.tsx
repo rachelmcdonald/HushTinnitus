@@ -1,9 +1,11 @@
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
-// ─── Citation data — all 8 references from Section 11 of the spec ─────────────
+// ─── Citation data ────────────────────────────────────────────────────────────
 
 type Citation = {
   id: string;
@@ -149,6 +151,8 @@ const CITATION_GROUPS: CitationGroup[] = [
 // ─── Components ───────────────────────────────────────────────────────────────
 
 function BackButton() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <Pressable
       style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -176,6 +180,8 @@ async function openUrl(url: string | null, label: string) {
 }
 
 function CitationCard({ citation }: { citation: Citation }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={styles.card}>
       <View style={styles.cardMeta}>
@@ -204,6 +210,8 @@ function CitationCard({ citation }: { citation: Citation }) {
 }
 
 function GroupSection({ group }: { group: CitationGroup }) {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   return (
     <View style={styles.group}>
       <View style={styles.groupHeader}>
@@ -222,6 +230,9 @@ function GroupSection({ group }: { group: CitationGroup }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function EvidenceCitationsScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const total = CITATION_GROUPS.reduce((n, g) => n + g.citations.length, 0);
 
   return (
@@ -266,115 +277,114 @@ export default function EvidenceCitationsScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
 
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
+    backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel:      { ...typography.body, color: Colors.deepTide },
 
-  header: { gap: Spacing.md },
-  title: { ...Typography.display, color: Colors.darkText },
-  lead: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  disclaimer: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.sm,
-  },
-  disclaimerText: { ...Typography.caption, color: Colors.deepTide },
+    header: { gap: Spacing.md },
+    title:  { ...typography.display, color: colors.textPrimary },
+    lead:   { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+    disclaimer: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.sm,
+    },
+    disclaimerText: { ...typography.caption, color: Colors.deepTide },
 
-  // Group
-  group: { gap: Spacing.sm },
-  groupHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  groupTitle: { ...Typography.heading1, color: Colors.deepTide },
-  groupCount: { ...Typography.caption, color: Colors.midGray },
+    group: { gap: Spacing.sm },
+    groupHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    groupTitle: { ...typography.heading1, color: Colors.deepTide },
+    groupCount: { ...typography.caption, color: colors.textSecondary },
 
-  // Citation card
-  card: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderTopWidth: 3,
-    borderTopColor: Colors.calmWave,
-  },
-  cardMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  cardAuthors: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    flex: 1,
-    lineHeight: 18,
-  },
-  cardYear: {
-    ...Typography.caption,
-    color: Colors.deepTide,
-    fontWeight: '600',
-    flexShrink: 0,
-  },
-  cardTitle: {
-    ...Typography.heading2,
-    color: Colors.darkText,
-    lineHeight: 22,
-  },
-  cardJournal: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    lineHeight: 18,
-  },
-  cardJournalItalic: {
-    fontStyle: 'italic',
-  },
-  cardRelevance: {
-    ...Typography.caption,
-    color: Colors.darkText,
-    lineHeight: 18,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    paddingTop: Spacing.sm,
-  },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderTopWidth: 3,
+      borderTopColor: Colors.calmWave,
+    },
+    cardMeta: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+      gap: Spacing.sm,
+    },
+    cardAuthors: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      flex: 1,
+      lineHeight: 18,
+    },
+    cardYear: {
+      ...typography.caption,
+      color: Colors.deepTide,
+      fontWeight: '600',
+      flexShrink: 0,
+    },
+    cardTitle: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+      lineHeight: 22,
+    },
+    cardJournal: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      lineHeight: 18,
+    },
+    cardJournalItalic: { fontStyle: 'italic' },
+    cardRelevance: {
+      ...typography.caption,
+      color: colors.textPrimary,
+      lineHeight: 18,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      paddingTop: Spacing.sm,
+    },
 
-  // Source link button
-  linkBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  linkBtnPressed: { opacity: 0.7 },
-  linkBtnText: { ...Typography.micro, color: Colors.deepTide },
-  linkBtnArrow: { ...Typography.micro, color: Colors.deepTide },
+    linkBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    linkBtnPressed: { opacity: 0.7 },
+    linkBtnText:    { ...typography.micro, color: Colors.deepTide },
+    linkBtnArrow:   { ...typography.micro, color: Colors.deepTide },
 
-  // Footer
-  footer: {
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    paddingTop: Spacing.md,
-  },
-  footerText: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-    lineHeight: 18,
-  },
-});
+    footer: {
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      paddingTop: Spacing.md,
+    },
+    footerText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+      lineHeight: 18,
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getDb } from '@/src/storage/database';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import UpgradeModal from '@/src/components/UpgradeModal';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -66,8 +67,13 @@ function saveEntry(entry: {
 }
 
 // ─── Premium gate ─────────────────────────────────────────────────────────────
+// The gate screen uses Colors.goldLight as its background — this is an
+// intentional brand design that doesn't respond to dark mode. Only typography
+// is dynamic; all color values stay hardcoded to preserve contrast on gold.
 
 function PremiumGate({ onBack }: { onBack: () => void }) {
+  const { typography } = useTheme();
+  const gate = useMemo(() => makeGateStyles(typography), [typography]);
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
@@ -163,109 +169,113 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
   );
 }
 
-const gate = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.goldLight },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.softGold },
-  header: { gap: Spacing.md },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  badgeText: { ...Typography.micro, color: Colors.white },
-  title: { ...Typography.display, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  // Preview
-  previewWrapper: { position: 'relative', borderRadius: Radius.card, overflow: 'hidden' },
-  previewOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: Colors.goldLight + 'CC',
-    zIndex: 2,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lockPill: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.base,
-    paddingVertical: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.softGold,
-  },
-  lockText: { ...Typography.heading2, color: Colors.softGold },
-  preview: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    opacity: 0.45,
-  },
-  previewStepLabel: { ...Typography.micro, color: Colors.midGray },
-  previewHeading: { ...Typography.heading1, color: Colors.darkText },
-  previewHint: { ...Typography.body, color: Colors.midGray },
-  previewInput: {
-    borderWidth: 1.5,
-    borderColor: Colors.midGray + '40',
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    minHeight: 80,
-    backgroundColor: Colors.warmSand,
-  },
-  previewPlaceholder: { ...Typography.body, color: Colors.midGray },
-  // Features
-  featureList: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderWidth: 1,
-    borderColor: Colors.softGold + '50',
-  },
-  featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
-  featureDot: {
-    width: 6, height: 6, borderRadius: 3,
-    backgroundColor: Colors.softGold,
-    marginTop: 8,
-  },
-  featureText: { ...Typography.body, color: Colors.darkText, flex: 1 },
-  // Citation
-  citation: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.softGold,
-  },
-  citationLabel: { ...Typography.micro, color: Colors.softGold },
-  citationText: { ...Typography.caption, color: Colors.darkText, lineHeight: 20 },
-  citationItalic: { fontStyle: 'italic' },
-  citationNote: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
-  // Unlock button
-  unlockBtn: {
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  unlockBtnPressed: { opacity: 0.85 },
-  unlockLabel: { ...Typography.heading2, color: Colors.white },
-});
+function makeGateStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: Colors.goldLight },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.softGold },
+    header: { gap: Spacing.md },
+    badge: {
+      alignSelf: 'flex-start',
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    badgeText: { ...typography.micro, color: Colors.white },
+    title: { ...typography.display, color: Colors.darkText },
+    subtitle: { ...typography.body, color: Colors.midGray, lineHeight: 24 },
+    // Preview
+    previewWrapper: { position: 'relative', borderRadius: Radius.card, overflow: 'hidden' },
+    previewOverlay: {
+      ...StyleSheet.absoluteFillObject,
+      backgroundColor: Colors.goldLight + 'CC',
+      zIndex: 2,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    lockPill: {
+      backgroundColor: Colors.warmSand,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.base,
+      paddingVertical: Spacing.sm,
+      borderWidth: 1,
+      borderColor: Colors.softGold,
+    },
+    lockText: { ...typography.heading2, color: Colors.softGold },
+    preview: {
+      backgroundColor: Colors.warmSand,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      opacity: 0.45,
+    },
+    previewStepLabel: { ...typography.micro, color: Colors.midGray },
+    previewHeading: { ...typography.heading1, color: Colors.darkText },
+    previewHint: { ...typography.body, color: Colors.midGray },
+    previewInput: {
+      borderWidth: 1.5,
+      borderColor: Colors.midGray + '40',
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      minHeight: 80,
+      backgroundColor: Colors.warmSand,
+    },
+    previewPlaceholder: { ...typography.body, color: Colors.midGray },
+    // Features
+    featureList: {
+      backgroundColor: Colors.warmSand,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: 1,
+      borderColor: Colors.softGold + '50',
+    },
+    featureRow: { flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.sm },
+    featureDot: {
+      width: 6, height: 6, borderRadius: 3,
+      backgroundColor: Colors.softGold,
+      marginTop: 8,
+    },
+    featureText: { ...typography.body, color: Colors.darkText, flex: 1 },
+    // Citation
+    citation: {
+      backgroundColor: Colors.warmSand,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.softGold,
+    },
+    citationLabel: { ...typography.micro, color: Colors.softGold },
+    citationText: { ...typography.caption, color: Colors.darkText, lineHeight: 20 },
+    citationItalic: { fontStyle: 'italic' },
+    citationNote: { ...typography.caption, color: Colors.midGray, lineHeight: 18 },
+    // Unlock button
+    unlockBtn: {
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    unlockBtnPressed: { opacity: 0.85 },
+    unlockLabel: { ...typography.heading2, color: Colors.white },
+  });
+}
 
 // ─── Journal flow ─────────────────────────────────────────────────────────────
 
 function ProgressBar({ step }: { step: number }) {
+  const { colors, typography } = useTheme();
+  const flow = useMemo(() => makeFlowStyles(colors, typography), [colors, typography]);
   return (
     <View style={flow.progressRow}>
       <Text style={flow.stepLabel}>Step {step} of {TOTAL_STEPS}</Text>
@@ -277,6 +287,8 @@ function ProgressBar({ step }: { step: number }) {
 }
 
 function StepHeading({ heading, hint }: { heading: string; hint?: string }) {
+  const { colors, typography } = useTheme();
+  const flow = useMemo(() => makeFlowStyles(colors, typography), [colors, typography]);
   return (
     <View style={flow.stepHeader}>
       <Text style={flow.heading}>{heading}</Text>
@@ -296,6 +308,8 @@ function PromptInput({
   placeholder: string;
   minHeight?: number;
 }) {
+  const { colors, typography } = useTheme();
+  const flow = useMemo(() => makeFlowStyles(colors, typography), [colors, typography]);
   return (
     <TextInput
       style={[flow.input, { minHeight }]}
@@ -303,7 +317,7 @@ function PromptInput({
       value={value}
       onChangeText={onChangeText}
       placeholder={placeholder}
-      placeholderTextColor={Colors.midGray + '90'}
+      placeholderTextColor={colors.textSecondary + '90'}
       textAlignVertical="top"
       accessibilityLabel={placeholder}
     />
@@ -311,6 +325,9 @@ function PromptInput({
 }
 
 function JournalFlow({ onBack }: { onBack: () => void }) {
+  const { colors, typography } = useTheme();
+  const flow = useMemo(() => makeFlowStyles(colors, typography), [colors, typography]);
+
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
 
@@ -579,153 +596,158 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
   );
 }
 
-const flow = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  topBar: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-    gap: Spacing.sm,
-    borderBottomWidth: Border.width,
-    borderBottomColor: Colors.calmWave + '33',
-  },
-  backBtn: { alignSelf: 'flex-start' },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  progressRow: { gap: Spacing.xs },
-  stepLabel: { ...Typography.micro, color: Colors.midGray },
-  track: {
-    height: 3,
-    backgroundColor: Colors.midGray + '25',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', backgroundColor: Colors.calmWave, borderRadius: 2 },
-  stepHeader: { gap: Spacing.sm },
-  heading: { ...Typography.heading1, color: Colors.darkText },
-  hint: { ...Typography.body, color: Colors.midGray, lineHeight: 24 },
-  input: {
-    borderWidth: 1.5,
-    borderColor: Colors.midGray + '40',
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    backgroundColor: Colors.tealLight,
-    ...Typography.body,
-    color: Colors.darkText,
-    lineHeight: 24,
-    textAlignVertical: 'top',
-  },
-  // Emotion grid — 2 columns
-  emotionGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.sm,
-  },
-  emotionTile: {
-    width: '47.5%',
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    paddingVertical: Spacing.base,
-    paddingHorizontal: Spacing.md,
-    alignItems: 'center',
-    borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '40',
-  },
-  emotionTileSelected: {
-    backgroundColor: Colors.deepTide,
-    borderColor: Colors.deepTide,
-  },
-  emotionLabel: { ...Typography.heading2, color: Colors.midGray },
-  emotionLabelSelected: { color: Colors.white },
-  // Original thought reminder (shown on Step 6)
-  originalReminder: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  originalReminderLabel: { ...Typography.micro, color: Colors.deepTide },
-  originalReminderText: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
-  // Footer
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    paddingTop: Spacing.md,
-    gap: Spacing.sm,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    backgroundColor: Colors.warmSand,
-  },
-  primaryBtn: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  primaryBtnDisabled: { backgroundColor: Colors.midGray + '40' },
-  primaryBtnPressed: { opacity: 0.85 },
-  primaryBtnLabel: { ...Typography.heading2, color: Colors.white },
-  primaryBtnLabelDisabled: { color: Colors.midGray },
-  skipHint: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  // Completion screen
-  completionHeader: { gap: Spacing.md, alignItems: 'flex-start' },
-  completionBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  completionBadgeText: { ...Typography.micro, color: Colors.deepTide },
-  completionTitle: { ...Typography.display, color: Colors.darkText },
-  completionSubtitle: { ...Typography.body, color: Colors.midGray },
-  // Comparison boxes
-  comparison: { gap: Spacing.sm },
-  compBox: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  compBoxReframe: {
-    borderColor: Colors.calmWave + '60',
-    backgroundColor: Colors.tealLight,
-  },
-  compLabel: { ...Typography.micro, color: Colors.midGray },
-  compText: { ...Typography.body, color: Colors.darkText, lineHeight: 24 },
-  compTag: { alignSelf: 'flex-start', borderRadius: 4, paddingHorizontal: Spacing.sm, paddingVertical: 2 },
-  compTagText: { ...Typography.micro },
-  compArrow: { alignItems: 'center' },
-  compArrowText: { fontSize: 20, color: Colors.calmWave },
-  // Citation on completion screen
-  citation: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  citationLabel: { ...Typography.micro, color: Colors.deepTide },
-  citationText: { ...Typography.caption, color: Colors.darkText, lineHeight: 20 },
-  citationItalic: { fontStyle: 'italic' },
-  citationNote: { ...Typography.caption, color: Colors.midGray, lineHeight: 18 },
-});
+function makeFlowStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    topBar: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.sm,
+      gap: Spacing.sm,
+      borderBottomWidth: Border.width,
+      borderBottomColor: Colors.calmWave + '33',
+    },
+    backBtn: { alignSelf: 'flex-start' },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.deepTide },
+    progressRow: { gap: Spacing.xs },
+    stepLabel: { ...typography.micro, color: colors.textSecondary },
+    track: {
+      height: 3,
+      backgroundColor: colors.textSecondary + '25',
+      borderRadius: 2,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', backgroundColor: Colors.calmWave, borderRadius: 2 },
+    stepHeader: { gap: Spacing.sm },
+    heading: { ...typography.heading1, color: colors.textPrimary },
+    hint: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
+    input: {
+      borderWidth: 1.5,
+      borderColor: colors.textSecondary + '40',
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      backgroundColor: colors.surfaceVariant,
+      ...typography.body,
+      color: colors.textPrimary,
+      lineHeight: 24,
+      textAlignVertical: 'top',
+    },
+    // Emotion grid — 2 columns
+    emotionGrid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.sm,
+    },
+    emotionTile: {
+      width: '47.5%',
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      paddingVertical: Spacing.base,
+      paddingHorizontal: Spacing.md,
+      alignItems: 'center',
+      borderWidth: Border.width * 2,
+      borderColor: colors.textSecondary + '40',
+    },
+    emotionTileSelected: {
+      backgroundColor: Colors.deepTide,
+      borderColor: Colors.deepTide,
+    },
+    emotionLabel: { ...typography.heading2, color: colors.textSecondary },
+    emotionLabelSelected: { color: Colors.white },
+    // Original thought reminder (shown on Step 6)
+    originalReminder: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      gap: Spacing.xs,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    originalReminderLabel: { ...typography.micro, color: Colors.deepTide },
+    originalReminderText: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
+    // Footer
+    footer: {
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      paddingTop: Spacing.md,
+      gap: Spacing.sm,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      backgroundColor: colors.background,
+    },
+    primaryBtn: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    primaryBtnDisabled: { backgroundColor: colors.textSecondary + '40' },
+    primaryBtnPressed: { opacity: 0.85 },
+    primaryBtnLabel: { ...typography.heading2, color: Colors.white },
+    primaryBtnLabelDisabled: { color: colors.textSecondary },
+    skipHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
+    // Completion screen
+    completionHeader: { gap: Spacing.md, alignItems: 'flex-start' },
+    completionBadge: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    completionBadgeText: { ...typography.micro, color: Colors.deepTide },
+    completionTitle: { ...typography.display, color: colors.textPrimary },
+    completionSubtitle: { ...typography.body, color: colors.textSecondary },
+    // Comparison boxes
+    comparison: { gap: Spacing.sm },
+    compBox: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    compBoxReframe: {
+      borderColor: Colors.calmWave + '60',
+      backgroundColor: colors.surfaceVariant,
+    },
+    compLabel: { ...typography.micro, color: colors.textSecondary },
+    compText: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
+    compTag: { alignSelf: 'flex-start', borderRadius: 4, paddingHorizontal: Spacing.sm, paddingVertical: 2 },
+    compTagText: { ...typography.micro },
+    compArrow: { alignItems: 'center' },
+    compArrowText: { fontSize: 20, color: Colors.calmWave },
+    // Citation on completion screen
+    citation: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
+    citationItalic: { fontStyle: 'italic' },
+    citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
+  });
+}
 
 // ─── Root screen ──────────────────────────────────────────────────────────────
 

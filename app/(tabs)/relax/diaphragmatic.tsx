@@ -166,9 +166,9 @@ function makeDiagStyles(
       width: 80,
       height: 50,
       borderRadius: 40,
-      backgroundColor: Colors.midGray + '25',
+      backgroundColor: colors.textSecondary + '25',
       borderWidth: 2,
-      borderColor: Colors.midGray + '50',
+      borderColor: colors.textSecondary + '50',
     },
     bellyRegion: {
       flex: 1,
@@ -197,7 +197,7 @@ function makeDiagStyles(
       width: '100%',
       paddingTop: Spacing.xs,
       borderTopWidth: Border.width,
-      borderTopColor: Colors.midGray + '25',
+      borderTopColor: colors.textSecondary + '25',
     },
     arrowText: { ...typography.caption, color: Colors.deepTide, fontSize: 11 },
   });

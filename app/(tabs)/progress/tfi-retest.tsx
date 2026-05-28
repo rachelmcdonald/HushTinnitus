@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, Platform,
 } from 'react-native';
@@ -9,11 +9,14 @@ import { TFI_QUESTIONS } from '@/src/data/tfiQuestions';
 import { scoreTFI } from '@/src/utils/tfiScoring';
 import { buildAndSaveAssessment } from '@/src/storage/tfi';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TOTAL = TFI_QUESTIONS.length; // 25
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
+  const { colors } = useTheme();
+  const bar = useMemo(() => makeBarStyles(colors), [colors]);
   const pct = ((current + 1) / total) * 100;
   return (
     <View style={bar.track}>
@@ -22,17 +25,21 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
-const bar = StyleSheet.create({
-  track: {
-    height: 3,
-    backgroundColor: Colors.midGray + '30',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', backgroundColor: Colors.calmWave, borderRadius: 2 },
-});
+function makeBarStyles(colors: ReturnType<typeof useTheme>['colors']) {
+  return StyleSheet.create({
+    track: {
+      height: 3,
+      backgroundColor: colors.textSecondary + '30',
+      borderRadius: 2,
+      overflow: 'hidden',
+    },
+    fill: { height: '100%', backgroundColor: Colors.calmWave, borderRadius: 2 },
+  });
+}
 
 function SubscaleBadge({ label }: { label: string }) {
+  const { colors, typography } = useTheme();
+  const badge = useMemo(() => makeBadgeStyles(colors, typography), [colors, typography]);
   return (
     <View style={badge.container}>
       <Text style={badge.text}>{label}</Text>
@@ -40,18 +47,26 @@ function SubscaleBadge({ label }: { label: string }) {
   );
 }
 
-const badge = StyleSheet.create({
-  container: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  text: { ...Typography.micro, color: Colors.deepTide },
-});
+function makeBadgeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    text: { ...typography.micro, color: Colors.deepTide },
+  });
+}
 
 export default function TFIRetestScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const params = useLocalSearchParams<{ weekNumber?: string }>();
   const weekNumber = parseInt(params.weekNumber ?? '4', 10) as 4 | 8;
   const { updatePreferences } = usePreferences();
@@ -107,7 +122,6 @@ export default function TFIRetestScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Pressable
@@ -128,7 +142,6 @@ export default function TFIRetestScreen() {
         <ProgressBar current={currentIndex} total={TOTAL} />
       </View>
 
-      {/* Content */}
       <View style={styles.content}>
         <SubscaleBadge label={question.subscale} />
 
@@ -148,7 +161,7 @@ export default function TFIRetestScreen() {
             value={sliderValue}
             onValueChange={(v) => setSliderValue(Math.round(v))}
             minimumTrackTintColor={Colors.calmWave}
-            maximumTrackTintColor={Colors.midGray + '40'}
+            maximumTrackTintColor={colors.textSecondary + '40'}
             thumbTintColor={Colors.deepTide}
             accessibilityLabel={question.text}
           />
@@ -179,7 +192,6 @@ export default function TFIRetestScreen() {
         )}
       </View>
 
-      {/* Footer */}
       <View style={styles.footer}>
         <Pressable
           style={({ pressed }) => [styles.nextButton, pressed && styles.nextButtonPressed]}
@@ -194,90 +206,95 @@ export default function TFIRetestScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  header: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
-    gap: Spacing.md,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  backButton: { paddingVertical: Spacing.xs, paddingRight: Spacing.sm },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-  weekBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-  },
-  weekBadgeText: { ...Typography.micro, color: Colors.deepTide },
-  counter: { ...Typography.caption, color: Colors.midGray },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  questionText: { ...Typography.heading1, color: Colors.darkText, lineHeight: 30 },
-  valueDisplay: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'center',
-  },
-  valueNumber: {
-    fontSize: 52,
-    fontWeight: '400',
-    color: Colors.deepTide,
-    lineHeight: 60,
-  },
-  valueMax: { ...Typography.heading1, color: Colors.midGray },
-  sliderContainer: { gap: Spacing.xs },
-  slider: { width: '100%', height: 40 },
-  anchors: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  anchorText: { ...Typography.caption, color: Colors.midGray, maxWidth: '45%' },
-  ticks: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-  },
-  tick: {
-    ...Typography.caption,
-    color: Colors.midGray + '80',
-    textAlign: 'center',
-    minWidth: 16,
-  },
-  tickActive: { color: Colors.deepTide, fontWeight: '500' },
-  zeroNote: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    padding: Spacing.md,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  zeroNoteText: { ...Typography.caption, color: Colors.deepTide, lineHeight: 18 },
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    paddingTop: Spacing.md,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.midGray + '20',
-  },
-  nextButton: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  nextButtonPressed: { opacity: 0.85 },
-  nextLabel: { ...Typography.heading2, color: Colors.white },
-});
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    header: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.md,
+      gap: Spacing.md,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    backButton: { paddingVertical: Spacing.xs, paddingRight: Spacing.sm },
+    backLabel:  { ...typography.body, color: Colors.deepTide },
+    headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    weekBadge: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+    },
+    weekBadgeText: { ...typography.micro, color: Colors.deepTide },
+    counter:       { ...typography.caption, color: colors.textSecondary },
+    content: {
+      flex: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    questionText: { ...typography.heading1, color: colors.textPrimary, lineHeight: 30 },
+    valueDisplay: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'center',
+    },
+    valueNumber: {
+      fontSize: 52,
+      fontWeight: '400',
+      color: Colors.deepTide,
+      lineHeight: 60,
+    },
+    valueMax:        { ...typography.heading1, color: colors.textSecondary },
+    sliderContainer: { gap: Spacing.xs },
+    slider:          { width: '100%', height: 40 },
+    anchors: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    anchorText: { ...typography.caption, color: colors.textSecondary, maxWidth: '45%' },
+    ticks: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+    },
+    tick: {
+      ...typography.caption,
+      color: colors.textSecondary + '80',
+      textAlign: 'center',
+      minWidth: 16,
+    },
+    tickActive: { color: Colors.deepTide, fontWeight: '500' },
+    zeroNote: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      padding: Spacing.md,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    zeroNoteText: { ...typography.caption, color: Colors.deepTide, lineHeight: 18 },
+    footer: {
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      paddingTop: Spacing.md,
+      borderTopWidth: Border.width,
+      borderTopColor: colors.textSecondary + '20',
+    },
+    nextButton: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    nextButtonPressed: { opacity: 0.85 },
+    nextLabel: { ...typography.heading2, color: Colors.white },
+  });
+}

@@ -1,12 +1,13 @@
 import { Stack } from 'expo-router';
-import { Colors } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function ProgressLayout() {
+  const { colors } = useTheme();
   return (
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: Colors.warmSand },
+        contentStyle: { backgroundColor: colors.background },
         animation: 'slide_from_right',
       }}
     />

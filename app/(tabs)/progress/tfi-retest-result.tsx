@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView, Platform,
 } from 'react-native';
@@ -6,7 +6,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { TFIAssessment } from '@/src/types';
 import { getAssessmentById, getAllAssessments } from '@/src/storage/tfi';
-import { Colors, TFISeverityColors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -43,10 +44,13 @@ function gradeColors(grade: TFIAssessment['grade']) {
 // ─── Delta display ────────────────────────────────────────────────────────────
 
 function DeltaBadge({ delta }: { delta: number }) {
-  const improved = delta > 0; // positive = score went DOWN (better)
+  const { colors, typography } = useTheme();
+  const deltaBadge = useMemo(() => makeDeltaBadgeStyles(typography), [typography]);
+
+  const improved = delta > 0;
   const label = improved ? `↓ ${delta} points` : delta < 0 ? `↑ ${Math.abs(delta)} points` : 'No change';
-  const bg = improved ? Colors.tealLight : delta < 0 ? Colors.coralLight : Colors.midGray + '20';
-  const color = improved ? Colors.deepTide : delta < 0 ? Colors.warmCoral : Colors.midGray;
+  const bg = improved ? Colors.tealLight : delta < 0 ? Colors.coralLight : colors.textSecondary + '20';
+  const color = improved ? Colors.deepTide : delta < 0 ? Colors.warmCoral : colors.textSecondary;
   return (
     <View style={[deltaBadge.pill, { backgroundColor: bg }]}>
       <Text style={[deltaBadge.text, { color }]}>{label}</Text>
@@ -54,15 +58,17 @@ function DeltaBadge({ delta }: { delta: number }) {
   );
 }
 
-const deltaBadge = StyleSheet.create({
-  pill: {
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    alignSelf: 'flex-start',
-  },
-  text: { ...Typography.micro },
-});
+function makeDeltaBadgeStyles(typography: ReturnType<typeof useTheme>['typography']) {
+  return StyleSheet.create({
+    pill: {
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      alignSelf: 'flex-start',
+    },
+    text: { ...typography.micro },
+  });
+}
 
 // ─── Subscale change row ──────────────────────────────────────────────────────
 
@@ -75,10 +81,13 @@ function SubscaleRow({
   before: number;
   after: number;
 }) {
-  const delta = Math.round(before - after); // positive = improved
+  const { colors, typography } = useTheme();
+  const sub = useMemo(() => makeSubStyles(colors, typography), [colors, typography]);
+
+  const delta = Math.round(before - after);
   const pct = Math.min(100, Math.max(0, after));
   const deltaStr = delta > 0 ? `↓${delta}` : delta < 0 ? `↑${Math.abs(delta)}` : '—';
-  const deltaColor = delta > 0 ? Colors.calmWave : delta < 0 ? Colors.warmCoral : Colors.midGray;
+  const deltaColor = delta > 0 ? Colors.calmWave : delta < 0 ? Colors.warmCoral : colors.textSecondary;
 
   return (
     <View style={sub.row}>
@@ -94,29 +103,37 @@ function SubscaleRow({
   );
 }
 
-const sub = StyleSheet.create({
-  row: { gap: 4 },
-  label: { ...Typography.caption, color: Colors.darkText },
-  trackWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  track: {
-    flex: 1,
-    height: 6,
-    backgroundColor: Colors.midGray + '25',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  fill: { height: '100%', backgroundColor: Colors.deepTide, borderRadius: 3 },
-  score: { ...Typography.caption, color: Colors.darkText, width: 24, textAlign: 'right' },
-  delta: { ...Typography.caption, fontWeight: '500' as const, width: 30, textAlign: 'right' },
-});
+function makeSubStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    row: { gap: 4 },
+    label: { ...typography.caption, color: colors.textPrimary },
+    trackWrap: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.sm,
+    },
+    track: {
+      flex: 1,
+      height: 6,
+      backgroundColor: colors.textSecondary + '25',
+      borderRadius: 3,
+      overflow: 'hidden',
+    },
+    fill:  { height: '100%', backgroundColor: Colors.deepTide, borderRadius: 3 },
+    score: { ...typography.caption, color: colors.textPrimary, width: 24, textAlign: 'right' },
+    delta: { ...typography.caption, fontWeight: '500' as const, width: 30, textAlign: 'right' },
+  });
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function TFIRetestResultScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const params = useLocalSearchParams<{ assessmentId?: string }>();
   const [assessment, setAssessment] = useState<TFIAssessment | null>(null);
   const [baseline, setBaseline] = useState<TFIAssessment | null>(null);
@@ -127,7 +144,6 @@ export default function TFIRetestResultScreen() {
     setAssessment(current);
     if (current) {
       const all = getAllAssessments();
-      // Find the most recent assessment before this one (for delta comparison)
       const earlier = all.filter((a) => a.id !== current.id && a.date < current.date);
       if (earlier.length > 0) {
         setBaseline(earlier[earlier.length - 1]);
@@ -146,7 +162,7 @@ export default function TFIRetestResultScreen() {
   }
 
   const { totalScore, grade, subscales, weekNumber } = assessment;
-  const colors = gradeColors(grade);
+  const gc = gradeColors(grade);
   const delta = baseline ? Math.round(baseline.totalScore - totalScore) : null;
   const mcidAchieved = delta !== null && delta >= 13;
   const subscaleKeys = Object.keys(subscales) as Array<keyof TFIAssessment['subscales']>;
@@ -157,41 +173,37 @@ export default function TFIRetestResultScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Week badge */}
         <View style={styles.weekRow}>
           <View style={styles.weekBadge}>
             <Text style={styles.weekBadgeText}>Week {weekNumber} retest complete</Text>
           </View>
         </View>
 
-        {/* Score card */}
-        <View style={[styles.scoreCard, { backgroundColor: colors.background }]}>
+        <View style={[styles.scoreCard, { backgroundColor: gc.background }]}>
           <View style={styles.scoreRow}>
             <View>
-              <Text style={[styles.scoreNumber, { color: colors.text }]}>
+              <Text style={[styles.scoreNumber, { color: gc.text }]}>
                 {Math.round(totalScore)}
               </Text>
-              <Text style={[styles.scoreOf, { color: colors.text }]}>out of 100</Text>
+              <Text style={[styles.scoreOf, { color: gc.text }]}>out of 100</Text>
             </View>
-            <View style={[styles.gradeBadge, { backgroundColor: colors.text + '18' }]}>
-              <Text style={[styles.gradeBadgeText, { color: colors.text }]}>
+            <View style={[styles.gradeBadge, { backgroundColor: gc.text + '18' }]}>
+              <Text style={[styles.gradeBadgeText, { color: gc.text }]}>
                 {GRADE_LABELS[grade]}
               </Text>
             </View>
           </View>
 
-          {/* Delta from last assessment */}
           {delta !== null && (
             <View style={styles.deltaRow}>
               <DeltaBadge delta={delta} />
-              <Text style={[styles.deltaLabel, { color: colors.text }]}>
+              <Text style={[styles.deltaLabel, { color: gc.text }]}>
                 vs. your previous assessment ({Math.round(baseline!.totalScore)})
               </Text>
             </View>
           )}
         </View>
 
-        {/* MCID milestone */}
         {mcidAchieved && (
           <View style={styles.mcidCard}>
             <Text style={styles.mcidTitle}>Clinically meaningful improvement</Text>
@@ -206,7 +218,6 @@ export default function TFIRetestResultScreen() {
           </View>
         )}
 
-        {/* Subscale breakdown */}
         <View style={styles.subscaleCard}>
           <Text style={styles.subscaleTitle}>Subscale breakdown</Text>
           <Text style={styles.subscaleSubtitle}>
@@ -224,7 +235,6 @@ export default function TFIRetestResultScreen() {
           </View>
         </View>
 
-        {/* Evidence note */}
         <View style={styles.citation}>
           <Text style={styles.citationLabel}>About the TFI</Text>
           <Text style={styles.citationText}>
@@ -247,95 +257,100 @@ export default function TFIRetestResultScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.base,
-  },
-  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { ...Typography.body, color: Colors.midGray },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.base,
+    },
+    loading:     { flex: 1, justifyContent: 'center', alignItems: 'center' },
+    loadingText: { ...typography.body, color: colors.textSecondary },
 
-  weekRow: { alignItems: 'flex-start' },
-  weekBadge: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  weekBadgeText: { ...Typography.micro, color: Colors.deepTide },
+    weekRow:  { alignItems: 'flex-start' },
+    weekBadge: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    weekBadgeText: { ...typography.micro, color: Colors.deepTide },
 
-  scoreCard: {
-    borderRadius: Radius.card,
-    padding: Spacing.xl,
-    gap: Spacing.md,
-  },
-  scoreRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-  },
-  scoreNumber: { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1 },
-  scoreOf: { ...Typography.body },
-  gradeBadge: {
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-    alignSelf: 'flex-end',
-  },
-  gradeBadgeText: { ...Typography.micro },
-  deltaRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-  deltaLabel: { ...Typography.caption, flex: 1 },
+    scoreCard: {
+      borderRadius: Radius.card,
+      padding: Spacing.xl,
+      gap: Spacing.md,
+    },
+    scoreRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+    },
+    scoreNumber:    { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1 },
+    scoreOf:        { ...typography.body },
+    gradeBadge: {
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+      alignSelf: 'flex-end',
+    },
+    gradeBadgeText: { ...typography.micro },
+    deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
+    deltaLabel: { ...typography.caption, flex: 1 },
 
-  // MCID card
-  mcidCard: {
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  mcidTitle: { ...Typography.heading2, color: Colors.deepTide },
-  mcidBody: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
-  mcidCitation: { ...Typography.caption, color: Colors.midGray, fontStyle: 'italic' },
+    // MCID card
+    mcidCard: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    mcidTitle:    { ...typography.heading2, color: Colors.deepTide },
+    mcidBody:     { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    mcidCitation: { ...typography.caption, color: colors.textSecondary, fontStyle: 'italic' },
 
-  // Subscale card
-  subscaleCard: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.md,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  subscaleTitle: { ...Typography.heading2, color: Colors.darkText },
-  subscaleSubtitle: { ...Typography.caption, color: Colors.midGray, marginTop: -Spacing.sm },
-  subscaleRows: { gap: Spacing.md },
+    // Subscale card
+    subscaleCard: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.md,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    subscaleTitle:    { ...typography.heading2, color: colors.textPrimary },
+    subscaleSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: -Spacing.sm },
+    subscaleRows:     { gap: Spacing.md },
 
-  // Citation
-  citation: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.xs,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.calmWave,
-  },
-  citationLabel: { ...Typography.micro, color: Colors.deepTide },
-  citationText: { ...Typography.caption, color: Colors.midGray, lineHeight: 20 },
+    // Citation
+    citation: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.xs,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.calmWave,
+    },
+    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationText:  { ...typography.caption, color: colors.textSecondary, lineHeight: 20 },
 
-  // Done button
-  doneBtn: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-  },
-  doneBtnPressed: { opacity: 0.85 },
-  doneBtnLabel: { ...Typography.heading2, color: Colors.white },
-});
+    // Done button
+    doneBtn: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+      marginTop: Spacing.sm,
+    },
+    doneBtnPressed: { opacity: 0.85 },
+    doneBtnLabel:   { ...typography.heading2, color: Colors.white },
+  });
+}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   TextInput, KeyboardAvoidingView, Platform, Alert,
@@ -10,7 +10,8 @@ import { usePreferences } from '@/src/context/PreferencesContext';
 import { saveSymptomLog, updateSymptomLog, getSymptomLogById } from '@/src/storage/symptomLog';
 import { SymptomLog, TriggerTag } from '@/src/types';
 import UpgradeModal from '@/src/components/UpgradeModal';
-import { Colors, Typography, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,6 +47,9 @@ function LabeledSlider({
   lowLabel: string;
   highLabel: string;
 }) {
+  const { colors, typography } = useTheme();
+  const slider = useMemo(() => makeSliderStyles(colors, typography), [colors, typography]);
+
   return (
     <View style={slider.container}>
       <View style={slider.labelRow}>
@@ -60,7 +64,7 @@ function LabeledSlider({
         value={value}
         onValueChange={(v) => onChange(Math.round(v))}
         minimumTrackTintColor={Colors.calmWave}
-        maximumTrackTintColor={Colors.midGray + '40'}
+        maximumTrackTintColor={colors.textSecondary + '40'}
         thumbTintColor={Colors.deepTide}
         accessibilityLabel={label}
       />
@@ -72,28 +76,36 @@ function LabeledSlider({
   );
 }
 
-const slider = StyleSheet.create({
-  container: { gap: Spacing.xs },
-  labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-  },
-  label: { ...Typography.heading2, color: Colors.darkText },
-  value: { fontSize: 24, fontWeight: '400', color: Colors.deepTide },
-  track: { width: '100%', height: 40 },
-  anchors: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: Spacing.xs,
-    marginTop: -Spacing.xs,
-  },
-  anchor: { ...Typography.caption, color: Colors.midGray },
-});
+function makeSliderStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    container: { gap: Spacing.xs },
+    labelRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'baseline',
+    },
+    label: { ...typography.heading2, color: colors.textPrimary },
+    value: { fontSize: 24, fontWeight: '400', color: Colors.deepTide },
+    track: { width: '100%', height: 40 },
+    anchors: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.xs,
+      marginTop: -Spacing.xs,
+    },
+    anchor: { ...typography.caption, color: colors.textSecondary },
+  });
+}
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function LogEntryScreen() {
+  const { colors, typography } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const params = useLocalSearchParams<{ existingId?: string }>();
@@ -108,7 +120,6 @@ export default function LogEntryScreen() {
   const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  // Pre-populate fields when editing an existing entry
   useEffect(() => {
     if (!existingId || Platform.OS === 'web') return;
     const existing = getSymptomLogById(existingId);
@@ -209,7 +220,6 @@ export default function LogEntryScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        {/* Top bar */}
         <View style={styles.topBar}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -226,7 +236,6 @@ export default function LogEntryScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>
               {isEditing ? "Edit today's entry" : "Log today's symptoms"}
@@ -236,7 +245,6 @@ export default function LogEntryScreen() {
             </Text>
           </View>
 
-          {/* Time of day */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Time of day</Text>
             <View style={styles.timeGrid}>
@@ -265,7 +273,6 @@ export default function LogEntryScreen() {
             </View>
           </View>
 
-          {/* Loudness */}
           <View style={styles.fieldGroup}>
             <LabeledSlider
               label="Perceived loudness"
@@ -276,7 +283,6 @@ export default function LogEntryScreen() {
             />
           </View>
 
-          {/* Distress */}
           <View style={styles.fieldGroup}>
             <LabeledSlider
               label="Perceived distress"
@@ -287,7 +293,6 @@ export default function LogEntryScreen() {
             />
           </View>
 
-          {/* Notes */}
           <View style={styles.fieldGroup}>
             <Text style={styles.fieldLabel}>Notes <Text style={styles.optional}>(optional)</Text></Text>
             <TextInput
@@ -296,13 +301,12 @@ export default function LogEntryScreen() {
               value={notes}
               onChangeText={setNotes}
               placeholder="Anything worth noting about today…"
-              placeholderTextColor={Colors.midGray + '80'}
+              placeholderTextColor={colors.textSecondary + '80'}
               textAlignVertical="top"
               accessibilityLabel="Notes"
             />
           </View>
 
-          {/* Trigger tags — Premium */}
           <View style={styles.fieldGroup}>
             <View style={styles.triggerHeader}>
               <Text style={styles.fieldLabel}>Triggers</Text>
@@ -364,7 +368,6 @@ export default function LogEntryScreen() {
           </View>
         </ScrollView>
 
-        {/* Footer */}
         <View style={styles.footer}>
           <Pressable
             style={({ pressed }) => [
@@ -400,155 +403,160 @@ export default function LogEntryScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: Colors.warmSand },
-  topBar: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.md,
-    paddingBottom: Spacing.sm,
-    borderBottomWidth: Border.width,
-    borderBottomColor: Colors.calmWave + '33',
-  },
-  backBtn: { alignSelf: 'flex-start' },
-  backBtnPressed: { opacity: 0.6 },
-  backLabel: { ...Typography.body, color: Colors.deepTide },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.xl,
-    gap: Spacing.xl,
-  },
-  header: { gap: Spacing.xs },
-  title: { ...Typography.heading1, color: Colors.darkText },
-  subtitle: { ...Typography.body, color: Colors.midGray },
+function makeStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
+  return StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    topBar: {
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.md,
+      paddingBottom: Spacing.sm,
+      borderBottomWidth: Border.width,
+      borderBottomColor: Colors.calmWave + '33',
+    },
+    backBtn: { alignSelf: 'flex-start' },
+    backBtnPressed: { opacity: 0.6 },
+    backLabel: { ...typography.body, color: Colors.deepTide },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: Spacing.xl,
+      paddingTop: Spacing.lg,
+      paddingBottom: Spacing.xl,
+      gap: Spacing.xl,
+    },
+    header: { gap: Spacing.xs },
+    title:    { ...typography.heading1, color: colors.textPrimary },
+    subtitle: { ...typography.body, color: colors.textSecondary },
 
-  fieldGroup: { gap: Spacing.sm },
-  fieldLabel: { ...Typography.heading2, color: Colors.darkText },
-  optional: { ...Typography.caption, color: Colors.midGray, fontWeight: '400' as const },
+    fieldGroup: { gap: Spacing.sm },
+    fieldLabel: { ...typography.heading2, color: colors.textPrimary },
+    optional:   { ...typography.caption, color: colors.textSecondary, fontWeight: '400' as const },
 
-  // Time of day
-  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  timeChip: {
-    borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '40',
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.base,
-    backgroundColor: Colors.warmSand,
-  },
-  timeChipSelected: {
-    backgroundColor: Colors.deepTide,
-    borderColor: Colors.deepTide,
-  },
-  timeChipLabel: { ...Typography.body, color: Colors.midGray },
-  timeChipLabelSelected: { color: Colors.white },
+    // Time of day
+    timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+    timeChip: {
+      borderWidth: Border.width * 2,
+      borderColor: colors.textSecondary + '40',
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      paddingHorizontal: Spacing.base,
+      backgroundColor: colors.background,
+    },
+    timeChipSelected: {
+      backgroundColor: Colors.deepTide,
+      borderColor: Colors.deepTide,
+    },
+    timeChipLabel:         { ...typography.body, color: colors.textSecondary },
+    timeChipLabelSelected: { color: Colors.white },
 
-  // Notes
-  notesInput: {
-    borderWidth: 1.5,
-    borderColor: Colors.midGray + '40',
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    backgroundColor: Colors.tealLight,
-    ...Typography.body,
-    color: Colors.darkText,
-    lineHeight: 24,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
+    // Notes
+    notesInput: {
+      borderWidth: 1.5,
+      borderColor: colors.textSecondary + '40',
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      backgroundColor: colors.surfaceVariant,
+      ...typography.body,
+      color: colors.textPrimary,
+      lineHeight: 24,
+      minHeight: 80,
+      textAlignVertical: 'top',
+    },
 
-  // Trigger tags
-  triggerHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  triggerHint: { ...Typography.caption, color: Colors.midGray },
-  tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
-  tagChip: {
-    borderWidth: Border.width * 2,
-    borderColor: Colors.midGray + '40',
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.xs,
-    paddingHorizontal: Spacing.md,
-    backgroundColor: Colors.warmSand,
-  },
-  tagChipSelected: { backgroundColor: Colors.calmWave, borderColor: Colors.calmWave },
-  tagChipLabel: { ...Typography.body, color: Colors.midGray },
-  tagChipLabelSelected: { color: Colors.white },
-  premiumChip: {
-    backgroundColor: Colors.softGold,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: 2,
-  },
-  premiumChipText: { ...Typography.micro, color: Colors.white },
-  triggerLocked: {
-    backgroundColor: Colors.goldLight,
-    borderRadius: Radius.card,
-    padding: Spacing.md,
-    gap: Spacing.xs,
-    borderWidth: 1,
-    borderColor: Colors.softGold + '50',
-  },
-  triggerLockedText: { ...Typography.body, color: Colors.midGray, lineHeight: 22 },
-  triggerLockedCTA: { ...Typography.caption, color: Colors.softGold, fontWeight: '500' as const },
+    // Trigger tags
+    triggerHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    triggerHint: { ...typography.caption, color: colors.textSecondary },
+    tagGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm },
+    tagChip: {
+      borderWidth: Border.width * 2,
+      borderColor: colors.textSecondary + '40',
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.xs,
+      paddingHorizontal: Spacing.md,
+      backgroundColor: colors.background,
+    },
+    tagChipSelected: { backgroundColor: Colors.calmWave, borderColor: Colors.calmWave },
+    tagChipLabel:         { ...typography.body, color: colors.textSecondary },
+    tagChipLabelSelected: { color: Colors.white },
+    premiumChip: {
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+    },
+    premiumChipText: { ...typography.micro, color: Colors.white },
+    triggerLocked: {
+      backgroundColor: Colors.goldLight,
+      borderRadius: Radius.card,
+      padding: Spacing.md,
+      gap: Spacing.xs,
+      borderWidth: 1,
+      borderColor: Colors.softGold + '50',
+    },
+    triggerLockedText: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
+    triggerLockedCTA:  { ...typography.caption, color: Colors.softGold, fontWeight: '500' as const },
 
-  // Footer
-  footer: {
-    paddingHorizontal: Spacing.xl,
-    paddingBottom: Spacing.xl,
-    paddingTop: Spacing.md,
-    gap: Spacing.xs,
-    borderTopWidth: Border.width,
-    borderTopColor: Colors.calmWave + '33',
-    backgroundColor: Colors.warmSand,
-  },
-  primaryBtn: {
-    backgroundColor: Colors.deepTide,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.base,
-    alignItems: 'center',
-  },
-  primaryBtnDisabled: { backgroundColor: Colors.midGray + '40' },
-  primaryBtnPressed: { opacity: 0.85 },
-  primaryBtnLabel: { ...Typography.heading2, color: Colors.white },
-  primaryBtnLabelDisabled: { color: Colors.midGray },
-  saveHint: {
-    ...Typography.caption,
-    color: Colors.midGray,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
+    // Footer
+    footer: {
+      paddingHorizontal: Spacing.xl,
+      paddingBottom: Spacing.xl,
+      paddingTop: Spacing.md,
+      gap: Spacing.xs,
+      borderTopWidth: Border.width,
+      borderTopColor: Colors.calmWave + '33',
+      backgroundColor: colors.background,
+    },
+    primaryBtn: {
+      backgroundColor: Colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    primaryBtnDisabled:      { backgroundColor: colors.textSecondary + '40' },
+    primaryBtnPressed:       { opacity: 0.85 },
+    primaryBtnLabel:         { ...typography.heading2, color: Colors.white },
+    primaryBtnLabelDisabled: { color: colors.textSecondary },
+    saveHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      fontStyle: 'italic',
+    },
 
-  // Saved confirmation
-  savedHeader: { gap: Spacing.md },
-  savedBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.tealLight,
-    borderRadius: Radius.chip,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.xs,
-  },
-  savedBadgeText: { ...Typography.micro, color: Colors.deepTide },
-  savedTitle: { ...Typography.display, color: Colors.darkText },
-  savedSub: { ...Typography.body, color: Colors.midGray },
-  savedSummary: {
-    backgroundColor: Colors.warmSand,
-    borderRadius: Radius.card,
-    padding: Spacing.base,
-    gap: Spacing.sm,
-    borderWidth: Border.width,
-    borderColor: Colors.calmWave + '33',
-  },
-  savedRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  savedRowStacked: { flexDirection: 'column', gap: Spacing.xs },
-  savedRowLabel: { ...Typography.caption, color: Colors.midGray, textTransform: 'capitalize' },
-  savedRowValue: { ...Typography.body, color: Colors.darkText, fontWeight: '500' as const },
-  savedRowNote: { ...Typography.body, color: Colors.darkText, lineHeight: 22 },
-});
+    // Saved confirmation
+    savedHeader: { gap: Spacing.md },
+    savedBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    savedBadgeText: { ...typography.micro, color: Colors.deepTide },
+    savedTitle:     { ...typography.display, color: colors.textPrimary },
+    savedSub:       { ...typography.body, color: colors.textSecondary },
+    savedSummary: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: Border.width,
+      borderColor: Colors.calmWave + '33',
+    },
+    savedRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'flex-start',
+    },
+    savedRowStacked: { flexDirection: 'column', gap: Spacing.xs },
+    savedRowLabel:   { ...typography.caption, color: colors.textSecondary, textTransform: 'capitalize' },
+    savedRowValue:   { ...typography.body, color: colors.textPrimary, fontWeight: '500' as const },
+    savedRowNote:    { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+  });
+}
