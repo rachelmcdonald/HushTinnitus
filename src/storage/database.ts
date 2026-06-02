@@ -3,6 +3,10 @@ import * as SQLite from 'expo-sqlite';
 
 let _db: SQLite.SQLiteDatabase | null = null;
 
+export function isNativePlatform(): boolean {
+  return Platform.OS !== 'web';
+}
+
 export function getDb(): SQLite.SQLiteDatabase {
   if (Platform.OS === 'web') {
     throw new Error('SQLite is not available on web');

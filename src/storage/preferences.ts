@@ -1,5 +1,5 @@
 import { UserPreferences } from '@/src/types';
-import { getDb } from './database';
+import { getDb, isNativePlatform } from './database';
 
 type PreferencesRow = {
   id: number;
@@ -47,6 +47,7 @@ function rowToPreferences(row: PreferencesRow): UserPreferences {
 }
 
 export function getPreferences(): UserPreferences {
+  if (!isNativePlatform()) return { ...DEFAULT_PREFERENCES };
   const db = getDb();
   const row = db.getFirstSync<PreferencesRow>('SELECT * FROM preferences WHERE id = 1');
   if (!row) {
@@ -56,6 +57,7 @@ export function getPreferences(): UserPreferences {
 }
 
 export function savePreferences(prefs: UserPreferences): void {
+  if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync(
     `INSERT OR REPLACE INTO preferences (
@@ -80,6 +82,7 @@ export function savePreferences(prefs: UserPreferences): void {
 }
 
 export function updatePreferences(patch: Partial<UserPreferences>): void {
+  if (!isNativePlatform()) return;
   const current = getPreferences();
   savePreferences({ ...current, ...patch });
 }

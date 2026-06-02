@@ -12,7 +12,7 @@
     "@expo/metro-runtime": "~6.1.2",
     "@expo/vector-icons": "^15.1.1",
     "@react-native-community/slider": "5.0.1",
-    "expo": "~54.0.33",
+    "expo": "~54.0.35",
     "expo-clipboard": "~8.0.8",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.21",
@@ -20,7 +20,7 @@
     "expo-linking": "~8.0.12",
     "expo-notifications": "~0.32.17",
     "expo-print": "~15.0.8",
-    "expo-router": "~6.0.23",
+    "expo-router": "~6.0.24",
     "expo-sharing": "~14.0.8",
     "expo-splash-screen": "~31.0.13",
     "expo-sqlite": "~16.0.10",
@@ -37,7 +37,7 @@
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
-    "babel-preset-expo": "^55.0.22",
+    "babel-preset-expo": "~54.0.10",
     "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },

@@ -1,5 +1,5 @@
 import { TFIAssessment } from '@/src/types';
-import { getDb } from './database';
+import { getDb, isNativePlatform } from './database';
 
 // ─── Draft (in-progress questionnaire) ───────────────────────────────────────
 
@@ -12,6 +12,7 @@ export type TFIDraft = {
 const DRAFT_DEFAULTS: number[] = Array(25).fill(5);
 
 export function loadDraft(): TFIDraft | null {
+  if (!isNativePlatform()) return null;
   const db = getDb();
   const row = db.getFirstSync<{
     responsesJson: string;
@@ -28,6 +29,7 @@ export function loadDraft(): TFIDraft | null {
 }
 
 export function saveDraft(responses: number[], currentIndex: number): void {
+  if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync(
     `INSERT OR REPLACE INTO tfi_draft (id, responsesJson, currentIndex, savedAt)
@@ -37,6 +39,7 @@ export function saveDraft(responses: number[], currentIndex: number): void {
 }
 
 export function clearDraft(): void {
+  if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync('DELETE FROM tfi_draft WHERE id = 1');
 }
@@ -56,6 +59,7 @@ function makeId(): string {
 }
 
 export function saveTFIAssessment(assessment: TFIAssessment): void {
+  if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync(
     `INSERT OR REPLACE INTO tfi_assessments
@@ -90,11 +94,12 @@ export function buildAndSaveAssessment(
     isBaseline,
     weekNumber,
   };
-  saveTFIAssessment(assessment);
+  if (isNativePlatform()) saveTFIAssessment(assessment);
   return assessment;
 }
 
 export function getAssessmentById(id: string): TFIAssessment | null {
+  if (!isNativePlatform()) return null;
   const db = getDb();
   const row = db.getFirstSync<{
     id: string;
@@ -121,6 +126,7 @@ export function getAssessmentById(id: string): TFIAssessment | null {
 }
 
 export function getAllAssessments(): TFIAssessment[] {
+  if (!isNativePlatform()) return [];
   const db = getDb();
   const rows = db.getAllSync<{
     id: string;
@@ -146,6 +152,7 @@ export function getAllAssessments(): TFIAssessment[] {
 }
 
 export function getLatestAssessment(): TFIAssessment | null {
+  if (!isNativePlatform()) return null;
   const db = getDb();
   const row = db.getFirstSync<{
     id: string;

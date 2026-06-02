@@ -1,5 +1,5 @@
 import { SoundSession } from '@/src/types';
-import { getDb } from './database';
+import { getDb, isNativePlatform } from './database';
 
 function makeId(): string {
   return `ss_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -10,6 +10,7 @@ export function createSessionId(): string {
 }
 
 export function saveSoundSession(session: SoundSession): void {
+  if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync(
     `INSERT INTO sound_sessions
@@ -29,6 +30,7 @@ export function saveSoundSession(session: SoundSession): void {
 }
 
 export function getRecentSessions(limit = 20): SoundSession[] {
+  if (!isNativePlatform()) return [];
   const db = getDb();
   const rows = db.getAllSync<{
     id: string;
