@@ -16,7 +16,28 @@
       "Read(//private/tmp/**)",
       "Read(//Users/Rachel/**)",
       "Bash(pip install *)",
-      "Bash(npm list *)"
+      "Bash(npm list *)",
+      "Bash(ffmpeg -version)",
+      "Bash(brew install *)",
+      "Bash(brew list *)",
+      "WebSearch",
+      "WebFetch(domain:freesound.org)",
+      "WebFetch(domain:pixabay.com)",
+      "WebFetch(domain:mixkit.co)",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(curl -sI \"https://assets.mixkit.co/sfx/preview/mixkit-restaurant-crowd-talking-ambience-444.mp3\")",
+      "Bash(curl -s \"https://freesound.org/apiv2/sounds/509950/?fields=id,name,license,previews,username\" -H \"Authorization: Token demo\")",
+      "Bash(curl -sI \"https://cdn.freesound.org/previews/509/509950_8808248-lq.mp3\")",
+      "Bash(curl -sI \"https://cdn.freesound.org/previews/509/509950_1-lq.mp3\")",
+      "WebFetch(domain:archive.org)",
+      "Bash(curl -s \"https://archive.org/advancedsearch.php?q=cafe+ambience+AND+mediatype:audio&fl[]=identifier,title,licenseurl&rows=10&output=json\")",
+      "Bash(curl -s \"https://archive.org/metadata/aporee_61003_70128\")",
+      "Bash(curl -s \"https://archive.org/advancedsearch.php?q=coffee+shop+ambience+AND+mediatype:audio&fl[]=identifier,title,licenseurl&rows=15&output=json\")",
+      "Bash(curl -s \"https://archive.org/metadata/Designers-Choice-Collection-Ambiences\")",
+      "Bash(afinfo /tmp/restaurant-walla-source.mp3)",
+      "Bash(soxi /tmp/restaurant-walla-source.mp3)",
+      "Bash(afconvert --help)"
     ]
   }
 }
