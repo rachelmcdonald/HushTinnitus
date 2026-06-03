@@ -66,7 +66,10 @@ export default function WelcomeScreen() {
 
         {/* Logo + wordmark */}
         <View style={styles.brandBlock}>
-          <LogoMark size={88} />
+          <Image
+            source={require('@/assets/icon.png')}
+            style={styles.appIcon}
+          />
           <Wordmark />
           <Text style={styles.tagline}>Sound therapy & support</Text>
         </View>
@@ -123,6 +126,13 @@ function makeStyles(
       justifyContent: 'space-between',
       paddingTop: Spacing.huge * 2,
       paddingBottom: Spacing.xl,
+    },
+
+    // App icon
+    appIcon: {
+      width: 120,
+      height: 120,
+      borderRadius: 24,
     },
 
     // Brand block
