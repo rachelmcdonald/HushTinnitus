@@ -37,7 +37,8 @@
       "Bash(curl -s \"https://archive.org/metadata/Designers-Choice-Collection-Ambiences\")",
       "Bash(afinfo /tmp/restaurant-walla-source.mp3)",
       "Bash(soxi /tmp/restaurant-walla-source.mp3)",
-      "Bash(afconvert --help)"
+      "Bash(afconvert --help)",
+      "Bash(npm ls *)"
     ]
   }
 }
