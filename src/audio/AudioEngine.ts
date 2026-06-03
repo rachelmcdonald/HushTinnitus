@@ -133,6 +133,8 @@ class AudioEngine {
     try {
       if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
         this.buildBinauralNodes(soundId, gain);
+      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise') {
+        await this.buildNoiseFileNodes(soundId, gain);
       } else if (soundId === 'cafe') {
         await this.buildCafeFileNodes(gain);
       } else {
@@ -250,6 +252,32 @@ class AudioEngine {
     this.activePanners = [leftPan, rightPan];
   }
 
+  // ─── Noise files (file-based) ────────────────────────────────────────────
+  // Loads a pre-generated MP3 (ffmpeg anoisesrc — mathematically accurate spectral
+  // profile) and plays it as a looping buffer. Replaces synthesised versions
+  // which were perceptually indistinct on device.
+
+  private static readonly NOISE_MODULES: Record<string, any> = {
+    'white-noise': require('@/assets/sounds/white-noise.mp3'),
+    'pink-noise':  require('@/assets/sounds/pink-noise.mp3'),
+    'brown-noise': require('@/assets/sounds/brown-noise.mp3'),
+  };
+
+  private async buildNoiseFileNodes(soundId: SoundSource, gain: any): Promise<void> {
+    const { Asset } = await import('expo-asset');
+    const asset = Asset.fromModule(AudioEngine.NOISE_MODULES[soundId]);
+    await asset.downloadAsync();
+    const response = await fetch(asset.localUri!);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+    const source = this.ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.loop = true;
+    source.connect(gain);
+    source.start();
+    this.activeSource = source;
+  }
+
   // ─── Cafe ambience (file-based) ──────────────────────────────────────────
   // Loads assets/sounds/cafe-ambience.mp3 (CC0 — The Designer's Choice collection
   // via archive.org), decodes via Web Audio API, and plays as a looping buffer.
@@ -309,9 +337,6 @@ class AudioEngine {
 
 function noiseBaseFor(soundId: SoundSource): NoiseType {
   switch (soundId) {
-    case 'white-noise': return 'white';
-    case 'pink-noise':  return 'pink';
-    case 'brown-noise': return 'brown';
     case 'rain': case 'stream': return 'white';
     case 'ocean': case 'fire':  return 'brown';
     case 'forest':              return 'pink';

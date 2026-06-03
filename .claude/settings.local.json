@@ -39,7 +39,12 @@
       "Bash(soxi /tmp/restaurant-walla-source.mp3)",
       "Bash(afconvert --help)",
       "Bash(npm ls *)",
-      "Bash(identify /Users/Rachel/HushTinnitus/assets/images/resonear-logo.png)"
+      "Bash(identify /Users/Rachel/HushTinnitus/assets/images/resonear-logo.png)",
+      "Bash(curl -s \"https://archive.org/advancedsearch.php?q=white+noise+pink+noise+brown+noise+AND+mediatype:audio&fl[]=identifier,title,licenseurl&rows=20&output=json\")",
+      "Bash(ffmpeg -filters)",
+      "Bash(ffmpeg -i assets/sounds/white-noise.mp3 -af \"astats\" -f null -)",
+      "Bash(ffmpeg -i assets/sounds/pink-noise.mp3  -af \"astats\" -f null -)",
+      "Bash(ffmpeg -i assets/sounds/brown-noise.mp3 -af \"astats\" -f null -)"
     ]
   }
 }
