@@ -38,7 +38,8 @@
       "Bash(afinfo /tmp/restaurant-walla-source.mp3)",
       "Bash(soxi /tmp/restaurant-walla-source.mp3)",
       "Bash(afconvert --help)",
-      "Bash(npm ls *)"
+      "Bash(npm ls *)",
+      "Bash(identify /Users/Rachel/HushTinnitus/assets/images/resonear-logo.png)"
     ]
   }
 }

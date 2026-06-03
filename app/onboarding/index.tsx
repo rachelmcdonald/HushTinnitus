@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -92,6 +92,15 @@ export default function WelcomeScreen() {
           >
             <Text style={styles.ctaLabel}>Get started</Text>
           </Pressable>
+
+          <View style={styles.attribution}>
+            <Text style={styles.attributionBy}>by</Text>
+            <Image
+              source={require('@/assets/images/resonear-logo.png')}
+              style={styles.attributionLogo}
+              resizeMode="contain"
+            />
+          </View>
         </View>
 
       </View>
@@ -142,6 +151,21 @@ function makeStyles(
     // CTA block
     ctaBlock: {
       gap: Spacing.md,
+    },
+    attribution: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: Spacing.xl,
+    },
+    attributionBy: {
+      fontSize: 12,
+      color: colors.calmWave,
+    },
+    attributionLogo: {
+      width: 100,
+      height: 17,
     },
     ctaButton: {
       backgroundColor: colors.deepTide,
