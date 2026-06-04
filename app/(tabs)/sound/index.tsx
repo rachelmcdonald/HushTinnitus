@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, cancelAnimation, Easing,
@@ -96,41 +96,43 @@ const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
 function SoundIcon({ soundId }: { soundId: SoundSource }) {
   if (soundId === 'ocean') {
     return (
-      <Svg viewBox="0 0 48 48" width={ICON_SIZE} height={ICON_SIZE}>
+      <Svg width={90} height={36} viewBox="0 0 48 24" fill="none">
         <Path
-          d="M4 30 C8 30 10 24 14 24 C18 24 18 28 22 26 C26 24 26 18 30 16 C34 14 34 20 36 18 C38 16 40 14 44 16"
+          d="M4 8 C8 4 12 12 16 8 C20 4 24 12 28 8 C32 4 36 12 40 8 C42 6 44 7 44 8"
           stroke={ICON_COLOR}
-          strokeWidth={2.5}
+          strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
         />
         <Path
-          d="M34 18 C36 22 38 26 36 30 C34 34 30 34 28 32"
+          d="M4 16 C8 12 12 20 16 16 C20 12 24 20 28 16 C32 12 36 20 40 16 C42 14 44 15 44 16"
           stroke={ICON_COLOR}
-          strokeWidth={2.5}
+          strokeWidth={2}
           strokeLinecap="round"
           strokeLinejoin="round"
           fill="none"
+          opacity={0.6}
         />
       </Svg>
     );
   }
   if (soundId === 'forest') {
     return (
-      <Svg viewBox="0 0 48 48" width={ICON_SIZE} height={ICON_SIZE}>
-        <Circle
-          cx={24} cy={20} r={12}
+      <Svg width={90} height={36} viewBox="0 0 48 24" fill="none">
+        <Path
+          d="M24 3 L36 18 L12 18 Z"
           stroke={ICON_COLOR}
-          strokeWidth={2.5}
+          strokeWidth={2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
           fill="none"
         />
         <Path
-          d="M21 32 L21 40 L27 40 L27 32 M17 40 L31 40"
+          d="M24 18 L24 23"
           stroke={ICON_COLOR}
-          strokeWidth={2.5}
+          strokeWidth={2}
           strokeLinecap="round"
-          strokeLinejoin="round"
           fill="none"
         />
       </Svg>
@@ -280,7 +282,7 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
       accessibilityState={{ selected: isActive }}
     >
       <View style={cc.row}>
-        <Animated.View style={waveStyle}>
+        <Animated.View style={[waveStyle, cc.iconWrap]}>
           <SoundIcon soundId={sound.id} />
         </Animated.View>
 
@@ -319,12 +321,16 @@ const cc = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     gap: Spacing.md,
   },
+  iconWrap: {
+    flexShrink: 0,
+  },
   nameWrap: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   name: {
+    width: '100%',
     fontSize: 16,
     fontWeight: '500',
     color: Colors.white,
