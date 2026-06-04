@@ -96,7 +96,7 @@ export default function AboutScreen() {
             <Text style={styles.credentials2}>
               NHS Scotland · Perth, Western Australia
             </Text>
-            <RoleBadge label="Audiologist & Co-founder" />
+            <RoleBadge label="Audiologist & Founder" />
           </View>
           <Text style={styles.body}>
             I trained and worked within the National Health Service in Scotland for
