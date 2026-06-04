@@ -44,7 +44,11 @@
       "Bash(ffmpeg -filters)",
       "Bash(ffmpeg -i assets/sounds/white-noise.mp3 -af \"astats\" -f null -)",
       "Bash(ffmpeg -i assets/sounds/pink-noise.mp3  -af \"astats\" -f null -)",
-      "Bash(ffmpeg -i assets/sounds/brown-noise.mp3 -af \"astats\" -f null -)"
+      "Bash(ffmpeg -i assets/sounds/brown-noise.mp3 -af \"astats\" -f null -)",
+      "Bash(curl -sI \"https://cdn.freesound.org/previews/234/234317_4254867-hq.mp3\")",
+      "Bash(curl -sL \"https://archive.org/download/rain-sounds-gentle-rain-thunderstorms/gentle-rainfall-16960.mp3\" -o /tmp/rain-source.mp3)",
+      "Bash(ffprobe *)",
+      "Bash(ffmpeg -i /tmp/rain-source.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/rain.mp3 -y)"
     ]
   }
 }
