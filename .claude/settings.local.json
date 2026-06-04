@@ -48,7 +48,9 @@
       "Bash(curl -sI \"https://cdn.freesound.org/previews/234/234317_4254867-hq.mp3\")",
       "Bash(curl -sL \"https://archive.org/download/rain-sounds-gentle-rain-thunderstorms/gentle-rainfall-16960.mp3\" -o /tmp/rain-source.mp3)",
       "Bash(ffprobe *)",
-      "Bash(ffmpeg -i /tmp/rain-source.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/rain.mp3 -y)"
+      "Bash(ffmpeg -i /tmp/rain-source.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/rain.mp3 -y)",
+      "Bash(curl -sL \"https://archive.org/download/ocean-sea-sounds/Gentle%20Ocean.mp3\" -o /tmp/ocean-source.mp3)",
+      "Bash(ffmpeg -i /tmp/ocean-source.mp3 -ss 30 -t 180 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/ocean-waves.mp3 -y)"
     ]
   }
 }
