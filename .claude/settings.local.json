@@ -52,7 +52,9 @@
       "Bash(curl -sL \"https://archive.org/download/ocean-sea-sounds/Gentle%20Ocean.mp3\" -o /tmp/ocean-source.mp3)",
       "Bash(ffmpeg -i /tmp/ocean-source.mp3 -ss 30 -t 180 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/ocean-waves.mp3 -y)",
       "Bash(curl -sL \"https://archive.org/download/rain-sounds-gentle-rain-thunderstorms/relaxing-mountains-rivers-streams-running-water-18178.mp3\" -o /tmp/stream-source.mp3)",
-      "Bash(ffmpeg -i /tmp/stream-source.mp3 -ss 30 -t 180 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/stream.mp3 -y)"
+      "Bash(ffmpeg -i /tmp/stream-source.mp3 -ss 30 -t 180 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/stream.mp3 -y)",
+      "Bash(curl -sL \"https://archive.org/download/various-bird-sounds/morning-forest-ambiance-17045.mp3\" -o /tmp/forest-source.mp3)",
+      "Bash(ffmpeg -i /tmp/forest-source.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/forest.mp3 -y)"
     ]
   }
 }
