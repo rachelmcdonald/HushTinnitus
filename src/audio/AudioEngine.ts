@@ -133,7 +133,7 @@ class AudioEngine {
     try {
       if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
         this.buildBinauralNodes(soundId, gain);
-      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise' || soundId === 'rain' || soundId === 'ocean') {
+      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise' || soundId === 'rain' || soundId === 'ocean' || soundId === 'stream') {
         await this.buildNoiseFileNodes(soundId, gain);
       } else if (soundId === 'cafe') {
         await this.buildCafeFileNodes(gain);
@@ -263,6 +263,7 @@ class AudioEngine {
     'brown-noise': require('@/assets/sounds/brown-noise.mp3'),
     'rain':        require('@/assets/sounds/rain.mp3'),
     'ocean':       require('@/assets/sounds/ocean-waves.mp3'),
+    'stream':      require('@/assets/sounds/stream.mp3'),
   };
 
   private async buildNoiseFileNodes(soundId: SoundSource, gain: any): Promise<void> {
@@ -339,7 +340,6 @@ class AudioEngine {
 
 function noiseBaseFor(soundId: SoundSource): NoiseType {
   switch (soundId) {
-    case 'stream': return 'white';
     case 'fire':  return 'brown';
     case 'forest':              return 'pink';
     default: return 'white';
@@ -349,7 +349,6 @@ function noiseBaseFor(soundId: SoundSource): NoiseType {
 function buildFilter(ctx: any, soundId: SoundSource): any {
   const f = ctx.createBiquadFilter();
   switch (soundId) {
-    case 'stream': f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 1.5; return f;
     case 'forest': f.type = 'lowpass';  f.frequency.value = 1500; f.Q.value = 0.5; return f;
     case 'fire':   f.type = 'lowpass';  f.frequency.value = 500;  f.Q.value = 0.3; return f;
     default:       return null;
