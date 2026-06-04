@@ -56,6 +56,43 @@ const TIMER_OPTIONS = [15, 30, 60, 90] as const;
 
 const CARD_HEIGHT = 120;
 
+// Default waveform icon used for Background Noise and Binaural Beats cards.
+const DEFAULT_WAVE = 'M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19';
+
+// Nature sound icons — SVG path strings in the same viewBox ("4 9 30 20").
+// All stroke-only, no fills. Fallback to DEFAULT_WAVE for any unlisted sound.
+const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
+  // Six short angled dashes in two staggered rows (15° from vertical)
+  rain:
+    'M9 11 L10.3 16 M16 11 L17.3 16 M23 11 L24.3 16' +
+    ' M12 15 L13.3 20 M19 15 L20.3 20 M26 15 L27.3 20',
+
+  // Single S-curve — smooth crest then trough
+  ocean:
+    'M5 19 C9 14 13 14 19 19 C25 24 29 24 33 19',
+
+  // Three stacked wavy lines, slightly offset, suggesting flowing water
+  stream:
+    'M5 15 Q9 13 13 15 Q17 17 21 15 Q25 13 29 15' +
+    ' M7 19 Q11 17 15 19 Q19 21 23 19 Q27 17 31 19' +
+    ' M5 23 Q9 21 13 23 Q17 25 21 23 Q25 21 29 23',
+
+  // Triangle canopy (no base) + vertical trunk
+  forest:
+    'M12 22 L19 10 L26 22 M19 22 L19 27',
+
+  // Flame outline (closed teardrop) + inner curve for depth
+  fire:
+    'M19 10 C24 14 27 20 23 24 C21 27 17 27 15 24 C11 20 14 14 19 10' +
+    ' M19 15 C21 17 22 20 20 22',
+
+  // Trapezoid cup + D-shaped handle + two steam wisps
+  cafe:
+    'M12 15 L26 15 L24 26 L14 26 Z' +
+    ' M26 18 C30 18 30 23 26 23' +
+    ' M16 13 C15 11 17 10 16 9 M20 13 C21 11 19 10 20 9',
+};
+
 // ─── Session timer bar ────────────────────────────────────────────────────────
 
 function SessionTimerBar({
@@ -189,7 +226,7 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
         <Animated.View style={waveStyle}>
           <Svg width={90} height={36} viewBox="4 9 30 20">
             <Path
-              d="M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19"
+              d={SOUND_ICON_PATHS[sound.id] ?? DEFAULT_WAVE}
               stroke={Colors.calmWave}
               strokeWidth={1.8}
               fill="none"
