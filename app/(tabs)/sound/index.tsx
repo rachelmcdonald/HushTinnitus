@@ -55,7 +55,6 @@ const TIMER_OPTIONS = [15, 30, 60, 90] as const;
 // ─── Card constant ────────────────────────────────────────────────────────────
 
 const CARD_HEIGHT = 120;
-const CARD_DARK   = '#0D2B33';
 
 // ─── Session timer bar ────────────────────────────────────────────────────────
 
@@ -186,8 +185,6 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
       accessibilityLabel={a11yLabel}
       accessibilityState={{ selected: isActive }}
     >
-      <View style={cc.gradientLeft} />
-
       <View style={cc.row}>
         <Animated.View style={waveStyle}>
           <Svg width={90} height={36} viewBox="4 9 30 20">
@@ -224,19 +221,10 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
 const cc = StyleSheet.create({
   card: {
     height: CARD_HEIGHT,
-    backgroundColor: CARD_DARK,
+    backgroundColor: Colors.darkCard,
     borderRadius: Radius.card,
     overflow: 'hidden',
     justifyContent: 'center',
-  },
-  gradientLeft: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '52%',
-    backgroundColor: Colors.deepTide,
-    opacity: 0.65,
   },
   row: {
     flexDirection: 'row',
@@ -306,58 +294,33 @@ function SoundCarousel({
 
   return (
     <View style={cr.wrapper}>
-      <View style={cr.row}>
-        <Pressable
-          style={cr.arrowBtn}
-          onPress={() => goTo(idx - 1)}
-          disabled={idx === 0}
-          accessibilityRole="button"
-          accessibilityLabel="Previous"
-          accessibilityState={{ disabled: idx === 0 }}
-        >
-          <Text style={[cr.arrowText, idx === 0 && cr.arrowHidden]}>‹</Text>
-        </Pressable>
-
-        <FlatList
-          ref={listRef}
-          data={sounds}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          style={cr.list}
-          onMomentumScrollEnd={(e) => {
-            const i = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
-            setIdx(Math.max(0, Math.min(sounds.length - 1, i)));
-          }}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <CarouselCard
-              sound={item}
-              isActive={currentSound === item.id}
-              isPaused={isPaused}
-              cardWidth={cardWidth}
-              onToggle={() => onToggle(item.id)}
-              onPauseResume={onPauseResume}
-            />
-          )}
-          getItemLayout={(_, index) => ({
-            length: cardWidth,
-            offset: cardWidth * index,
-            index,
-          })}
-        />
-
-        <Pressable
-          style={cr.arrowBtn}
-          onPress={() => goTo(idx + 1)}
-          disabled={idx >= sounds.length - 1}
-          accessibilityRole="button"
-          accessibilityLabel="Next"
-          accessibilityState={{ disabled: idx >= sounds.length - 1 }}
-        >
-          <Text style={[cr.arrowText, idx >= sounds.length - 1 && cr.arrowHidden]}>›</Text>
-        </Pressable>
-      </View>
+      <FlatList
+        ref={listRef}
+        data={sounds}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => {
+          const i = Math.round(e.nativeEvent.contentOffset.x / cardWidth);
+          setIdx(Math.max(0, Math.min(sounds.length - 1, i)));
+        }}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <CarouselCard
+            sound={item}
+            isActive={currentSound === item.id}
+            isPaused={isPaused}
+            cardWidth={cardWidth}
+            onToggle={() => onToggle(item.id)}
+            onPauseResume={onPauseResume}
+          />
+        )}
+        getItemLayout={(_, index) => ({
+          length: cardWidth,
+          offset: cardWidth * index,
+          index,
+        })}
+      />
 
       {sounds.length > 1 && (
         <View style={cr.dots}>
@@ -379,25 +342,6 @@ function SoundCarousel({
 function makeCrStyles(colors: ReturnType<typeof useTheme>['colors']) {
   return StyleSheet.create({
     wrapper: { gap: Spacing.xs },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'center',
-    },
-    list: { flex: 1 },
-    arrowBtn: {
-      width: 44,
-      height: CARD_HEIGHT,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    arrowText: {
-      fontSize: 20,
-      color: Colors.deepTide,
-      fontWeight: '400',
-      opacity: 0.75,
-      lineHeight: 24,
-    },
-    arrowHidden: { opacity: 0 },
     dots: {
       flexDirection: 'row',
       justifyContent: 'center',
@@ -651,8 +595,7 @@ export default function SoundScreen() {
   const [notchedActive, setNotchedActive] = useState(false);
 
   const { width: screenWidth } = useWindowDimensions();
-  const ARROW_W = 44;
-  const cardWidth = screenWidth - Spacing.xl * 2 - ARROW_W * 2;
+  const cardWidth = screenWidth - Spacing.xl * 2;
 
   function handleNotchedToggle() {
     if (!savedPitchHz) return;
