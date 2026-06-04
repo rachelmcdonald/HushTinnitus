@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
   withTiming, cancelAnimation, Easing,
@@ -59,17 +59,17 @@ const CARD_HEIGHT = 120;
 // Default waveform icon used for Background Noise and Binaural Beats cards.
 const DEFAULT_WAVE = 'M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19';
 
-// Nature sound icons — SVG path strings in the same viewBox ("4 9 30 20").
-// All stroke-only, no fills. Fallback to DEFAULT_WAVE for any unlisted sound.
-const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
-  // Six short angled dashes in two staggered rows (15° from vertical)
-  rain:
-    'M9 11 L10.3 16 M16 11 L17.3 16 M23 11 L24.3 16' +
-    ' M12 15 L13.3 20 M19 15 L20.3 20 M26 15 L27.3 20',
+const ICON_COLOR = Colors.calmWave;
+const ICON_SIZE  = 36;   // square dimension for 0 0 48 48 viewBox icons
 
-  // Single S-curve — smooth crest then trough
-  ocean:
-    'M5 19 C9 14 13 14 19 19 C25 24 29 24 33 19',
+// Nature sound icons — SVG path strings in the shared viewBox ("4 9 30 20").
+// Ocean and Forest are handled in SoundIcon below (they need multiple elements).
+const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
+  // Cloud outline (bumpy top, flat bottom) + three angled rain drops
+  // y-coords shifted +2 so top of cloud clears the viewBox edge with padding
+  rain:
+    'M8 20 Q8 15 12 15 Q12 12 16 13 Q17 11 20 11 Q23 11 24 13 Q28 12 29 15 Q31 15 31 20 Z' +
+    ' M12 22 L13 25 M19 22 L20 25 M26 22 L27 25',
 
   // Three stacked wavy lines, slightly offset, suggesting flowing water
   stream:
@@ -77,14 +77,10 @@ const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
     ' M7 19 Q11 17 15 19 Q19 21 23 19 Q27 17 31 19' +
     ' M5 23 Q9 21 13 23 Q17 25 21 23 Q25 21 29 23',
 
-  // Triangle canopy (no base) + vertical trunk
-  forest:
-    'M12 22 L19 10 L26 22 M19 22 L19 27',
-
-  // Flame outline (closed teardrop) + inner curve for depth
+  // Closed outer flame bezier + inner flame with V-notch at base
   fire:
-    'M19 10 C24 14 27 20 23 24 C21 27 17 27 15 24 C11 20 14 14 19 10' +
-    ' M19 15 C21 17 22 20 20 22',
+    'M19 10 C24 13 27 20 24 25 C22 28 16 28 14 25 C11 20 14 13 19 10' +
+    ' M16 24 L19 21 L22 24 C24 20 22 16 19 14 C16 16 14 20 16 24',
 
   // Trapezoid cup + D-shaped handle + two steam wisps
   cafe:
@@ -92,6 +88,67 @@ const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
     ' M26 18 C30 18 30 23 26 23' +
     ' M16 13 C15 11 17 10 16 9 M20 13 C21 11 19 10 20 9',
 };
+
+// ─── Sound icon ───────────────────────────────────────────────────────────────
+// Ocean and Forest need multiple SVG elements so they get their own <Svg>.
+// Everything else is routed through SOUND_ICON_PATHS as a single <Path>.
+
+function SoundIcon({ soundId }: { soundId: SoundSource }) {
+  if (soundId === 'ocean') {
+    return (
+      <Svg viewBox="0 0 48 48" width={ICON_SIZE} height={ICON_SIZE}>
+        <Path
+          d="M4 30 C8 30 10 24 14 24 C18 24 18 28 22 26 C26 24 26 18 30 16 C34 14 34 20 36 18 C38 16 40 14 44 16"
+          stroke={ICON_COLOR}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+        <Path
+          d="M34 18 C36 22 38 26 36 30 C34 34 30 34 28 32"
+          stroke={ICON_COLOR}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </Svg>
+    );
+  }
+  if (soundId === 'forest') {
+    return (
+      <Svg viewBox="0 0 48 48" width={ICON_SIZE} height={ICON_SIZE}>
+        <Circle
+          cx={24} cy={20} r={12}
+          stroke={ICON_COLOR}
+          strokeWidth={2.5}
+          fill="none"
+        />
+        <Path
+          d="M21 32 L21 40 L27 40 L27 32 M17 40 L31 40"
+          stroke={ICON_COLOR}
+          strokeWidth={2.5}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      </Svg>
+    );
+  }
+  return (
+    <Svg width={90} height={36} viewBox="4 9 30 20">
+      <Path
+        d={SOUND_ICON_PATHS[soundId] ?? DEFAULT_WAVE}
+        stroke={ICON_COLOR}
+        strokeWidth={1.8}
+        fill="none"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
 
 // ─── Session timer bar ────────────────────────────────────────────────────────
 
@@ -224,19 +281,12 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
     >
       <View style={cc.row}>
         <Animated.View style={waveStyle}>
-          <Svg width={90} height={36} viewBox="4 9 30 20">
-            <Path
-              d={SOUND_ICON_PATHS[sound.id] ?? DEFAULT_WAVE}
-              stroke={Colors.calmWave}
-              strokeWidth={1.8}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
+          <SoundIcon soundId={sound.id} />
         </Animated.View>
 
-        <Text style={cc.name} numberOfLines={2}>{sound.name}</Text>
+        <View style={cc.nameWrap}>
+          <Text style={cc.name} numberOfLines={2}>{sound.name}</Text>
+        </View>
 
         <View style={cc.playBtn}>
           {isActive && !isPaused ? (
@@ -269,13 +319,18 @@ const cc = StyleSheet.create({
     paddingHorizontal: Spacing.base,
     gap: Spacing.md,
   },
-  name: {
+  nameWrap: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  name: {
     fontSize: 16,
     fontWeight: '500',
     color: Colors.white,
     letterSpacing: -0.2,
     lineHeight: 21,
+    textAlign: 'center',
   },
   playBtn: {
     width: 44,
