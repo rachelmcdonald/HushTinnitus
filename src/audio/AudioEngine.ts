@@ -133,7 +133,7 @@ class AudioEngine {
     try {
       if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
         this.buildBinauralNodes(soundId, gain);
-      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise' || soundId === 'rain' || soundId === 'ocean' || soundId === 'stream' || soundId === 'forest') {
+      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise' || soundId === 'rain' || soundId === 'ocean' || soundId === 'stream' || soundId === 'forest' || soundId === 'fire') {
         await this.buildNoiseFileNodes(soundId, gain);
       } else if (soundId === 'cafe') {
         await this.buildCafeFileNodes(gain);
@@ -265,6 +265,7 @@ class AudioEngine {
     'ocean':       require('@/assets/sounds/ocean-waves.mp3'),
     'stream':      require('@/assets/sounds/stream.mp3'),
     'forest':      require('@/assets/sounds/forest.mp3'),
+    'fire':        require('@/assets/sounds/fire.mp3'),
   };
 
   private async buildNoiseFileNodes(soundId: SoundSource, gain: any): Promise<void> {
@@ -340,18 +341,11 @@ class AudioEngine {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function noiseBaseFor(soundId: SoundSource): NoiseType {
-  switch (soundId) {
-    case 'fire':  return 'brown';
-    default: return 'white';
-  }
+  return 'white';
 }
 
 function buildFilter(ctx: any, soundId: SoundSource): any {
-  const f = ctx.createBiquadFilter();
-  switch (soundId) {
-    case 'fire':   f.type = 'lowpass';  f.frequency.value = 500;  f.Q.value = 0.3; return f;
-    default:       return null;
-  }
+  return null;
 }
 
 function binauralFrequencies(soundId: SoundSource): { leftHz: number; rightHz: number } {
