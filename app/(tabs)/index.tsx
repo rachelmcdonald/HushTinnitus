@@ -242,17 +242,6 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* Daily support card */}
-      <View style={styles.dailyCard}>
-        <View style={styles.dailyHeader}>
-          <Text style={styles.dailyHeading}>Today's Support</Text>
-          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-            <Path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" fill="#5DCAA5"/>
-          </Svg>
-        </View>
-        <Text style={styles.dailyMessage}>{dailyMessage}</Text>
-      </View>
-
       {/* Today snapshot */}
       <View style={styles.snapshotCard}>
         <Text style={styles.snapshotTitle}>Today</Text>
@@ -286,6 +275,17 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.chevron}>{'›'}</Text>
         </Pressable>
+      </View>
+
+      {/* Daily support card */}
+      <View style={styles.dailyCard}>
+        <View style={styles.dailyHeader}>
+          <Text style={styles.dailyHeading}>Today's Support</Text>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" fill="#5DCAA5"/>
+          </Svg>
+        </View>
+        <Text style={styles.dailyMessage}>{dailyMessage}</Text>
       </View>
 
       {/* Recent sessions */}
