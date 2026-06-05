@@ -307,13 +307,11 @@ function makeStyles(
 
     group: { gap: Spacing.sm },
     groupHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
+      flexDirection: 'column',
       paddingHorizontal: Spacing.xs,
     },
     groupTitle: { ...typography.heading1, color: colors.headingAccent },
-    groupCount: { ...typography.caption, color: colors.textSecondary },
+    groupCount: { fontSize: 12, color: colors.textSecondary, marginBottom: 8 },
 
     card: {
       backgroundColor: colors.surface,
