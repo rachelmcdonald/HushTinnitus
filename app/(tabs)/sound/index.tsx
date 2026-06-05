@@ -96,7 +96,7 @@ const SOUND_ICON_PATHS: Partial<Record<SoundSource, string>> = {
 function SoundIcon({ soundId }: { soundId: SoundSource }) {
   if (soundId === 'ocean') {
     return (
-      <Svg width={90} height={36} viewBox="0 0 48 24" fill="none">
+      <Svg width={44} height={36} viewBox="0 0 48 24" fill="none">
         <Path
           d="M4 8 C8 4 12 12 16 8 C20 4 24 12 28 8 C32 4 36 12 40 8 C42 6 44 7 44 8"
           stroke={ICON_COLOR}
@@ -119,7 +119,7 @@ function SoundIcon({ soundId }: { soundId: SoundSource }) {
   }
   if (soundId === 'forest') {
     return (
-      <Svg width={90} height={36} viewBox="0 0 48 24" fill="none">
+      <Svg width={44} height={36} viewBox="0 0 48 24" fill="none">
         <Path
           d="M24 3 L36 18 L12 18 Z"
           stroke={ICON_COLOR}
@@ -139,7 +139,7 @@ function SoundIcon({ soundId }: { soundId: SoundSource }) {
     );
   }
   return (
-    <Svg width={90} height={36} viewBox="4 9 30 20">
+    <Svg width={44} height={36} viewBox="4 9 30 20">
       <Path
         d={SOUND_ICON_PATHS[soundId] ?? DEFAULT_WAVE}
         stroke={ICON_COLOR}
@@ -322,7 +322,10 @@ const cc = StyleSheet.create({
     gap: Spacing.md,
   },
   iconWrap: {
+    width: 44,
     flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   nameWrap: {
     flex: 1,
