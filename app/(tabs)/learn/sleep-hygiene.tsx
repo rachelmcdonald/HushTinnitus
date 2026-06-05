@@ -353,7 +353,7 @@ function makeStyles(
 
     backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: Colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title: { ...typography.display, color: colors.textPrimary },
@@ -372,7 +372,7 @@ function makeStyles(
       alignItems: 'center',
     },
     progressLabel: { ...typography.body, color: colors.textPrimary },
-    progressPct: { ...typography.heading2, color: Colors.deepTide },
+    progressPct: { ...typography.heading2, color: colors.headingAccent },
     progressTrack: {
       height: 6,
       backgroundColor: colors.textSecondary + '25',
@@ -386,7 +386,7 @@ function makeStyles(
     },
     personalisedNote: {
       ...typography.caption,
-      color: Colors.deepTide,
+      color: colors.headingAccent,
       fontStyle: 'italic',
     },
 
@@ -427,7 +427,7 @@ function makeStyles(
 
     checkBody: { flex: 1, gap: 4 },
     checkText: { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
-    checkTextDone: { color: Colors.deepTide },
+    checkTextDone: { color: colors.headingAccent },
     checkDetail: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
     // Citation
@@ -439,7 +439,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationLabel: { ...typography.micro, color: colors.headingAccent },
     citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
     citationItalic: { fontStyle: 'italic' },
     citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },

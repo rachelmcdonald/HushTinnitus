@@ -217,14 +217,14 @@ function makeStyles(
 
     backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel:      { ...typography.body, color: Colors.deepTide },
+    backLabel:      { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title:  { ...typography.display, color: colors.textPrimary },
     lead:   { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
     section:        { gap: Spacing.md },
-    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
+    sectionHeading: { ...typography.heading1, color: colors.headingAccent },
     body:           { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
     bulletList: { gap: Spacing.sm, paddingLeft: Spacing.xs },
@@ -246,7 +246,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    citationLabel:  { ...typography.micro, color: Colors.deepTide },
+    citationLabel:  { ...typography.micro, color: colors.headingAccent },
     citationText:   { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
     citationItalic: { fontStyle: 'italic' },
     citationNote:   { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },

@@ -300,14 +300,14 @@ function makeStyles(
 
     backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel:      { ...typography.body, color: Colors.deepTide },
+    backLabel:      { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title:  { ...typography.display, color: colors.textPrimary },
     lead:   { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
     section:        { gap: Spacing.md },
-    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
+    sectionHeading: { ...typography.heading1, color: colors.headingAccent },
 
     // Threshold cards
     thresholdCards: { gap: Spacing.sm },
@@ -397,7 +397,7 @@ function makeStyles(
       padding: Spacing.base,
       gap: 6,
     },
-    recHeading: { ...typography.heading2, color: Colors.deepTide },
+    recHeading: { ...typography.heading2, color: colors.headingAccent },
     recBody:    { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
 
     // Tinnitus info card
@@ -409,7 +409,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    infoHeading: { ...typography.heading2, color: Colors.deepTide },
+    infoHeading: { ...typography.heading2, color: colors.headingAccent },
     infoBody:    { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
     footer: {

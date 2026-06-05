@@ -83,7 +83,7 @@ function LoopDiagram() {
   // Colors moved inside component for theme reactivity
   const NODE_FILL = colors.calmWave;
   const NODE_TEXT = colors.deepTide;
-  const ARROW_COL = colors.deepTide;
+  const ARROW_COL = colors.headingAccent;
 
   const diagramStyles = useMemo(() => StyleSheet.create({
     container: {
@@ -363,14 +363,14 @@ function makeStyles(
 
     backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title: { ...typography.display, color: colors.textPrimary },
     lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
     section: { gap: Spacing.md },
-    sectionHeading: { ...typography.heading1, color: colors.deepTide },
+    sectionHeading: { ...typography.heading1, color: colors.headingAccent },
     body: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
     // Node explanation rows
@@ -394,7 +394,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: colors.calmWave,
     },
-    highlightHeading: { ...typography.heading2, color: colors.deepTide },
+    highlightHeading: { ...typography.heading2, color: colors.headingAccent },
     highlightBody: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
 
     // Citation
@@ -406,7 +406,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: colors.calmWave,
     },
-    citationLabel: { ...typography.micro, color: colors.deepTide },
+    citationLabel: { ...typography.micro, color: colors.headingAccent },
     citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
     citationItalic: { fontStyle: 'italic' },
     citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },

@@ -259,7 +259,7 @@ function makeStyles(
 
     backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: Colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title: { ...typography.display, color: colors.textPrimary },
@@ -273,14 +273,14 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    reassuranceText: { ...typography.body, color: Colors.deepTide, lineHeight: 24 },
+    reassuranceText: { ...typography.body, color: colors.headingAccent, lineHeight: 24 },
 
     section: { gap: Spacing.sm },
-    sectionHeading: { ...typography.heading1, color: Colors.deepTide },
+    sectionHeading: { ...typography.heading1, color: colors.headingAccent },
 
-    // Condition card — coral light background, coral LEFT BORDER ONLY
+    // Condition card — surface background, coral LEFT BORDER communicates red-flag nature
     condCard: {
-      backgroundColor: Colors.coralLight,
+      backgroundColor: colors.surface,
       borderRadius: Radius.card,
       flexDirection: 'row',
       overflow: 'hidden',
@@ -315,7 +315,7 @@ function makeStyles(
       padding: Spacing.md,
       gap: Spacing.xs,
     },
-    condActionLabel: { ...typography.micro, color: Colors.deepTide },
+    condActionLabel: { ...typography.micro, color: colors.headingAccent },
 
     // Referral section
     referralSection: { gap: Spacing.md },
@@ -344,10 +344,10 @@ function makeStyles(
     },
     copyBtnCopied: {
       borderColor: Colors.calmWave,
-      backgroundColor: Colors.tealLight,
+      backgroundColor: colors.surfaceVariant,
     },
     copyBtnPressed: { opacity: 0.7 },
-    copyBtnLabel: { ...typography.heading2, color: Colors.deepTide },
+    copyBtnLabel: { ...typography.heading2, color: colors.headingAccent },
     copyBtnLabelCopied: { color: Colors.calmWave },
 
     // Disclaimer — exact Section 8.3 wording

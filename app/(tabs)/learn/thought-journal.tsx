@@ -383,7 +383,7 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
               <Text style={flow.compArrowText}>→</Text>
             </View>
             <View style={[flow.compBox, flow.compBoxReframe]}>
-              <Text style={[flow.compLabel, { color: Colors.deepTide }]}>A more balanced view</Text>
+              <Text style={[flow.compLabel, flow.compLabelReframe]}>A more balanced view</Text>
               <Text style={flow.compText}>
                 {reframedThought.trim() || 'No reframed thought written.'}
               </Text>
@@ -619,7 +619,7 @@ function makeFlowStyles(
     },
     backBtn: { alignSelf: 'flex-start' },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: Colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
     progressRow: { gap: Spacing.xs },
     stepLabel: { ...typography.micro, color: colors.textSecondary },
     track: {
@@ -674,7 +674,7 @@ function makeFlowStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    originalReminderLabel: { ...typography.micro, color: Colors.deepTide },
+    originalReminderLabel: { ...typography.micro, color: colors.headingAccent },
     originalReminderText: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
     // Footer
     footer: {
@@ -710,7 +710,7 @@ function makeFlowStyles(
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
     },
-    completionBadgeText: { ...typography.micro, color: Colors.deepTide },
+    completionBadgeText: { ...typography.micro, color: colors.headingAccent },
     completionTitle: { ...typography.display, color: colors.textPrimary },
     completionSubtitle: { ...typography.body, color: colors.textSecondary },
     // Comparison boxes
@@ -728,6 +728,7 @@ function makeFlowStyles(
       backgroundColor: colors.surfaceVariant,
     },
     compLabel: { ...typography.micro, color: colors.textSecondary },
+    compLabelReframe: { color: colors.headingAccent },
     compText: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
     compTag: { alignSelf: 'flex-start', borderRadius: 4, paddingHorizontal: Spacing.sm, paddingVertical: 2 },
     compTagText: { ...typography.micro },
@@ -742,7 +743,7 @@ function makeFlowStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationLabel: { ...typography.micro, color: colors.headingAccent },
     citationText: { ...typography.caption, color: colors.textPrimary, lineHeight: 20 },
     citationItalic: { fontStyle: 'italic' },
     citationNote: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },

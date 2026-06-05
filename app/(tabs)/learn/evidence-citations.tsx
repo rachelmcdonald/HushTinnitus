@@ -293,7 +293,7 @@ function makeStyles(
 
     backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel:      { ...typography.body, color: Colors.deepTide },
+    backLabel:      { ...typography.body, color: colors.headingAccent },
 
     header: { gap: Spacing.md },
     title:  { ...typography.display, color: colors.textPrimary },
@@ -303,7 +303,7 @@ function makeStyles(
       borderRadius: Radius.chip,
       padding: Spacing.sm,
     },
-    disclaimerText: { ...typography.caption, color: Colors.deepTide },
+    disclaimerText: { ...typography.caption, color: colors.headingAccent },
 
     group: { gap: Spacing.sm },
     groupHeader: {
@@ -312,7 +312,7 @@ function makeStyles(
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.xs,
     },
-    groupTitle: { ...typography.heading1, color: Colors.deepTide },
+    groupTitle: { ...typography.heading1, color: colors.headingAccent },
     groupCount: { ...typography.caption, color: colors.textSecondary },
 
     card: {
@@ -337,7 +337,7 @@ function makeStyles(
     },
     cardYear: {
       ...typography.caption,
-      color: Colors.deepTide,
+      color: colors.headingAccent,
       fontWeight: '600',
       flexShrink: 0,
     },
@@ -371,8 +371,8 @@ function makeStyles(
       paddingVertical: Spacing.xs,
     },
     linkBtnPressed: { opacity: 0.7 },
-    linkBtnText:    { ...typography.micro, color: Colors.deepTide },
-    linkBtnArrow:   { ...typography.micro, color: Colors.deepTide },
+    linkBtnText:    { ...typography.micro, color: colors.headingAccent },
+    linkBtnArrow:   { ...typography.micro, color: colors.headingAccent },
 
     footer: {
       borderTopWidth: Border.width,

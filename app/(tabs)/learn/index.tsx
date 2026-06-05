@@ -76,7 +76,7 @@ function GridCard({ item, width }: { item: GridItem; width: number }) {
       accessibilityLabel={`Open ${item.title}`}
     >
       <View style={styles.gridCardTop}>
-        <Ionicons name={item.icon} size={22} color={colors.deepTide} />
+        <Ionicons name={item.icon} size={22} color={colors.headingAccent} />
         {item.premium && (
           <View style={styles.premiumBadge}>
             <Text style={styles.premiumBadgeText}>Premium</Text>

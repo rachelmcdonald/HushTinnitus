@@ -21,6 +21,7 @@ export interface ThemeColors {
   midGray: string;
   white: string;
   transparent: string;
+  headingAccent: string;  // deepTide in light, calmWave in dark
   // Semantic tokens (change between light / dark):
   background: string;     // main screen background
   surface: string;        // white card surface
@@ -51,6 +52,7 @@ const LIGHT_COLORS: ThemeColors = {
   surfaceVariant: Colors.tealLight,
   textPrimary: Colors.darkText,
   textSecondary: Colors.midGray,
+  headingAccent: Colors.deepTide,
 };
 
 const DARK_COLORS: ThemeColors = {
@@ -60,6 +62,7 @@ const DARK_COLORS: ThemeColors = {
   surfaceVariant: Colors.darkCard,
   textPrimary: Colors.warmSand,
   textSecondary: '#A0B8BC',
+  headingAccent: Colors.calmWave,
 };
 
 // ─── Typography scaling ───────────────────────────────────────────────────────
