@@ -65,9 +65,9 @@ const DARK_COLORS: ThemeColors = {
 // ─── Typography scaling ───────────────────────────────────────────────────────
 
 const FONT_SCALES: Record<'small' | 'medium' | 'large', number> = {
-  small: 0.9,
-  medium: 1.0,
-  large: 1.15,
+  small: 1.0,
+  medium: 1.15,
+  large: 1.30,
 };
 
 function buildTypography(scale: number): ScaledTypography {
