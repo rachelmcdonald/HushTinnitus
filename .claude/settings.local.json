@@ -62,7 +62,15 @@
       "Bash(ffmpeg -i /tmp/fire-closeup.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire.mp3 -y)",
       "Bash(ffmpeg -i /tmp/fire-closeup.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire.mp3 -y)",
       "Bash(curl *)",
-      "Bash(ffmpeg -i /tmp/fire-source.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire-encoded.mp3 -y)"
+      "Bash(ffmpeg -i /tmp/fire-source.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire-encoded.mp3 -y)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "WebFetch(domain:freepd.com)",
+      "WebFetch(domain:bigsoundbank.com)",
+      "WebFetch(domain:mc2method.org)",
+      "WebFetch(domain:cantonbecker.com)",
+      "WebFetch(domain:samplefocus.com)",
+      "Bash(ffmpeg -y -i /tmp/bsb_white_noise.mp3 -t 60 -af equalizer=f=10000:width_type=o:width=2:g=-3,equalizer=f=14000:width_type=o:width=2:g=-4 -b:a 128k -ac 1 /tmp/gentle_white_noise.mp3)"
     ]
   }
 }
