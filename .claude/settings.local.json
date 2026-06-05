@@ -60,7 +60,9 @@
       "Bash(curl -sL \"https://archive.org/download/Red_Library_Fire/R09-66-Close%20Up%20Burning%20Fire.mp3\" -o /tmp/fire-closeup.mp3)",
       "Bash(wait)",
       "Bash(ffmpeg -i /tmp/fire-closeup.mp3 -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire.mp3 -y)",
-      "Bash(ffmpeg -i /tmp/fire-closeup.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire.mp3 -y)"
+      "Bash(ffmpeg -i /tmp/fire-closeup.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire.mp3 -y)",
+      "Bash(curl *)",
+      "Bash(ffmpeg -i /tmp/fire-source.mp3 -vn -ar 44100 -ac 2 -b:a 128k -map_metadata -1 /tmp/fire-encoded.mp3 -y)"
     ]
   }
 }
