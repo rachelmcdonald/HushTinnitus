@@ -17,6 +17,76 @@ import { getPreferences } from '@/src/storage/preferences';
 import { getDb } from '@/src/storage/database';
 import type { SoundSession, SymptomLog } from '@/src/types';
 
+// ─── daily support messages ───────────────────────────────────────────────────
+
+const DAILY_MESSAGES = [
+  // 1 — breathing: 4-7-8
+  "When tinnitus feels particularly noticeable, slow breathing can help your nervous system settle. Try breathing in for four counts, holding for seven, and out for eight. Even two or three rounds can interrupt a cycle of tension and bring your focus back to the present.",
+  // 2 — breathing: box
+  "Box breathing is a simple grounding technique you can use anywhere. Breathe in for four counts, hold for four, breathe out for four, and hold for four before the next breath. Many people find that a few cycles help quiet a tinnitus-focused mind.",
+  // 3 — breathing: diaphragmatic
+  "When you're stressed, breathing tends to become shallow and fast — which can heighten awareness of any physical sensation, including tinnitus. Practising slow, deep breathing from the belly sends a calming signal to the brain and can help settle the nervous system.",
+  // 4 — sound awareness: enrichment
+  "Your brain is remarkably good at learning to filter sound to the background — it does this automatically with traffic noise, humming appliances, and countless other sounds each day. With consistent sound enrichment, many people find that tinnitus gradually becomes easier to live alongside.",
+  // 5 — sound awareness: background sound
+  "Background sound can help shift your brain's attention away from tinnitus by reducing the contrast between the sound and your surrounding environment. Nature sounds, soft music, or a gentle fan all provide a helpful layer of enrichment — experiment to find what feels most natural for you.",
+  // 6 — sleep: background sound
+  "If tinnitus feels more noticeable at bedtime, it's often because the room is very quiet. A low level of background sound — like white noise, soft rain, or ocean waves — can bridge that quiet gap and help settle the mind as you wind down.",
+  // 7 — sleep: wind-down routine
+  "A consistent wind-down routine signals to your brain that sleep is coming. Dimming lights 30 to 60 minutes before bed, stepping away from screens, and doing something calm like reading or gentle stretching can help quiet both the mind and body.",
+  // 8 — sleep: mental imagery
+  "Some people find that gentle mental imagery at bedtime helps shift attention away from tinnitus. Imagine a calm, familiar place in detail — the sounds, the air, the light. It gives your mind something absorbing to settle into as you drift off.",
+  // 9 — sleep: frustration cycle
+  "Worrying about sleep can sometimes make it harder. If you're lying awake feeling frustrated, it's okay to get up briefly, do something quiet and unstimulating, then return when you feel drowsy. This approach can help break a cycle of sleep-related anxiety.",
+  // 10 — CBT: habituation
+  "A common thought pattern is 'I'll never get used to this.' But tinnitus habituation is a real and well-documented process. Many people find that, over months, their brain simply stops treating the sound as important or threatening. Today is part of that gradual journey.",
+  // 11 — CBT: attention
+  "Attention can amplify how intrusive a sound feels. Gently redirecting your focus — toward a task, a conversation, or your surroundings — can help tinnitus recede into the background. It's a skill that gets more natural with practice over time.",
+  // 12 — CBT: fuller picture
+  "Try noticing a tinnitus-focused thought, then asking: what else is true right now? Often there are neutral or good things happening alongside the difficult ones. This isn't about dismissing the hard stuff — it's about giving your brain a fuller, more balanced picture.",
+  // 13 — CBT: emotional layer
+  "The emotional response to tinnitus — frustration, worry, sadness — is completely valid and understandable. Research shows that it's often this emotional layer, rather than the sound itself, that drives daily distress. Working on the response is one of the most effective self-management tools available.",
+  // 14 — CBT: testing thoughts
+  "If you catch yourself thinking 'I can't concentrate because of the tinnitus', try testing that thought gently: are there times when you've focused well despite it being present? Building a catalogue of those moments is evidence that you have more capacity than tinnitus-focused thinking often suggests.",
+  // 15 — hearing protection: prevention
+  "Protecting your hearing from loud environments is a practical way to look after your ears long term. Keeping a pair of foam earplugs in your bag means you're always ready for concerts, power tools, or noisy restaurants without needing to scramble at the last moment.",
+  // 16 — hearing protection: recovery
+  "After noisy environments, giving your ears some quiet time helps them recover. If you notice tinnitus is more prominent after loud sound exposure, that's a useful signal — your auditory system is asking for a rest.",
+  // 17 — mindfulness: body scan
+  "A short body scan is a grounding practice worth trying today. Starting at your feet, notice any tension or sensation in each part of your body and simply acknowledge it without trying to change it. This can help you feel more settled and less focused on any one sensation.",
+  // 18 — mindfulness: relationship with sound
+  "Mindfulness isn't about achieving silence or making tinnitus disappear — it's about changing your relationship with the sound. Observing it with curiosity rather than resistance, even briefly, can shift how much mental space it takes up.",
+  // 19 — mindfulness: sound widening
+  "Try this today: spend two minutes sitting quietly and notice five things you can hear — not just tinnitus, but all the sounds in your environment. This gentle expansion of sound awareness can help tinnitus become one sound among many, rather than the only one.",
+  // 20 — difficult days: self-compassion
+  "Some days with tinnitus are genuinely harder than others, and that's okay. Being kind to yourself on difficult days — rather than frustrated with yourself — is not giving up. It's an important part of long-term coping.",
+  // 21 — difficult days: stress loop
+  "Stress and tinnitus often interact — stress can make tinnitus feel more prominent, and a prominent tinnitus can cause stress. Finding even small ways to ease your stress load — a walk, a warm drink, a short break outside — can have a positive ripple effect on how the day feels.",
+  // 22 — difficult days: routine
+  "On particularly difficult days, staying close to your normal routine can help. Structure gives the brain a sense of predictability and control, which can ease the emotional weight of a challenging day without requiring a big effort.",
+  // 23 — difficult days: acceptance
+  "Acceptance in the context of tinnitus doesn't mean liking it — it means not spending energy fighting the fact that it's there. Letting the sound exist without urgency or resistance, even briefly, can make the day significantly lighter.",
+  // 24 — small wins: engagement
+  "If you stayed present and engaged today despite tinnitus being in the background, that's worth acknowledging. Building that capacity is exactly what supports long-term tinnitus management, and every day you practise it counts.",
+  // 25 — small wins: consistency
+  "Every check-in you complete — logging your symptoms, doing a breathing practice, listening to a sound session — is an act of looking after yourself. Small, consistent actions add up to real change over weeks and months.",
+  // 26 — social: noise management
+  "Social environments can sometimes feel tiring when you're managing tinnitus. Choosing quieter venues when possible and positioning yourself away from louder areas can make social situations more comfortable without drawing attention to your needs.",
+  // 27 — social: sharing with others
+  "You don't have to explain tinnitus to everyone — but having at least one person who understands can make a real difference. Many people find that simply telling someone close to them brings a sense of being seen and supported.",
+  // 28 — concentration: sound enrichment
+  "If tinnitus is making it harder to focus, low-level background sound can help by providing a layer of enrichment that reduces the contrast between tinnitus and silence. Try instrumental music or ambient nature sounds rather than anything with lyrics.",
+  // 29 — concentration: time blocks
+  "Breaking tasks into shorter focused blocks — like 25 minutes of work followed by a 5-minute break — can help on days when tinnitus is more distracting. It reduces the mental load of sustained concentration and gives you regular moments to reset.",
+  // 30 — mindfulness: noticing good
+  "Today is a good day to notice what's going right — a moment of calm, a pleasant sound, a task completed, a conversation enjoyed. Deliberately noticing the positive, alongside the hard, helps build a more balanced picture of life with tinnitus over time.",
+];
+
+function getDailyMessage(): string {
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  return DAILY_MESSAGES[dayIndex % DAILY_MESSAGES.length];
+}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 function getGreeting(): string {
@@ -98,6 +168,8 @@ export default function HomeScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
+  const dailyMessage = useMemo(() => getDailyMessage(), []);
+
   const [greeting, setGreeting] = useState(getGreeting);
   const [streak, setStreak] = useState(0);
   const [todayEntry, setTodayEntry] = useState<SymptomLog | null>(null);
@@ -168,6 +240,17 @@ export default function HomeScreen() {
             ? `${streak} days in a row — every check-in counts.`
             : 'Keep going — consistency helps you notice what makes a difference.'}
         </Text>
+      </View>
+
+      {/* Daily support card */}
+      <View style={styles.dailyCard}>
+        <View style={styles.dailyHeader}>
+          <Text style={styles.dailyHeading}>Today's Support</Text>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" fill="#5DCAA5"/>
+          </Svg>
+        </View>
+        <Text style={styles.dailyMessage}>{dailyMessage}</Text>
       </View>
 
       {/* Today snapshot */}
@@ -442,6 +525,30 @@ function makeStyles(
       ...typography.body,
       color: colors.calmWave,
       fontWeight: '600',
+    },
+
+    // Daily support
+    dailyCard: {
+      backgroundColor: '#E1F5EE',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: Spacing.base,
+    },
+    dailyHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.sm,
+    },
+    dailyHeading: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: '#0D4F5C',
+    },
+    dailyMessage: {
+      fontSize: 14,
+      lineHeight: 14 * 1.6,
+      color: '#1A2B2B',
     },
 
     bottomSpacer: {
