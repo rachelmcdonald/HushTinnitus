@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Ellipse, Circle } from 'react-native-svg';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { getTodayLogs } from '@/src/storage/symptomLog';
@@ -148,15 +148,13 @@ export default function HomeScreen() {
       {/* Streak card */}
       <View style={styles.card}>
         <View style={styles.streakRow}>
-          <Svg width={38} height={38} viewBox="0 0 38 38">
-            <Path
-              d="M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19"
-              stroke={colors.calmWave}
-              strokeWidth={2.5}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+          <Svg viewBox="0 0 48 48" width={38} height={38} fill="none">
+            <Ellipse cx="24" cy="40" rx="18" ry="5.5" stroke={colors.calmWave} strokeWidth="2" opacity={0.3} fill="none"/>
+            <Ellipse cx="24" cy="40" rx="12" ry="3.5" stroke={colors.calmWave} strokeWidth="2.2" opacity={0.55} fill="none"/>
+            <Ellipse cx="24" cy="40" rx="6" ry="2" stroke={colors.calmWave} strokeWidth="2.5" opacity={0.9} fill="none"/>
+            <Circle cx="24" cy="30" r="4" fill={colors.calmWave}/>
+            <Circle cx="24" cy="20" r="3" fill={colors.calmWave} opacity={0.75}/>
+            <Circle cx="24" cy="12" r="2" fill={colors.calmWave} opacity={0.5}/>
           </Svg>
           <View style={styles.streakNumbers}>
             <Text style={styles.streakCount}>{streak}</Text>
