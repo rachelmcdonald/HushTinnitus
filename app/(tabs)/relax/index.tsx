@@ -13,7 +13,6 @@ type PremiumSession = {
 };
 
 const PREMIUM_SESSIONS: PremiumSession[] = [
-  { id: 'box',           title: 'Box Breathing',                  duration: '3–5 min' },
   { id: 'diaphragmatic', title: 'Diaphragmatic Breathing',        duration: '5–10 min' },
   { id: 'mindfulness',   title: 'Mindfulness Practice',           duration: '5–10 min' },
   { id: 'pmr',           title: 'Progressive Muscle Relaxation',  duration: '15 min' },
@@ -53,6 +52,25 @@ export default function RelaxScreen() {
           <View style={styles.freeCardContent}>
             <View style={styles.freeCardText}>
               <Text style={styles.freeCardTitle}>4-7-8 Breathing</Text>
+              <Text style={styles.freeCardSubtitle}>Guided breathing exercise — free</Text>
+              <Text style={styles.freeCardMeta}>3–5 min  ·  Calms the nervous system</Text>
+            </View>
+            <View style={styles.freePlayBtn}>
+              <Text style={styles.freePlayIcon}>▶</Text>
+            </View>
+          </View>
+        </Pressable>
+
+        {/* Free — Box Breathing */}
+        <Pressable
+          style={({ pressed }) => [styles.freeCard, pressed && styles.freeCardPressed]}
+          onPress={() => router.push('/relax/box-breathing' as any)}
+          accessibilityRole="button"
+          accessibilityLabel="Start Box Breathing — free"
+        >
+          <View style={styles.freeCardContent}>
+            <View style={styles.freeCardText}>
+              <Text style={styles.freeCardTitle}>Box Breathing</Text>
               <Text style={styles.freeCardSubtitle}>Guided breathing exercise — free</Text>
               <Text style={styles.freeCardMeta}>3–5 min  ·  Calms the nervous system</Text>
             </View>
