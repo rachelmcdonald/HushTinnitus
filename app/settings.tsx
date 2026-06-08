@@ -15,7 +15,6 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
-import { getPreferences } from '@/src/storage/preferences';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import type { UserPreferences } from '@/src/types';
 
@@ -30,6 +29,146 @@ function formatShortDate(d: Date): string {
 }
 
 const isExpoGo = Constants.appOwnership === 'expo';
+
+// ─── Personal report (plain-text export) ─────────────────────────────────────
+
+// Exact wording from Section 8.3 of the Hush Tinnitus specification.
+// Do not paraphrase or abridge.
+const REPORT_DISCLAIMER =
+  'Hush Tinnitus provides self-management tools and educational content for people ' +
+  'living with tinnitus. It is not a medical device and is not intended to diagnose, ' +
+  'treat, cure, or prevent tinnitus or any medical condition. Always consult a qualified ' +
+  'healthcare professional — including a GP, audiologist, or ENT specialist — before ' +
+  'making changes to how you manage your tinnitus. If your tinnitus started suddenly, ' +
+  'is pulsatile, or is heard only in one ear, seek medical advice promptly.';
+
+const REPORT_GRADE_LABELS: Record<string, string> = {
+  'not-significant': 'Not significant',
+  'small':           'Small',
+  'moderate':        'Moderate',
+  'big':             'Big',
+  'very-big':        'Very big',
+};
+
+const REPORT_TRIGGER_LABELS: Record<string, string> = {
+  noise:        'Noise',
+  stress:       'Stress',
+  caffeine:     'Caffeine',
+  alcohol:      'Alcohol',
+  'poor-sleep': 'Poor sleep',
+  illness:      'Illness',
+  other:        'Other',
+};
+
+const REPORT_SOUND_LABELS: Record<string, string> = {
+  'white-noise':    'White noise',
+  'pink-noise':     'Pink noise',
+  'brown-noise':    'Brown noise',
+  rain:             'Rain',
+  ocean:            'Ocean waves',
+  stream:           'Stream',
+  forest:           'Forest',
+  fire:             'Fire',
+  cafe:             'Cafe ambience',
+  'binaural-alpha': 'Alpha waves',
+  'binaural-theta': 'Theta waves',
+};
+
+function buildPersonalReport(
+  tfiRows: Array<Record<string, unknown>>,
+  logRows: Array<Record<string, unknown>>,
+  sessionRows: Array<Record<string, unknown>>,
+): string {
+  const lines: string[] = [];
+
+  lines.push('--- HUSH TINNITUS — PERSONAL REPORT ---');
+  lines.push(`Generated: ${formatShortDate(new Date())}`);
+  lines.push('');
+
+  // ── TFI history ──
+  lines.push('TFI HISTORY');
+  const baseline = tfiRows.find((r) => r.isBaseline === 1);
+  const week4 = tfiRows.find((r) => r.weekNumber === 4);
+  const week8 = tfiRows.find((r) => r.weekNumber === 8);
+
+  if (baseline) {
+    lines.push(`Baseline score: ${baseline.totalScore} — ${REPORT_GRADE_LABELS[baseline.grade as string] ?? baseline.grade}`);
+  } else {
+    lines.push('Baseline score: not yet recorded');
+  }
+  if (week4) {
+    lines.push(`Week 4 score: ${week4.totalScore} — ${REPORT_GRADE_LABELS[week4.grade as string] ?? week4.grade}`);
+  }
+  if (week8) {
+    lines.push(`Week 8 score: ${week8.totalScore} — ${REPORT_GRADE_LABELS[week8.grade as string] ?? week8.grade}`);
+  }
+
+  const latest = week8 ?? week4 ?? null;
+  if (baseline && latest) {
+    const delta = Math.round((baseline.totalScore as number) - (latest.totalScore as number));
+    const direction = delta > 0 ? 'improvement' : delta < 0 ? 'worsening' : 'no change';
+    lines.push(`Change from baseline: ${Math.abs(delta)} points ${direction}`);
+    if (delta >= 13) {
+      lines.push('Clinically meaningful improvement achieved (MCID: 13 points)');
+    }
+  }
+  lines.push('');
+
+  // ── Symptom log summary (last 30 days) ──
+  lines.push('SYMPTOM LOG SUMMARY (last 30 days)');
+  const cutoff = Date.now() - 30 * 86_400_000;
+  const recentLogs = logRows.filter((r) => new Date(r.date as string).getTime() >= cutoff);
+
+  if (recentLogs.length > 0) {
+    const avgLoudness = recentLogs.reduce((s, r) => s + (r.loudness as number), 0) / recentLogs.length;
+    const avgDistress = recentLogs.reduce((s, r) => s + (r.distress as number), 0) / recentLogs.length;
+
+    const triggerCounts: Record<string, number> = {};
+    for (const r of recentLogs) {
+      const triggers = (safeJSON(r.triggersJson as string) as string[] | null) ?? [];
+      for (const t of triggers) triggerCounts[t] = (triggerCounts[t] ?? 0) + 1;
+    }
+    const topTriggers = Object.entries(triggerCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([t]) => REPORT_TRIGGER_LABELS[t] ?? t);
+
+    lines.push(`Average loudness: ${avgLoudness.toFixed(1)} / 10`);
+    lines.push(`Average distress: ${avgDistress.toFixed(1)} / 10`);
+    lines.push(`Most frequent triggers: ${topTriggers.length > 0 ? topTriggers.join(', ') : 'None logged'}`);
+    lines.push(`Total entries: ${recentLogs.length}`);
+  } else {
+    lines.push('No symptom log entries in the last 30 days.');
+  }
+  lines.push('');
+
+  // ── Session summary ──
+  lines.push('SESSION SUMMARY');
+  if (sessionRows.length > 0) {
+    const totalSeconds = sessionRows.reduce((s, r) => s + (r.durationSeconds as number), 0);
+    const totalMinutes = Math.round(totalSeconds / 60);
+
+    const soundCounts: Record<string, number> = {};
+    for (const r of sessionRows) {
+      const sounds = (safeJSON(r.soundsJson as string) as string[] | null) ?? [];
+      for (const s of sounds) soundCounts[s] = (soundCounts[s] ?? 0) + 1;
+    }
+    const mostUsed = Object.entries(soundCounts).sort((a, b) => b[1] - a[1])[0];
+    const mostUsedSound = mostUsed ? (REPORT_SOUND_LABELS[mostUsed[0]] ?? mostUsed[0]) : 'None logged';
+
+    lines.push(`Total sessions completed: ${sessionRows.length}`);
+    lines.push(`Total minutes logged: ${totalMinutes}`);
+    lines.push(`Most used sound: ${mostUsedSound}`);
+  } else {
+    lines.push('No sound sessions logged yet.');
+  }
+  lines.push('');
+
+  lines.push('---');
+  lines.push(REPORT_DISCLAIMER);
+
+  return lines.join('\n');
+}
 
 // ─── Notification scheduling ──────────────────────────────────────────────────
 
@@ -333,6 +472,7 @@ export default function SettingsScreen() {
   const notificationsOn   = preferences?.notificationsEnabled ?? false;
   const savedTime         = preferences?.notificationTime ?? '09:00';
   const firstLaunchDate   = preferences?.firstLaunchDate ?? null;
+  const isPremium         = preferences?.isPremium ?? false;
 
   // Compute TFI reminder dates for display
   const tfiDates = useMemo(() => {
@@ -366,7 +506,7 @@ export default function SettingsScreen() {
     setNotifApplying(false);
   }, [firstLaunchDate, updatePreferences]);
 
-  // Export all data
+  // Export a readable personal report
   const handleExport = useCallback(async () => {
     if (Platform.OS === 'web') {
       Alert.alert('Not available', 'Data export is not supported on web.');
@@ -375,82 +515,28 @@ export default function SettingsScreen() {
     setExporting(true);
     try {
       const db = getDb();
-      const prefs = getPreferences();
 
       const tfiRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM tfi_assessments ORDER BY date ASC');
       const logRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM symptom_log ORDER BY date ASC');
       const sessionRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM sound_sessions ORDER BY date ASC');
 
-      const exportData = {
-        exportedAt: new Date().toISOString(),
-        note: 'All data is stored privately on this device. Nothing is shared with third parties or transmitted to any server.',
-        preferences: {
-          darkMode:             prefs.darkMode,
-          textSize:             prefs.textSize,
-          firstLaunchDate:     prefs.firstLaunchDate,
-          lastTFIDate:         prefs.lastTFIDate,
-          notificationsEnabled: prefs.notificationsEnabled,
-          notificationTime:    prefs.notificationTime,
-        },
-        tfiAssessments: tfiRows.map((r) => ({
-          id:          r.id,
-          date:        r.date,
-          totalScore:  r.totalScore,
-          grade:       r.grade,
-          isBaseline:  r.isBaseline,
-          weekNumber:  r.weekNumber,
-          subscales:   safeJSON(r.subscalesJson as string),
-          responses:   safeJSON(r.responsesJson as string),
-        })),
-        symptomLog: logRows.map((r) => ({
-          id:         r.id,
-          date:       r.date,
-          timeOfDay:  r.timeOfDay,
-          loudness:   r.loudness,
-          distress:   r.distress,
-          notes:      r.notes,
-          triggers:   safeJSON(r.triggersJson as string),
-        })),
-        soundSessions: sessionRows.map((r) => ({
-          id:              r.id,
-          date:            r.date,
-          durationSeconds: r.durationSeconds,
-          timerMinutes:    r.timerMinutes,
-          sounds:          safeJSON(r.soundsJson as string),
-        })),
-      };
-
-      const json = JSON.stringify(exportData, null, 2);
-      const escaped = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const report = buildPersonalReport(tfiRows, logRows, sessionRows);
 
       // Dynamic imports — wrapped in try/catch per spec
       try {
-        const Print   = await import('expo-print');
-        const Sharing = await import('expo-sharing');
+        const FileSystem = await import('expo-file-system');
+        const Sharing    = await import('expo-sharing');
 
-        const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: -apple-system, Helvetica, sans-serif; padding: 24px; }
-    h1   { font-size: 18px; font-weight: 500; color: #0D4F5C; margin-bottom: 4px; }
-    .sub { font-size: 12px; color: #666; margin-bottom: 20px; }
-    pre  { font-size: 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; }
-  </style>
-</head>
-<body>
-  <h1>Hush Tinnitus — Data Export</h1>
-  <p class="sub">Exported: ${new Date().toLocaleString('en-AU')}<br>
-  All data is stored privately on this device.</p>
-  <pre>${escaped}</pre>
-</body>
-</html>`;
+        const file = new FileSystem.File(FileSystem.Paths.cache, `hush-tinnitus-report-${Date.now()}.txt`);
+        file.write(report);
 
-        const { uri } = await Print.printToFileAsync({ html, base64: false });
         const canShare = await Sharing.isAvailableAsync();
         if (canShare) {
-          await Sharing.shareAsync(uri, { dialogTitle: 'Export Hush Tinnitus data' });
+          await Sharing.shareAsync(file.uri, {
+            dialogTitle: 'Share your Hush Tinnitus report',
+            mimeType: 'text/plain',
+            UTI: 'public.plain-text',
+          });
         } else {
           Alert.alert('Sharing not available', 'Your device does not support file sharing.');
         }
@@ -636,33 +722,59 @@ export default function SettingsScreen() {
 
           <View style={styles.divider} />
 
-          {/* Export button */}
-          <View style={styles.row}>
-            <View style={styles.rowLabel}>
-              <Text style={styles.rowTitle}>Export my data</Text>
-              <Text style={styles.rowDesc}>
+          {/* Export — Premium feature */}
+          {isPremium ? (
+            <View style={styles.row}>
+              <View style={styles.rowLabel}>
+                <Text style={styles.rowTitle}>Export my data</Text>
+                <Text style={styles.rowDesc}>
+                  Downloads a file containing all your logs, TFI assessments, and
+                  sessions that you can save or share.
+                </Text>
+              </View>
+              <Pressable
+                style={({ pressed }) => [
+                  styles.exportBtn,
+                  pressed && styles.exportBtnPressed,
+                  exporting && styles.exportBtnDisabled,
+                ]}
+                onPress={handleExport}
+                disabled={exporting}
+                accessibilityRole="button"
+                accessibilityLabel="Export my data"
+              >
+                {exporting ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.exportBtnLabel}>Export</Text>
+                )}
+              </Pressable>
+            </View>
+          ) : (
+            <View style={styles.exportGate}>
+              <View style={styles.exportGateTop}>
+                <Text style={styles.exportGateLockIcon}>🔒</Text>
+                <View style={styles.exportGateLabel}>
+                  <Text style={styles.exportGateTitle}>Export my data</Text>
+                  <View style={styles.exportGateBadge}>
+                    <Text style={styles.exportGateBadgeText}>Premium feature</Text>
+                  </View>
+                </View>
+              </View>
+              <Text style={styles.exportGateDesc}>
                 Downloads a file containing all your logs, TFI assessments, and
                 sessions that you can save or share.
               </Text>
+              <Pressable
+                style={({ pressed }) => [styles.exportGateBtn, pressed && styles.exportGateBtnPressed]}
+                onPress={() => router.push('/premium' as any)}
+                accessibilityRole="button"
+                accessibilityLabel="Get Premium"
+              >
+                <Text style={styles.exportGateBtnLabel}>Get Premium</Text>
+              </Pressable>
             </View>
-            <Pressable
-              style={({ pressed }) => [
-                styles.exportBtn,
-                pressed && styles.exportBtnPressed,
-                exporting && styles.exportBtnDisabled,
-              ]}
-              onPress={handleExport}
-              disabled={exporting}
-              accessibilityRole="button"
-              accessibilityLabel="Export my data"
-            >
-              {exporting ? (
-                <ActivityIndicator size="small" color={Colors.white} />
-              ) : (
-                <Text style={styles.exportBtnLabel}>Export</Text>
-              )}
-            </Pressable>
-          </View>
+          )}
         </View>
       </ScrollView>
 
@@ -771,6 +883,37 @@ function makeStyles(
     exportBtnPressed:  { opacity: 0.85 },
     exportBtnDisabled: { opacity: 0.6 },
     exportBtnLabel:    { fontSize: 13, fontWeight: '500', color: Colors.white },
+
+    // Export — Premium gate card
+    exportGate: {
+      backgroundColor: Colors.goldLight,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+      borderWidth: Border.width,
+      borderColor: Colors.softGold + '50',
+    },
+    exportGateTop:      { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
+    exportGateLockIcon: { fontSize: 18 },
+    exportGateLabel:    { flex: 1, gap: 4 },
+    exportGateTitle:    { fontSize: 14, fontWeight: '500', color: colors.textPrimary },
+    exportGateBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.sm,
+      paddingVertical: 2,
+    },
+    exportGateBadgeText: { fontSize: 10, fontWeight: '500', color: Colors.white },
+    exportGateDesc:      { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
+    exportGateBtn: {
+      backgroundColor: Colors.softGold,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+    },
+    exportGateBtnPressed: { opacity: 0.85 },
+    exportGateBtnLabel:   { fontSize: 13, fontWeight: '500', color: Colors.white },
 
     // Preview card
     previewCard: {

@@ -70,7 +70,9 @@
       "WebFetch(domain:mc2method.org)",
       "WebFetch(domain:cantonbecker.com)",
       "WebFetch(domain:samplefocus.com)",
-      "Bash(ffmpeg -y -i /tmp/bsb_white_noise.mp3 -t 60 -af equalizer=f=10000:width_type=o:width=2:g=-3,equalizer=f=14000:width_type=o:width=2:g=-4 -b:a 128k -ac 1 /tmp/gentle_white_noise.mp3)"
+      "Bash(ffmpeg -y -i /tmp/bsb_white_noise.mp3 -t 60 -af equalizer=f=10000:width_type=o:width=2:g=-3,equalizer=f=14000:width_type=o:width=2:g=-4 -b:a 128k -ac 1 /tmp/gentle_white_noise.mp3)",
+      "Bash(awk 'NR==74,NR==272' \"app/\\(tabs\\)/learn/thought-journal.tsx\")",
+      "Bash(awk NR==460,NR==560 *)"
     ]
   }
 }
