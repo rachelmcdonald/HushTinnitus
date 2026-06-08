@@ -102,10 +102,27 @@ export default function Tinnitus101Screen() {
             manageable part of daily life.
           </Body>
           <Body>
-            The sound is real. It originates from changes in how the auditory system
-            processes signals, not from physical damage that is actively getting
-            worse. This distinction matters: tinnitus is a perception, and
-            perceptions can change.
+            The sound is real, and for many people it does start with something
+            physical. Exposure to loud noise, age-related changes in the inner ear,
+            certain medications that can affect hearing, an injury to the head or
+            neck, and middle ear conditions can all play a part — and in many cases
+            there is a genuine, identifiable change happening at the level of the
+            cochlea or the auditory nerve.
+          </Body>
+          <Body>
+            What the Jastreboff neurophysiological model helps explain is what
+            happens next. Once that signal reaches the brain, how loud or
+            distressing it feels is shaped heavily by the central auditory pathways
+            and the limbic system — the parts of the brain involved in emotion and
+            attention. This is part of why the same sound can feel barely there on a
+            calm day and far more present on a stressful one.
+          </Body>
+          <Body>
+            And when no clear cause can be found, that does not make the experience
+            any less real or any less physical — it simply means the change is
+            happening at a level that is harder to pinpoint. Either way, tinnitus is
+            a genuine perception, and how the brain and nervous system respond to it
+            can change over time.
           </Body>
         </Section>
 
