@@ -390,8 +390,8 @@ function makeStyles(
     },
     streakNumbers: {
       flexDirection: 'row',
-      alignItems: 'baseline',
-      gap: Spacing.xs,
+      alignItems: 'center',
+      gap: Spacing.sm,
     },
     streakCount: {
       fontSize: 32,
