@@ -10,75 +10,56 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { TFIAssessment } from '@/src/types';
-import { getAssessmentById } from '@/src/storage/tfi';
-import { gradeFromScore } from '@/src/utils/tfiScoring';
+import { CRESTAssessment } from '@/src/types';
+import { getAssessmentById } from '@/src/storage/crest';
+import { severityFromScore, severityLabel } from '@/src/utils/crestScoring';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
-// ─── Grade content — Section 5.3 ─────────────────────────────────────────────
-
-const GRADE_LABELS: Record<TFIAssessment['grade'], string> = {
-  'not-significant': 'Not significant',
-  'small': 'Small',
-  'moderate': 'Moderate',
-  'big': 'Big',
-  'very-big': 'Very big',
-};
+// ─── Severity content — Section 4.5 ──────────────────────────────────────────
 
 // Tone and plain-language interpretation per Section 5.3 (no prohibited words)
-const GRADE_MESSAGES: Record<TFIAssessment['grade'], string> = {
-  'not-significant':
+const SEVERITY_MESSAGES: Record<CRESTAssessment['severity'], string> = {
+  minimal:
     'Your tinnitus is having minimal impact on your daily life. The tools in this app are designed to keep it that way and support you in building habits that may prevent it from becoming more bothersome.',
-  'small':
+  mild:
     'Your tinnitus is mildly bothersome at the moment. Many people at this level find that simple, consistent daily habits make a real difference — and this app has the tools to help.',
-  'moderate':
+  moderate:
     'Your tinnitus is affecting daily life in noticeable ways. The app will focus on the areas most relevant to you. If you haven\'t already spoken with a GP or audiologist about your tinnitus, it may be worth a check-in.',
-  'big':
+  significant:
     'Your tinnitus is having a substantial impact on your daily life. This app will guide you step by step through the tools that can help. If you haven\'t had your tinnitus assessed, we recommend mentioning it to your GP — especially if you haven\'t had a hearing test.',
-  'very-big':
+  severe:
     'Your tinnitus appears to be having a significant impact on your life. We strongly encourage you to see a GP or ENT specialist soon. All features of this app are available to you right now, and we\'ll be here to support you every step of the way.',
 };
 
-// ─── Subscale display ─────────────────────────────────────────────────────────
+// ─── Domain display ───────────────────────────────────────────────────────────
 
-type SubscaleKey = keyof TFIAssessment['subscales'];
+type DomainKey = keyof CRESTAssessment['domains'];
 
-const SUBSCALE_LABELS: Record<SubscaleKey, string> = {
-  intrusiveness: 'Intrusiveness',
-  control: 'Sense of control',
+const DOMAIN_LABELS: Record<DomainKey, string> = {
+  intrusion: 'Intrusion',
+  emotional: 'Emotional',
   cognitive: 'Cognitive',
   sleep: 'Sleep',
-  auditory: 'Auditory',
-  relaxation: 'Relaxation',
-  qualityOfLife: 'Quality of life',
-  emotional: 'Emotional',
+  social: 'Social',
+  control: 'Sense of control',
 };
 
-function severityColors(score: number): { background: string; text: string } {
-  const grade = gradeFromScore(score);
-  switch (grade) {
-    case 'not-significant': return TFISeverityColors.notSignificant;
-    case 'small':           return TFISeverityColors.small;
-    case 'moderate':        return TFISeverityColors.moderate;
-    case 'big':             return TFISeverityColors.big;
-    case 'very-big':        return TFISeverityColors.veryBig;
-  }
+function severityColorsFromScore(score: number): { background: string; text: string } {
+  return CRESTSeverityColors[severityFromScore(score)];
 }
 
-function topTwoSubscales(subscales: TFIAssessment['subscales']): Set<SubscaleKey> {
-  const keys = Object.keys(subscales) as SubscaleKey[];
-  const sorted = [...keys].sort((a, b) => subscales[b] - subscales[a]);
+function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
+  const keys = Object.keys(domains) as DomainKey[];
+  const sorted = [...keys].sort((a, b) => domains[b] - domains[a]);
   return new Set(sorted.slice(0, 2));
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function GradeBadge({ grade }: { grade: TFIAssessment['grade'] }) {
-  const gradeColors = severityColors(
-    { 'not-significant': 8, small: 24, moderate: 42, big: 63, 'very-big': 80 }[grade]
-  );
+function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) {
+  const gradeColors = CRESTSeverityColors[severity];
   const badgeStyles = useMemo(() => StyleSheet.create({
     container: {
       alignSelf: 'flex-start',
@@ -97,7 +78,7 @@ function GradeBadge({ grade }: { grade: TFIAssessment['grade'] }) {
   return (
     <View style={badgeStyles.container}>
       <Text style={badgeStyles.text}>
-        {GRADE_LABELS[grade]}
+        {severityLabel(severity)}
       </Text>
     </View>
   );
@@ -111,7 +92,7 @@ type BarRowProps = {
 
 function BarRow({ label, score, isFocusArea }: BarRowProps) {
   const { colors, typography } = useTheme();
-  const gradeColors = severityColors(score);
+  const gradeColors = severityColorsFromScore(score);
   const pct = Math.min(100, Math.max(0, score));
   const barStyles = useMemo(() => StyleSheet.create({
     row: {
@@ -179,9 +160,9 @@ function BarRow({ label, score, isFocusArea }: BarRowProps) {
   );
 }
 
-// ─── Very big grade — referral note ──────────────────────────────────────────
+// ─── Severe band — referral note ─────────────────────────────────────────────
 
-function VeryBigReferralCard({ totalScore }: { totalScore: number }) {
+function SevereReferralCard({ totalScore }: { totalScore: number }) {
   const { colors, typography } = useTheme();
   const referralStyles = useMemo(() => StyleSheet.create({
     card: {
@@ -244,7 +225,7 @@ function VeryBigReferralCard({ totalScore }: { totalScore: number }) {
   const note =
     `Dear Doctor,\n\n` +
     `I have been experiencing tinnitus that is significantly affecting my daily life. ` +
-    `My self-assessed Tinnitus Functional Index (TFI) score is ${Math.round(totalScore)}/100.\n\n` +
+    `My self-assessed CREST (Compact Rating and Experience of Symptoms in Tinnitus) score is ${Math.round(totalScore)}/100.\n\n` +
     `I would appreciate a hearing assessment and, if appropriate, a referral to an ` +
     `audiologist or ENT specialist for further evaluation.\n\n` +
     `Thank you for your time.`;
@@ -290,27 +271,27 @@ function VeryBigReferralCard({ totalScore }: { totalScore: number }) {
 type Params = {
   assessmentId?: string;
   totalScore?: string;
-  grade?: string;
-  subscalesJson?: string;
+  severity?: string;
+  domainsJson?: string;
 };
 
-export default function TFIResultScreen() {
+export default function CRESTResultScreen() {
   const params = useLocalSearchParams<Params>();
   const { updatePreferences } = usePreferences();
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
-  const [assessment, setAssessment] = useState<TFIAssessment | null>(null);
+  const [assessment, setAssessment] = useState<CRESTAssessment | null>(null);
 
   useEffect(() => {
     if (Platform.OS !== 'web' && params.assessmentId) {
       setAssessment(getAssessmentById(params.assessmentId));
-    } else if (params.totalScore && params.grade && params.subscalesJson) {
+    } else if (params.totalScore && params.severity && params.domainsJson) {
       setAssessment({
         id: 'web-preview',
         date: new Date().toISOString(),
         totalScore: parseFloat(params.totalScore),
-        grade: params.grade as TFIAssessment['grade'],
-        subscales: JSON.parse(params.subscalesJson),
+        severity: params.severity as CRESTAssessment['severity'],
+        domains: JSON.parse(params.domainsJson),
         responses: [],
         isBaseline: true,
         weekNumber: 0,
@@ -334,13 +315,13 @@ export default function TFIResultScreen() {
     );
   }
 
-  const { totalScore, grade, subscales } = assessment;
-  const gradeColors = severityColors(totalScore);
-  const focusAreas = topTwoSubscales(subscales);
-  const subscaleKeys = Object.keys(subscales) as SubscaleKey[];
+  const { totalScore, severity, domains } = assessment;
+  const gradeColors = CRESTSeverityColors[severity];
+  const focusAreas = topTwoDomains(domains);
+  const domainKeys = Object.keys(domains) as DomainKey[];
   // Sort descending for display — highest impact first
-  const sortedKeys = [...subscaleKeys].sort((a, b) => subscales[b] - subscales[a]);
-  const message = GRADE_MESSAGES[grade];
+  const sortedKeys = [...domainKeys].sort((a, b) => domains[b] - domains[a]);
+  const message = SEVERITY_MESSAGES[severity];
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -354,35 +335,35 @@ export default function TFIResultScreen() {
             {Math.round(totalScore)}
           </Text>
           <Text style={[styles.scoreOf, { color: gradeColors.text }]}>out of 100</Text>
-          <GradeBadge grade={grade} />
+          <SeverityBadge severity={severity} />
           <Text style={[styles.scoreMessage, { color: gradeColors.text }]}>
             {message}
           </Text>
         </View>
 
-        {/* Very big — referral card above the chart */}
-        {grade === 'very-big' && (
-          <VeryBigReferralCard totalScore={totalScore} />
+        {/* Severe band — referral card above the chart */}
+        {severity === 'severe' && (
+          <SevereReferralCard totalScore={totalScore} />
         )}
 
-        {/* Subscale breakdown */}
+        {/* Domain breakdown */}
         <View style={styles.chartCard}>
           <Text style={styles.chartTitle}>How tinnitus is affecting you</Text>
           <Text style={styles.chartSubtitle}>
-            Subscale scores 0–100 — higher means greater impact
+            Domain scores 0–100 — higher means greater impact
           </Text>
           <View style={styles.chartRows}>
             {sortedKeys.map((key) => (
               <BarRow
                 key={key}
-                label={SUBSCALE_LABELS[key]}
-                score={subscales[key]}
+                label={DOMAIN_LABELS[key]}
+                score={domains[key]}
                 isFocusArea={focusAreas.has(key)}
               />
             ))}
           </View>
           <Text style={styles.focusNote}>
-            Your two highest subscales are flagged as focus areas — the app
+            Your two highest domains are flagged as focus areas — the app
             will highlight relevant tools for these.
           </Text>
         </View>
@@ -453,7 +434,7 @@ function makeStyles(
       marginTop: Spacing.xs,
     },
 
-    // Subscale chart card
+    // Domain chart card
     chartCard: {
       backgroundColor: colors.surface,
       borderRadius: Radius.card,

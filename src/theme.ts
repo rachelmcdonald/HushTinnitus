@@ -28,13 +28,13 @@ export const Colors = {
   transparent: 'transparent',
 } as const;
 
-// TFI severity grade colour mapping (Section 4.5)
-export const TFISeverityColors = {
-  notSignificant: {
+// CREST severity band colour mapping (Section 4.5)
+export const CRESTSeverityColors = {
+  minimal: {
     background: '#E1F5EE',
     text: '#085041',
   },
-  small: {
+  mild: {
     background: '#D4EDDA',
     text: '#1A5C3A',
   },
@@ -42,11 +42,11 @@ export const TFISeverityColors = {
     background: '#FEF7F0',
     text: '#8A6030',
   },
-  big: {
+  significant: {
     background: '#FAECEC',
     text: '#7A2A28',
   },
-  veryBig: {
+  severe: {
     background: '#FAECE7',
     text: '#7A2A28',
   },

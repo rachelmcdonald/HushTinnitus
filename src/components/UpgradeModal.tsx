@@ -10,7 +10,7 @@ const PREMIUM_FEATURES = [
   'Full relaxation library (PMR, body scan, sleep routine)',
   'CBT thought journal',
   'Trigger tagging and pattern analysis',
-  'TFI progress charts and clinician PDF export',
+  'CREST progress charts and clinician PDF export',
 ];
 
 type Props = {

@@ -22,15 +22,15 @@ function InfoRow({ emoji, heading, body }: InfoRowProps) {
   );
 }
 
-export default function TFIIntroScreen() {
+export default function CRESTIntroScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   function handleStart() {
-    router.push('/onboarding/tfi-questionnaire');
+    router.push('/onboarding/crest-questionnaire');
   }
 
-  // Skip: lastTFIDate stays null — Home screen uses this as the nudge flag
+  // Skip: lastCRESTDate stays null — Home screen uses this as the nudge flag
   function handleSkip() {
     router.push('/onboarding/notifications');
   }
@@ -47,8 +47,8 @@ export default function TFIIntroScreen() {
           </View>
           <Text style={styles.title}>Understand your tinnitus</Text>
           <Text style={styles.subtitle}>
-            The Tinnitus Functional Index (TFI) is a validated questionnaire
-            that measures how tinnitus is affecting different areas of your life.
+            The CREST assessment is a short questionnaire that measures how
+            tinnitus is affecting different areas of your life.
           </Text>
         </View>
 
@@ -62,14 +62,26 @@ export default function TFIIntroScreen() {
           <InfoRow
             emoji="📈"
             heading="Measure change over time"
-            body="You'll be prompted to retake it at 4 and 8 weeks. A drop of 13 or more points is considered a meaningful improvement."
+            body="You'll be prompted to retake it at 4 and 8 weeks. A drop of 8 or more points is considered a meaningful improvement."
           />
           <View style={styles.divider} />
           <InfoRow
             emoji="🩺"
             heading="Share with your audiologist"
-            body="Your TFI history can be exported as a one-page PDF to bring to appointments."
+            body="Your CREST history can be exported as a one-page PDF to bring to appointments."
           />
+        </View>
+
+        <View style={styles.aboutCard}>
+          <Text style={styles.aboutHeading}>About the CREST assessment</Text>
+          <Text style={styles.aboutBody}>
+            The CREST assessment was developed by Michael McDonald BSc (Hons), AAudA,
+            an audiologist with over 11 years of clinical experience across the NHS
+            in Scotland and private and specialist audiology services in Perth,
+            Western Australia. It is a compact 12-question scale designed to measure
+            the impact of tinnitus across six key areas: intrusion, emotional
+            wellbeing, cognitive function, sleep, social life, and sense of control.
+          </Text>
         </View>
 
         <View style={styles.footer}>
@@ -80,7 +92,7 @@ export default function TFIIntroScreen() {
             ]}
             onPress={handleStart}
             accessibilityRole="button"
-            accessibilityLabel="Start the TFI assessment"
+            accessibilityLabel="Start the CREST assessment"
           >
             <Text style={styles.startLabel}>Start assessment</Text>
           </Pressable>
@@ -149,6 +161,23 @@ function makeStyles(
       borderRadius: Radius.card,
       padding: Spacing.base,
       gap: Spacing.md,
+    },
+
+    // About card
+    aboutCard: {
+      backgroundColor: colors.surfaceVariant,
+      borderRadius: Radius.card,
+      padding: Spacing.base,
+      gap: Spacing.sm,
+    },
+    aboutHeading: {
+      ...typography.heading2,
+      color: colors.textPrimary,
+    },
+    aboutBody: {
+      ...typography.body,
+      color: colors.textSecondary,
+      lineHeight: 22,
     },
     infoRow: {
       flexDirection: 'row',

@@ -35,8 +35,8 @@ const NOTIFICATION_ITEMS: NotificationItem[] = [
   },
   {
     emoji: '📅',
-    heading: 'TFI retest reminders',
-    body: 'A reminder at 4 weeks and 8 weeks to retake the TFI so you can track your progress.',
+    heading: 'CREST retest reminders',
+    body: 'A reminder at 4 weeks and 8 weeks to retake the CREST assessment so you can track your progress.',
   },
 ];
 

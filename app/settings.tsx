@@ -42,12 +42,12 @@ const REPORT_DISCLAIMER =
   'making changes to how you manage your tinnitus. If your tinnitus started suddenly, ' +
   'is pulsatile, or is heard only in one ear, seek medical advice promptly.';
 
-const REPORT_GRADE_LABELS: Record<string, string> = {
-  'not-significant': 'Not significant',
-  'small':           'Small',
-  'moderate':        'Moderate',
-  'big':             'Big',
-  'very-big':        'Very big',
+const REPORT_SEVERITY_LABELS: Record<string, string> = {
+  'minimal':     'Minimal impact',
+  'mild':        'Mild impact',
+  'moderate':    'Moderate impact',
+  'significant': 'Significant impact',
+  'severe':      'Severe impact',
 };
 
 const REPORT_TRIGGER_LABELS: Record<string, string> = {
@@ -75,7 +75,7 @@ const REPORT_SOUND_LABELS: Record<string, string> = {
 };
 
 function buildPersonalReport(
-  tfiRows: Array<Record<string, unknown>>,
+  crestRows: Array<Record<string, unknown>>,
   logRows: Array<Record<string, unknown>>,
   sessionRows: Array<Record<string, unknown>>,
 ): string {
@@ -85,22 +85,22 @@ function buildPersonalReport(
   lines.push(`Generated: ${formatShortDate(new Date())}`);
   lines.push('');
 
-  // ── TFI history ──
-  lines.push('TFI HISTORY');
-  const baseline = tfiRows.find((r) => r.isBaseline === 1);
-  const week4 = tfiRows.find((r) => r.weekNumber === 4);
-  const week8 = tfiRows.find((r) => r.weekNumber === 8);
+  // ── CREST history ──
+  lines.push('CREST HISTORY');
+  const baseline = crestRows.find((r) => r.isBaseline === 1);
+  const week4 = crestRows.find((r) => r.weekNumber === 4);
+  const week8 = crestRows.find((r) => r.weekNumber === 8);
 
   if (baseline) {
-    lines.push(`Baseline score: ${baseline.totalScore} — ${REPORT_GRADE_LABELS[baseline.grade as string] ?? baseline.grade}`);
+    lines.push(`Baseline score: ${baseline.totalScore} — ${REPORT_SEVERITY_LABELS[baseline.severity as string] ?? baseline.severity}`);
   } else {
     lines.push('Baseline score: not yet recorded');
   }
   if (week4) {
-    lines.push(`Week 4 score: ${week4.totalScore} — ${REPORT_GRADE_LABELS[week4.grade as string] ?? week4.grade}`);
+    lines.push(`Week 4 score: ${week4.totalScore} — ${REPORT_SEVERITY_LABELS[week4.severity as string] ?? week4.severity}`);
   }
   if (week8) {
-    lines.push(`Week 8 score: ${week8.totalScore} — ${REPORT_GRADE_LABELS[week8.grade as string] ?? week8.grade}`);
+    lines.push(`Week 8 score: ${week8.totalScore} — ${REPORT_SEVERITY_LABELS[week8.severity as string] ?? week8.severity}`);
   }
 
   const latest = week8 ?? week4 ?? null;
@@ -108,8 +108,8 @@ function buildPersonalReport(
     const delta = Math.round((baseline.totalScore as number) - (latest.totalScore as number));
     const direction = delta > 0 ? 'improvement' : delta < 0 ? 'worsening' : 'no change';
     lines.push(`Change from baseline: ${Math.abs(delta)} points ${direction}`);
-    if (delta >= 13) {
-      lines.push('Clinically meaningful improvement achieved (MCID: 13 points)');
+    if (delta >= 8) {
+      lines.push('Meaningful improvement achieved (8-point change threshold)');
     }
   }
   lines.push('');
@@ -182,7 +182,7 @@ async function applyNotifications(
     const Notifs = await import('expo-notifications');
 
     // Cancel all existing Hush notifications first
-    for (const id of ['hush-daily', 'hush-tfi-week4', 'hush-tfi-week8']) {
+    for (const id of ['hush-daily', 'hush-crest-week4', 'hush-crest-week8']) {
       Notifs.cancelScheduledNotificationAsync(id).catch(() => {});
     }
 
@@ -213,7 +213,7 @@ async function applyNotifications(
       },
     });
 
-    // TFI retest reminders — auto-scheduled based on firstLaunchDate
+    // CREST retest reminders — auto-scheduled based on firstLaunchDate
     if (firstLaunchDate) {
       const launch = new Date(firstLaunchDate);
       const now = Date.now();
@@ -223,10 +223,10 @@ async function applyNotifications(
 
       if (w4.getTime() > now) {
         await Notifs.scheduleNotificationAsync({
-          identifier: 'hush-tfi-week4',
+          identifier: 'hush-crest-week4',
           content: {
-            title: 'Week 4 TFI check-in',
-            body: "It's been 4 weeks — time to retake the TFI and track your progress.",
+            title: 'Week 4 CREST check-in',
+            body: "It's been 4 weeks — time to retake the CREST assessment and track your progress.",
             sound: true,
           },
           trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w4 },
@@ -235,10 +235,10 @@ async function applyNotifications(
 
       if (w8.getTime() > now) {
         await Notifs.scheduleNotificationAsync({
-          identifier: 'hush-tfi-week8',
+          identifier: 'hush-crest-week8',
           content: {
-            title: 'Week 8 TFI check-in',
-            body: "It's been 8 weeks — time to retake the TFI and see how far you've come.",
+            title: 'Week 8 CREST check-in',
+            body: "It's been 8 weeks — time to retake the CREST assessment and see how far you've come.",
             sound: true,
           },
           trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w8 },
@@ -474,8 +474,8 @@ export default function SettingsScreen() {
   const firstLaunchDate   = preferences?.firstLaunchDate ?? null;
   const isPremium         = preferences?.isPremium ?? false;
 
-  // Compute TFI reminder dates for display
-  const tfiDates = useMemo(() => {
+  // Compute CREST reminder dates for display
+  const crestDates = useMemo(() => {
     if (!firstLaunchDate) return null;
     const launch = new Date(firstLaunchDate);
     const now = new Date();
@@ -516,11 +516,11 @@ export default function SettingsScreen() {
     try {
       const db = getDb();
 
-      const tfiRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM tfi_assessments ORDER BY date ASC');
+      const crestRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM crest_assessments ORDER BY date ASC');
       const logRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM symptom_log ORDER BY date ASC');
       const sessionRows = db.getAllSync<Record<string, unknown>>('SELECT * FROM sound_sessions ORDER BY date ASC');
 
-      const report = buildPersonalReport(tfiRows, logRows, sessionRows);
+      const report = buildPersonalReport(crestRows, logRows, sessionRows);
 
       // Dynamic imports — wrapped in try/catch per spec
       try {
@@ -670,30 +670,30 @@ export default function SettingsScreen() {
 
           <View style={styles.divider} />
 
-          {/* TFI retest reminders */}
+          {/* CREST retest reminders */}
           <View style={styles.row}>
             <View style={styles.rowLabel}>
-              <Text style={styles.rowTitle}>TFI retest reminders</Text>
+              <Text style={styles.rowTitle}>CREST retest reminders</Text>
               <Text style={styles.rowDesc}>
-                Automatically reminded at week 4 and week 8 to retake the TFI.
+                Automatically reminded at week 4 and week 8 to retake the CREST assessment.
                 Scheduled based on your start date.
               </Text>
-              {tfiDates && notificationsOn && (
-                <View style={styles.tfiDatesRow}>
-                  <Text style={styles.tfiDateItem}>
-                    {tfiDates.w4.future
-                      ? `Week 4 — ${formatShortDate(tfiDates.w4.date)}`
+              {crestDates && notificationsOn && (
+                <View style={styles.crestDatesRow}>
+                  <Text style={styles.crestDateItem}>
+                    {crestDates.w4.future
+                      ? `Week 4 — ${formatShortDate(crestDates.w4.date)}`
                       : 'Week 4 — already passed'}
                   </Text>
-                  <Text style={styles.tfiDateItem}>
-                    {tfiDates.w8.future
-                      ? `Week 8 — ${formatShortDate(tfiDates.w8.date)}`
+                  <Text style={styles.crestDateItem}>
+                    {crestDates.w8.future
+                      ? `Week 8 — ${formatShortDate(crestDates.w8.date)}`
                       : 'Week 8 — already passed'}
                   </Text>
                 </View>
               )}
               {!notificationsOn && (
-                <Text style={styles.tfiDisabledNote}>
+                <Text style={styles.crestDisabledNote}>
                   Enable notifications above to schedule these.
                 </Text>
               )}
@@ -728,7 +728,7 @@ export default function SettingsScreen() {
               <View style={styles.rowLabel}>
                 <Text style={styles.rowTitle}>Export my data</Text>
                 <Text style={styles.rowDesc}>
-                  Downloads a file containing all your logs, TFI assessments, and
+                  Downloads a file containing all your logs, CREST assessments, and
                   sessions that you can save or share.
                 </Text>
               </View>
@@ -762,7 +762,7 @@ export default function SettingsScreen() {
                 </View>
               </View>
               <Text style={styles.exportGateDesc}>
-                Downloads a file containing all your logs, TFI assessments, and
+                Downloads a file containing all your logs, CREST assessments, and
                 sessions that you can save or share.
               </Text>
               <Pressable
@@ -842,10 +842,10 @@ function makeStyles(
 
     divider: { height: Border.width, backgroundColor: colors.calmWave + '30' },
 
-    // TFI dates
-    tfiDatesRow: { marginTop: Spacing.xs, gap: 2 },
-    tfiDateItem: { fontSize: 11, color: colors.deepTide, lineHeight: 16 },
-    tfiDisabledNote: { fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', marginTop: Spacing.xs },
+    // CREST dates
+    crestDatesRow: { marginTop: Spacing.xs, gap: 2 },
+    crestDateItem: { fontSize: 11, color: colors.deepTide, lineHeight: 16 },
+    crestDisabledNote: { fontSize: 11, color: colors.textSecondary, fontStyle: 'italic', marginTop: Spacing.xs },
 
     // Dev note
     devNote: {

@@ -4,41 +4,27 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { TFIAssessment } from '@/src/types';
-import { getAssessmentById, getAllAssessments } from '@/src/storage/tfi';
-import { Colors, TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { CRESTAssessment } from '@/src/types';
+import { getAssessmentById, getAllAssessments } from '@/src/storage/crest';
+import { severityLabel, MEANINGFUL_CHANGE_THRESHOLD, isMeaningfulImprovement } from '@/src/utils/crestScoring';
+import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const GRADE_LABELS: Record<TFIAssessment['grade'], string> = {
-  'not-significant': 'Not significant',
-  small: 'Small',
-  moderate: 'Moderate',
-  big: 'Big',
-  'very-big': 'Very big',
-};
+type DomainKey = keyof CRESTAssessment['domains'];
 
-const SUBSCALE_LABELS: Record<keyof TFIAssessment['subscales'], string> = {
-  intrusiveness: 'Intrusiveness',
-  control: 'Sense of control',
+const DOMAIN_LABELS: Record<DomainKey, string> = {
+  intrusion: 'Intrusion',
+  emotional: 'Emotional',
   cognitive: 'Cognitive',
   sleep: 'Sleep',
-  auditory: 'Auditory',
-  relaxation: 'Relaxation',
-  qualityOfLife: 'Quality of life',
-  emotional: 'Emotional',
+  social: 'Social',
+  control: 'Sense of control',
 };
 
-function gradeColors(grade: TFIAssessment['grade']) {
-  const map: Record<TFIAssessment['grade'], { background: string; text: string }> = {
-    'not-significant': TFISeverityColors.notSignificant,
-    small: TFISeverityColors.small,
-    moderate: TFISeverityColors.moderate,
-    big: TFISeverityColors.big,
-    'very-big': TFISeverityColors.veryBig,
-  };
-  return map[grade];
+function severityColors(severity: CRESTAssessment['severity']) {
+  return CRESTSeverityColors[severity];
 }
 
 // ─── Delta display ────────────────────────────────────────────────────────────
@@ -70,9 +56,9 @@ function makeDeltaBadgeStyles(typography: ReturnType<typeof useTheme>['typograph
   });
 }
 
-// ─── Subscale change row ──────────────────────────────────────────────────────
+// ─── Domain change row ────────────────────────────────────────────────────────
 
-function SubscaleRow({
+function DomainRow({
   label,
   before,
   after,
@@ -130,13 +116,13 @@ function makeSubStyles(
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
-export default function TFIRetestResultScreen() {
+export default function CRESTRetestResultScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const params = useLocalSearchParams<{ assessmentId?: string }>();
-  const [assessment, setAssessment] = useState<TFIAssessment | null>(null);
-  const [baseline, setBaseline] = useState<TFIAssessment | null>(null);
+  const [assessment, setAssessment] = useState<CRESTAssessment | null>(null);
+  const [baseline, setBaseline] = useState<CRESTAssessment | null>(null);
 
   useEffect(() => {
     if (Platform.OS === 'web' || !params.assessmentId) return;
@@ -161,13 +147,13 @@ export default function TFIRetestResultScreen() {
     );
   }
 
-  const { totalScore, grade, subscales, weekNumber } = assessment;
-  const gc = gradeColors(grade);
+  const { totalScore, severity, domains, weekNumber } = assessment;
+  const gc = severityColors(severity);
   const delta = baseline ? Math.round(baseline.totalScore - totalScore) : null;
-  const mcidAchieved = delta !== null && delta >= 13;
-  const subscaleKeys = Object.keys(subscales) as Array<keyof TFIAssessment['subscales']>;
-  const sortedKeys = [...subscaleKeys].sort(
-    (a, b) => subscales[b] - subscales[a]
+  const meaningfulImprovement = delta !== null && isMeaningfulImprovement(delta);
+  const domainKeys = Object.keys(domains) as DomainKey[];
+  const sortedKeys = [...domainKeys].sort(
+    (a, b) => domains[b] - domains[a]
   );
 
   return (
@@ -189,7 +175,7 @@ export default function TFIRetestResultScreen() {
             </View>
             <View style={[styles.gradeBadge, { backgroundColor: gc.text + '18' }]}>
               <Text style={[styles.gradeBadgeText, { color: gc.text }]}>
-                {GRADE_LABELS[grade]}
+                {severityLabel(severity)}
               </Text>
             </View>
           </View>
@@ -204,43 +190,41 @@ export default function TFIRetestResultScreen() {
           )}
         </View>
 
-        {mcidAchieved && (
-          <View style={styles.mcidCard}>
-            <Text style={styles.mcidTitle}>Clinically meaningful improvement</Text>
-            <Text style={styles.mcidBody}>
-              A reduction of {delta} points meets the validated Minimum Clinically
-              Important Difference (MCID) for the TFI — this is a meaningful change
-              that goes beyond normal variation.
-            </Text>
-            <Text style={styles.mcidCitation}>
-              Meikle MB et al. (2012). Ear and Hearing, 33(2), 153–176.
+        {meaningfulImprovement && (
+          <View style={styles.meaningfulCard}>
+            <Text style={styles.meaningfulTitle}>Clinically meaningful improvement</Text>
+            <Text style={styles.meaningfulBody}>
+              A reduction of {delta} points meets the {MEANINGFUL_CHANGE_THRESHOLD}-point
+              meaningful change threshold for the CREST scale — this is a meaningful
+              change that goes beyond normal week-to-week variation.
             </Text>
           </View>
         )}
 
-        <View style={styles.subscaleCard}>
-          <Text style={styles.subscaleTitle}>Subscale breakdown</Text>
-          <Text style={styles.subscaleSubtitle}>
+        <View style={styles.domainCard}>
+          <Text style={styles.domainTitle}>Domain breakdown</Text>
+          <Text style={styles.domainSubtitle}>
             Scores 0–100 · {baseline ? 'Change vs. previous' : 'Current scores'}
           </Text>
-          <View style={styles.subscaleRows}>
+          <View style={styles.domainRows}>
             {sortedKeys.map((key) => (
-              <SubscaleRow
+              <DomainRow
                 key={key}
-                label={SUBSCALE_LABELS[key]}
-                before={baseline?.subscales[key] ?? subscales[key]}
-                after={subscales[key]}
+                label={DOMAIN_LABELS[key]}
+                before={baseline?.domains[key] ?? domains[key]}
+                after={domains[key]}
               />
             ))}
           </View>
         </View>
 
         <View style={styles.citation}>
-          <Text style={styles.citationLabel}>About the TFI</Text>
+          <Text style={styles.citationLabel}>About the CREST assessment</Text>
           <Text style={styles.citationText}>
-            The Tinnitus Functional Index (TFI) is a validated 25-item questionnaire
-            measuring the impact of tinnitus across 8 domains. A 13-point improvement
-            is the validated Minimum Clinically Important Difference (MCID).
+            CREST (Compact Rating and Experience of Symptoms in Tinnitus) is a
+            12-question scale measuring the impact of tinnitus across 6 domains.
+            A drop of {MEANINGFUL_CHANGE_THRESHOLD} or more points is considered a
+            meaningful improvement.
           </Text>
         </View>
 
@@ -304,8 +288,8 @@ function makeStyles(
     deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
     deltaLabel: { ...typography.caption, flex: 1 },
 
-    // MCID card
-    mcidCard: {
+    // Meaningful-change card
+    meaningfulCard: {
       backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
       padding: Spacing.base,
@@ -313,12 +297,12 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    mcidTitle:    { ...typography.heading2, color: Colors.deepTide },
-    mcidBody:     { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
-    mcidCitation: { ...typography.caption, color: colors.textSecondary, fontStyle: 'italic' },
+    meaningfulTitle:    { ...typography.heading2, color: Colors.deepTide },
+    meaningfulBody:     { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    meaningfulCitation: { ...typography.caption, color: colors.textSecondary, fontStyle: 'italic' },
 
-    // Subscale card
-    subscaleCard: {
+    // Domain card
+    domainCard: {
       backgroundColor: colors.surface,
       borderRadius: Radius.card,
       padding: Spacing.base,
@@ -326,9 +310,9 @@ function makeStyles(
       borderWidth: Border.width,
       borderColor: Colors.calmWave + '33',
     },
-    subscaleTitle:    { ...typography.heading2, color: colors.textPrimary },
-    subscaleSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: -Spacing.sm },
-    subscaleRows:     { gap: Spacing.md },
+    domainTitle:    { ...typography.heading2, color: colors.textPrimary },
+    domainSubtitle: { ...typography.caption, color: colors.textSecondary, marginTop: -Spacing.sm },
+    domainRows:     { gap: Spacing.md },
 
     // Citation
     citation: {

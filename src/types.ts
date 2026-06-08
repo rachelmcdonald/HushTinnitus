@@ -1,19 +1,17 @@
 // Section 9 — Core data models (stored on-device via expo-sqlite)
 
-export interface TFIAssessment {
+export interface CRESTAssessment {
   id: string;
   date: string;
   totalScore: number;
-  grade: 'not-significant' | 'small' | 'moderate' | 'big' | 'very-big';
-  subscales: {
-    intrusiveness: number;
-    control: number;
+  severity: 'minimal' | 'mild' | 'moderate' | 'significant' | 'severe';
+  domains: {
+    intrusion: number;
+    emotional: number;
     cognitive: number;
     sleep: number;
-    auditory: number;
-    relaxation: number;
-    qualityOfLife: number;
-    emotional: number;
+    social: number;
+    control: number;
   };
   responses: number[];
   isBaseline: boolean;
@@ -49,14 +47,14 @@ export interface UserPreferences {
   notificationsEnabled: boolean;
   notificationTime: string;
   firstLaunchDate: string;
-  lastTFIDate: string | null;
+  lastCRESTDate: string | null;
   week4Prompted: boolean;
   week8Prompted: boolean;
   matchedPitchHz: number | null;
 }
 
-// TFI severity grade type
-export type TFIGrade = TFIAssessment['grade'];
+// CREST severity grade type
+export type CRESTSeverity = CRESTAssessment['severity'];
 
 // Trigger tag type
 export type TriggerTag = SymptomLog['triggers'][number];

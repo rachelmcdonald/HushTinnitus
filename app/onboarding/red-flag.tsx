@@ -109,7 +109,7 @@ export default function RedFlagScreen() {
         },
       });
     } else {
-      router.push('/onboarding/tfi-intro');
+      router.push('/onboarding/crest-intro');
     }
   }
 

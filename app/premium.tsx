@@ -21,7 +21,7 @@ const FEATURES = [
   'Full relaxation library',
   'CBT thought journal',
   'Trigger tagging and pattern analysis',
-  'TFI progress trend chart',
+  'CREST progress trend chart',
   'Clinician PDF export',
   'Progress dashboard',
 ];

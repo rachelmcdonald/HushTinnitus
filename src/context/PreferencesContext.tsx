@@ -11,7 +11,7 @@ const WEB_DEFAULTS: UserPreferences = {
   notificationsEnabled: false,
   notificationTime: '09:00',
   firstLaunchDate: new Date().toISOString(),
-  lastTFIDate: null,
+  lastCRESTDate: null,
   week4Prompted: false,
   week8Prompted: false,
   matchedPitchHz: null,

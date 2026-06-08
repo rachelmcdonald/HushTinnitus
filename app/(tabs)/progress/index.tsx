@@ -11,31 +11,17 @@ import {
   getLogsForPeriod, getRecentLogs, getSessionStats, getTriggerStats,
   getTodayLogs, groupLogsByDay, TriggerStat, SessionStats,
 } from '@/src/storage/symptomLog';
-import { getAllAssessments } from '@/src/storage/tfi';
-import { TFIAssessment, SymptomLog } from '@/src/types';
-import { Colors, TFISeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { getAllAssessments } from '@/src/storage/crest';
+import { severityLabel, MEANINGFUL_CHANGE_THRESHOLD } from '@/src/utils/crestScoring';
+import { CRESTAssessment, SymptomLog } from '@/src/types';
+import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import PremiumGate from '@/src/components/PremiumGate';
 import { useTheme } from '@/src/context/ThemeContext';
 
-// ─── Grade helpers ────────────────────────────────────────────────────────────
+// ─── Severity helpers ─────────────────────────────────────────────────────────
 
-const GRADE_LABELS: Record<TFIAssessment['grade'], string> = {
-  'not-significant': 'Not significant',
-  small: 'Small',
-  moderate: 'Moderate',
-  big: 'Big',
-  'very-big': 'Very big',
-};
-
-function gradeColors(grade: TFIAssessment['grade']) {
-  const map: Record<TFIAssessment['grade'], { background: string; text: string }> = {
-    'not-significant': TFISeverityColors.notSignificant,
-    small: TFISeverityColors.small,
-    moderate: TFISeverityColors.moderate,
-    big: TFISeverityColors.big,
-    'very-big': TFISeverityColors.veryBig,
-  };
-  return map[grade];
+function severityColors(severity: CRESTAssessment['severity']) {
+  return CRESTSeverityColors[severity];
 }
 
 // ─── SVG Charts ───────────────────────────────────────────────────────────────
@@ -110,12 +96,12 @@ function SymptomLineChart({
   );
 }
 
-function TFITrendChart({
+function CRESTTrendChart({
   chartWidth,
   assessments,
 }: {
   chartWidth: number;
-  assessments: TFIAssessment[];
+  assessments: CRESTAssessment[];
 }) {
   const height = 110;
   const padX = 8;
@@ -133,13 +119,13 @@ function TFITrendChart({
 
   const polyline = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  const mcidTarget = Math.max(0, assessments[0].totalScore - 13);
-  const mcidY = padY + h - (mcidTarget / 100) * h;
+  const meaningfulTarget = Math.max(0, assessments[0].totalScore - MEANINGFUL_CHANGE_THRESHOLD);
+  const meaningfulY = padY + h - (meaningfulTarget / 100) * h;
 
   return (
     <Svg width={chartWidth} height={height}>
       <SvgLine
-        x1={padX} y1={mcidY} x2={padX + w} y2={mcidY}
+        x1={padX} y1={meaningfulY} x2={padX + w} y2={meaningfulY}
         stroke={Colors.calmWave}
         strokeWidth={1.5}
         strokeDasharray="5,4"
@@ -164,20 +150,19 @@ function TFITrendChart({
 
 // ─── PDF export ───────────────────────────────────────────────────────────────
 
-function buildPDFHtml(assessments: TFIAssessment[], logs: SymptomLog[]): string {
+function buildPDFHtml(assessments: CRESTAssessment[], logs: SymptomLog[]): string {
   const dateStr = new Date().toLocaleDateString('en-AU', {
     day: '2-digit', month: 'long', year: 'numeric',
   });
 
-  const gradeLabel = (g: TFIAssessment['grade']) => GRADE_LABELS[g] ?? g;
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString('en-AU', { day: '2-digit', month: 'short', year: 'numeric' });
 
-  const tfiRows = assessments.map((a) => `
+  const crestRows = assessments.map((a) => `
     <tr>
       <td>${formatDate(a.date)}</td>
       <td>${Math.round(a.totalScore)}</td>
-      <td>${gradeLabel(a.grade)}</td>
+      <td>${severityLabel(a.severity)}</td>
       <td>${a.isBaseline ? 'Baseline' : `Week ${a.weekNumber}`}</td>
     </tr>`).join('');
 
@@ -210,10 +195,10 @@ function buildPDFHtml(assessments: TFIAssessment[], logs: SymptomLog[]): string 
   <h1>Hush Tinnitus — Clinician Report</h1>
   <div class="sub">Exported ${dateStr} · Self-management app, not a medical device</div>
 
-  <h2>TFI Assessment History</h2>
+  <h2>CREST Assessment History</h2>
   ${assessments.length === 0
     ? '<p style="color:#666;font-size:10px;">No assessments recorded.</p>'
-    : `<table><tr><th>Date</th><th>Score /100</th><th>Grade</th><th>Time point</th></tr>${tfiRows}</table>`}
+    : `<table><tr><th>Date</th><th>Score /100</th><th>Severity</th><th>Time point</th></tr>${crestRows}</table>`}
 
   <h2>Symptom Log (Last 30 Days)</h2>
   ${logs.length === 0
@@ -231,7 +216,7 @@ function buildPDFHtml(assessments: TFIAssessment[], logs: SymptomLog[]): string 
 </html>`;
 }
 
-async function sharePDF(assessments: TFIAssessment[], logs: SymptomLog[]): Promise<void> {
+async function sharePDF(assessments: CRESTAssessment[], logs: SymptomLog[]): Promise<void> {
   let Print: typeof import('expo-print');
   let Sharing: typeof import('expo-sharing');
   try {
@@ -257,12 +242,12 @@ async function sharePDF(assessments: TFIAssessment[], logs: SymptomLog[]): Promi
 // ─── Retest prompt logic ──────────────────────────────────────────────────────
 
 function getRetestWeek(
-  assessments: TFIAssessment[],
-  lastTFIDate: string | null
+  assessments: CRESTAssessment[],
+  lastCRESTDate: string | null
 ): 4 | 8 | null {
-  if (!lastTFIDate || assessments.length === 0) return null;
+  if (!lastCRESTDate || assessments.length === 0) return null;
   const daysSince = Math.floor(
-    (Date.now() - new Date(lastTFIDate).getTime()) / (1000 * 60 * 60 * 24)
+    (Date.now() - new Date(lastCRESTDate).getTime()) / (1000 * 60 * 60 * 24)
   );
   const hasWeek4 = assessments.some((a) => a.weekNumber === 4);
   const hasWeek8 = assessments.some((a) => a.weekNumber === 8);
@@ -292,7 +277,7 @@ export default function ProgressScreen() {
   const { width } = useWindowDimensions();
   const chartWidth = width - 2 * Spacing.xl - 2 * Spacing.base;
 
-  const [assessments, setAssessments] = useState<TFIAssessment[]>([]);
+  const [assessments, setAssessments] = useState<CRESTAssessment[]>([]);
   const [chartData, setChartData] = useState<{ loudness: number[]; distress: number[] }>({
     loudness: [], distress: [],
   });
@@ -323,7 +308,7 @@ export default function ProgressScreen() {
   );
 
   const latestAssessment = assessments.length > 0 ? assessments[assessments.length - 1] : null;
-  const retestWeek = getRetestWeek(assessments, preferences?.lastTFIDate ?? null);
+  const retestWeek = getRetestWeek(assessments, preferences?.lastCRESTDate ?? null);
 
   async function handleExport() {
     setExportLoading(true);
@@ -346,7 +331,7 @@ export default function ProgressScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Progress</Text>
           <Text style={styles.subtitle}>
-            Track your symptoms, therapy activity, and TFI scores over time.
+            Track your symptoms, therapy activity, and CREST scores over time.
           </Text>
         </View>
 
@@ -407,22 +392,22 @@ export default function ProgressScreen() {
           </View>
         </View>
 
-        {/* ── Latest TFI ────────────────────────────────────────────────────── */}
-        <SectionLabel label="TFI SCORE" />
+        {/* ── Latest CREST ──────────────────────────────────────────────────── */}
+        <SectionLabel label="CREST SCORE" />
         {latestAssessment ? (
-          <View style={styles.tfiCard}>
-            <View style={styles.tfiCardRow}>
+          <View style={styles.crestCard}>
+            <View style={styles.crestCardRow}>
               <View>
-                <Text style={styles.tfiScore}>{Math.round(latestAssessment.totalScore)}</Text>
-                <Text style={styles.tfiScoreOf}>out of 100</Text>
+                <Text style={styles.crestScore}>{Math.round(latestAssessment.totalScore)}</Text>
+                <Text style={styles.crestScoreOf}>out of 100</Text>
               </View>
-              <View style={[styles.gradeBadge, { backgroundColor: gradeColors(latestAssessment.grade).background }]}>
-                <Text style={[styles.gradeBadgeText, { color: gradeColors(latestAssessment.grade).text }]}>
-                  {GRADE_LABELS[latestAssessment.grade]}
+              <View style={[styles.gradeBadge, { backgroundColor: severityColors(latestAssessment.severity).background }]}>
+                <Text style={[styles.gradeBadgeText, { color: severityColors(latestAssessment.severity).text }]}>
+                  {severityLabel(latestAssessment.severity)}
                 </Text>
               </View>
             </View>
-            <Text style={styles.tfiDate}>
+            <Text style={styles.crestDate}>
               {latestAssessment.isBaseline ? 'Baseline' : `Week ${latestAssessment.weekNumber}`}
               {' · '}
               {new Date(latestAssessment.date).toLocaleDateString('en-AU', {
@@ -433,29 +418,29 @@ export default function ProgressScreen() {
             {retestWeek && (
               <View style={styles.retestPrompt}>
                 <Text style={styles.retestText}>
-                  Your week {retestWeek} TFI check-in is ready. It takes about 4 minutes.
+                  Your week {retestWeek} CREST check-in is ready. It takes about 4 minutes.
                 </Text>
                 <Pressable
                   style={({ pressed }) => [styles.retestBtn, pressed && styles.retestBtnPressed]}
                   onPress={() =>
                     router.push({
-                      pathname: '/progress/tfi-retest' as any,
+                      pathname: '/progress/crest-retest' as any,
                       params: { weekNumber: String(retestWeek) },
                     })
                   }
                   accessibilityRole="button"
-                  accessibilityLabel={`Start week ${retestWeek} TFI retest`}
+                  accessibilityLabel={`Start week ${retestWeek} CREST retest`}
                 >
-                  <Text style={styles.retestBtnLabel}>Retake TFI — Week {retestWeek}</Text>
+                  <Text style={styles.retestBtnLabel}>Retake CREST — Week {retestWeek}</Text>
                 </Pressable>
               </View>
             )}
           </View>
         ) : (
-          <View style={styles.tfiEmptyCard}>
-            <Text style={styles.tfiEmptyTitle}>TFI not yet completed</Text>
-            <Text style={styles.tfiEmptyBody}>
-              Complete the Tinnitus Functional Index during onboarding to see your score here.
+          <View style={styles.crestEmptyCard}>
+            <Text style={styles.crestEmptyTitle}>CREST not yet completed</Text>
+            <Text style={styles.crestEmptyBody}>
+              Complete the CREST assessment during onboarding to see your score here.
             </Text>
           </View>
         )}
@@ -494,34 +479,34 @@ export default function ProgressScreen() {
           </View>
         </PremiumGate>
 
-        {/* ── TFI trend (Premium) ───────────────────────────────────────────── */}
-        <SectionLabel label="TFI PROGRESS" />
-        <PremiumGate isPremium={isPremium} featureName="TFI trend chart">
+        {/* ── CREST trend (Premium) ─────────────────────────────────────────── */}
+        <SectionLabel label="CREST PROGRESS" />
+        <PremiumGate isPremium={isPremium} featureName="CREST trend chart">
           <View style={styles.chartCard}>
-            <Text style={styles.chartCardTitle}>TFI score over time</Text>
+            <Text style={styles.chartCardTitle}>CREST score over time</Text>
             {assessments.length >= 2 ? (
               <>
-                <TFITrendChart chartWidth={chartWidth} assessments={assessments} />
-                <View style={styles.tfiTrendLabels}>
+                <CRESTTrendChart chartWidth={chartWidth} assessments={assessments} />
+                <View style={styles.crestTrendLabels}>
                   {assessments.map((a) => (
-                    <Text key={a.id} style={styles.tfiTrendLabel}>
+                    <Text key={a.id} style={styles.crestTrendLabel}>
                       {a.isBaseline ? 'Baseline' : `Wk ${a.weekNumber}`}
                       {'\n'}
-                      <Text style={styles.tfiTrendScore}>{Math.round(a.totalScore)}</Text>
+                      <Text style={styles.crestTrendScore}>{Math.round(a.totalScore)}</Text>
                     </Text>
                   ))}
                 </View>
-                <View style={styles.mcidNote}>
+                <View style={styles.meaningfulNote}>
                   <View style={[styles.legendDot, { backgroundColor: Colors.calmWave }]} />
-                  <Text style={styles.mcidNoteText}>
-                    Dotted line = MCID target (13-point improvement considered clinically meaningful)
+                  <Text style={styles.meaningfulNoteText}>
+                    Dotted line = meaningful change target (a {MEANINGFUL_CHANGE_THRESHOLD}-point reduction is considered a meaningful improvement)
                   </Text>
                 </View>
                 {assessments.length >= 2 &&
-                  assessments[0].totalScore - assessments[assessments.length - 1].totalScore >= 13 && (
-                    <View style={styles.mcidAchieved}>
-                      <Text style={styles.mcidAchievedText}>
-                        You've achieved a clinically meaningful improvement — a reduction of{' '}
+                  assessments[0].totalScore - assessments[assessments.length - 1].totalScore >= MEANINGFUL_CHANGE_THRESHOLD && (
+                    <View style={styles.meaningfulAchieved}>
+                      <Text style={styles.meaningfulAchievedText}>
+                        You've achieved a meaningful improvement — a reduction of{' '}
                         {Math.round(assessments[0].totalScore - assessments[assessments.length - 1].totalScore)}{' '}
                         points.
                       </Text>
@@ -530,7 +515,7 @@ export default function ProgressScreen() {
               </>
             ) : (
               <Text style={styles.chartEmpty}>
-                Complete a week 4 or week 8 retest to see your TFI progress here.
+                Complete a week 4 or week 8 retest to see your CREST progress here.
               </Text>
             )}
           </View>
@@ -576,7 +561,7 @@ export default function ProgressScreen() {
           <View style={styles.exportCard}>
             <Text style={styles.exportTitle}>Clinician report</Text>
             <Text style={styles.exportBody}>
-              Generate a PDF of your TFI history and symptom log — ready to share
+              Generate a PDF of your CREST history and symptom log — ready to share
               with your GP, audiologist, or ENT specialist.
             </Text>
             <Pressable
@@ -673,8 +658,8 @@ function makeStyles(
     statValue: { fontSize: 28, fontWeight: '400', color: Colors.deepTide },
     statLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
 
-    // TFI card
-    tfiCard: {
+    // CREST card
+    crestCard: {
       backgroundColor: colors.surface,
       borderRadius: Radius.card,
       padding: Spacing.base,
@@ -682,13 +667,13 @@ function makeStyles(
       borderWidth: Border.width,
       borderColor: Colors.calmWave + '33',
     },
-    tfiCardRow: {
+    crestCardRow: {
       flexDirection: 'row',
       alignItems: 'flex-end',
       justifyContent: 'space-between',
     },
-    tfiScore: { fontSize: 40, fontWeight: '400', color: Colors.deepTide, lineHeight: 44 },
-    tfiScoreOf: { ...typography.caption, color: colors.textSecondary },
+    crestScore: { fontSize: 40, fontWeight: '400', color: Colors.deepTide, lineHeight: 44 },
+    crestScoreOf: { ...typography.caption, color: colors.textSecondary },
     gradeBadge: {
       borderRadius: Radius.chip,
       paddingHorizontal: Spacing.md,
@@ -696,8 +681,8 @@ function makeStyles(
       alignSelf: 'flex-end',
     },
     gradeBadgeText: { ...typography.micro },
-    tfiDate: { ...typography.caption, color: colors.textSecondary },
-    tfiEmptyCard: {
+    crestDate: { ...typography.caption, color: colors.textSecondary },
+    crestEmptyCard: {
       backgroundColor: colors.surface,
       borderRadius: Radius.card,
       padding: Spacing.base,
@@ -706,8 +691,8 @@ function makeStyles(
       borderColor: Colors.calmWave + '33',
       opacity: 0.7,
     },
-    tfiEmptyTitle: { ...typography.heading2, color: colors.textSecondary },
-    tfiEmptyBody:  { ...typography.body, color: colors.textSecondary },
+    crestEmptyTitle: { ...typography.heading2, color: colors.textSecondary },
+    crestEmptyBody:  { ...typography.body, color: colors.textSecondary },
 
     // Retest prompt
     retestPrompt: {
@@ -758,29 +743,29 @@ function makeStyles(
     legendLabel: { ...typography.caption, color: colors.textSecondary },
     legendScale: { ...typography.caption, color: colors.textSecondary, marginLeft: 'auto' as any },
 
-    // TFI trend labels
-    tfiTrendLabels: {
+    // CREST trend labels
+    crestTrendLabels: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       paddingHorizontal: Spacing.xs,
     },
-    tfiTrendLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
-    tfiTrendScore: { ...typography.body, color: Colors.deepTide, fontWeight: '500' as const },
-    mcidNote: {
+    crestTrendLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
+    crestTrendScore: { ...typography.body, color: Colors.deepTide, fontWeight: '500' as const },
+    meaningfulNote: {
       flexDirection: 'row',
       alignItems: 'flex-start',
       gap: Spacing.xs,
       marginTop: -Spacing.xs,
     },
-    mcidNoteText: { ...typography.caption, color: colors.textSecondary, flex: 1, lineHeight: 18 },
-    mcidAchieved: {
+    meaningfulNoteText: { ...typography.caption, color: colors.textSecondary, flex: 1, lineHeight: 18 },
+    meaningfulAchieved: {
       backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.chip,
       padding: Spacing.md,
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    mcidAchievedText: { ...typography.body, color: Colors.deepTide, lineHeight: 22 },
+    meaningfulAchievedText: { ...typography.body, color: Colors.deepTide, lineHeight: 22 },
 
     // Trigger patterns
     triggerList: { gap: Spacing.sm },

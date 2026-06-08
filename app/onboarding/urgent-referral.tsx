@@ -74,7 +74,7 @@ export default function UrgentReferralScreen() {
   }
 
   function handleContinue() {
-    router.push('/onboarding/tfi-intro');
+    router.push('/onboarding/crest-intro');
   }
 
   return (

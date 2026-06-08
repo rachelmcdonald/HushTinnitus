@@ -26,24 +26,6 @@ type CitationGroup = {
 
 const CITATION_GROUPS: CitationGroup[] = [
   {
-    groupTitle: 'Tinnitus Functional Index (TFI)',
-    citations: [
-      {
-        id: 'meikle-2012',
-        authors: 'Meikle MB, Henry JA, Griest SE, et al.',
-        year: 2012,
-        title:
-          'The Tinnitus Functional Index: Development of a New Clinical Measure for Chronic, Intrusive Tinnitus',
-        journal: 'Ear and Hearing',
-        details: '33(2), 153–176',
-        relevance:
-          'Describes the development and validation of the 25-item TFI questionnaire used in this app for baseline and follow-up assessment.',
-        url: 'https://doi.org/10.1097/AUD.0b013e3182498c78',
-        urlLabel: 'doi.org',
-      },
-    ],
-  },
-  {
     groupTitle: 'Sound therapy & habituation',
     citations: [
       {

@@ -24,6 +24,7 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
   // column already exists, which is the expected case on subsequent launches.
   const migrations = [
     'ALTER TABLE preferences ADD COLUMN matchedPitchHz REAL',
+    'ALTER TABLE preferences ADD COLUMN lastCRESTDate TEXT',
   ];
 
   db.execSync(`
@@ -36,24 +37,24 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
       notificationsEnabled INTEGER NOT NULL DEFAULT 0,
       notificationTime TEXT NOT NULL DEFAULT '09:00',
       firstLaunchDate TEXT NOT NULL DEFAULT '',
-      lastTFIDate TEXT,
+      lastCRESTDate TEXT,
       week4Prompted INTEGER NOT NULL DEFAULT 0,
       week8Prompted INTEGER NOT NULL DEFAULT 0,
       matchedPitchHz REAL
     );
 
-    CREATE TABLE IF NOT EXISTS tfi_assessments (
+    CREATE TABLE IF NOT EXISTS crest_assessments (
       id TEXT PRIMARY KEY,
       date TEXT NOT NULL,
       totalScore REAL NOT NULL,
-      grade TEXT NOT NULL,
-      subscalesJson TEXT NOT NULL,
+      severity TEXT NOT NULL,
+      domainsJson TEXT NOT NULL,
       responsesJson TEXT NOT NULL,
       isBaseline INTEGER NOT NULL DEFAULT 1,
       weekNumber INTEGER NOT NULL DEFAULT 0
     );
 
-    CREATE TABLE IF NOT EXISTS tfi_draft (
+    CREATE TABLE IF NOT EXISTS crest_draft (
       id INTEGER PRIMARY KEY CHECK (id = 1),
       responsesJson TEXT NOT NULL,
       currentIndex INTEGER NOT NULL DEFAULT 0,
@@ -65,6 +66,14 @@ function initSchema(db: SQLite.SQLiteDatabase): void {
   for (const sql of migrations) {
     try { db.execSync(sql); } catch { /* column already exists */ }
   }
+
+  // The CREST scale replaces the TFI: different question count, response
+  // scale, scoring formula, and domain structure, so prior TFI assessment
+  // rows cannot be meaningfully converted into CREST records. Drop the old
+  // tables — IF EXISTS makes this a no-op (and safe to crash-guard) on
+  // installs that never had them.
+  try { db.execSync('DROP TABLE IF EXISTS tfi_assessments'); } catch { /* table absent */ }
+  try { db.execSync('DROP TABLE IF EXISTS tfi_draft'); } catch { /* table absent */ }
 
   db.execSync(`
     CREATE TABLE IF NOT EXISTS sound_sessions (

@@ -1,18 +1,27 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import Slider from '@react-native-community/slider';
-import { TFI_QUESTIONS } from '@/src/data/tfiQuestions';
-import { scoreTFI } from '@/src/utils/tfiScoring';
-import { buildAndSaveAssessment } from '@/src/storage/tfi';
+import { CREST_QUESTIONS } from '@/src/data/crestQuestions';
+import { scoreCREST } from '@/src/utils/crestScoring';
+import { buildAndSaveAssessment } from '@/src/storage/crest';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ResponseScale from '@/src/components/ResponseScale';
 
-const TOTAL = TFI_QUESTIONS.length; // 25
+const TOTAL = CREST_QUESTIONS.length; // 12
+
+const DOMAIN_LABELS: Record<string, string> = {
+  intrusion: 'Intrusion',
+  emotional: 'Emotional',
+  cognitive: 'Cognitive',
+  sleep: 'Sleep',
+  social: 'Social',
+  control: 'Control',
+};
 
 function ProgressBar({ current, total }: { current: number; total: number }) {
   const { colors } = useTheme();
@@ -37,7 +46,7 @@ function makeBarStyles(colors: ReturnType<typeof useTheme>['colors']) {
   });
 }
 
-function SubscaleBadge({ label }: { label: string }) {
+function DomainBadge({ label }: { label: string }) {
   const { colors, typography } = useTheme();
   const badge = useMemo(() => makeBadgeStyles(colors, typography), [colors, typography]);
   return (
@@ -63,7 +72,7 @@ function makeBadgeStyles(
   });
 }
 
-export default function TFIRetestScreen() {
+export default function CRESTRetestScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
@@ -71,33 +80,24 @@ export default function TFIRetestScreen() {
   const weekNumber = parseInt(params.weekNumber ?? '4', 10) as 4 | 8;
   const { updatePreferences } = usePreferences();
 
-  const [responses, setResponses] = useState<number[]>(() => Array(25).fill(5));
+  const [responses, setResponses] = useState<number[]>(() => Array(TOTAL).fill(2));
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [sliderValue, setSliderValue] = useState(5);
 
-  useEffect(() => {
-    setSliderValue(responses[currentIndex]);
-  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const commitCurrentResponse = useCallback((): number[] => {
+  function handleSelect(value: number) {
     const updated = [...responses];
-    updated[currentIndex] = sliderValue;
+    updated[currentIndex] = value;
     setResponses(updated);
-    return updated;
-  }, [responses, currentIndex, sliderValue]);
 
-  function handleNext() {
-    const updated = commitCurrentResponse();
     if (currentIndex === TOTAL - 1) {
       if (Platform.OS !== 'web') {
-        const score = scoreTFI(updated);
+        const score = scoreCREST(updated);
         const assessment = buildAndSaveAssessment(updated, score, false, weekNumber);
-        const prefPatch: Record<string, unknown> = { lastTFIDate: assessment.date };
+        const prefPatch: Record<string, unknown> = { lastCRESTDate: assessment.date };
         if (weekNumber === 4) prefPatch.week4Prompted = true;
         if (weekNumber === 8) prefPatch.week8Prompted = true;
         updatePreferences(prefPatch as any);
         router.replace({
-          pathname: '/progress/tfi-retest-result' as any,
+          pathname: '/progress/crest-retest-result' as any,
           params: { assessmentId: assessment.id },
         });
       }
@@ -110,13 +110,11 @@ export default function TFIRetestScreen() {
     if (currentIndex === 0) {
       router.back();
     } else {
-      const updated = commitCurrentResponse();
-      setResponses(updated);
       setCurrentIndex(currentIndex - 1);
     }
   }
 
-  const question = TFI_QUESTIONS[currentIndex];
+  const question = CREST_QUESTIONS[currentIndex];
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === TOTAL - 1;
 
@@ -143,64 +141,21 @@ export default function TFIRetestScreen() {
       </View>
 
       <View style={styles.content}>
-        <SubscaleBadge label={question.subscale} />
+        <DomainBadge label={DOMAIN_LABELS[question.domain]} />
 
         <Text style={styles.questionText}>{question.text}</Text>
 
-        <View style={styles.valueDisplay}>
-          <Text style={styles.valueNumber}>{sliderValue}</Text>
-          <Text style={styles.valueMax}> / 10</Text>
-        </View>
-
-        <View style={styles.sliderContainer}>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={10}
-            step={1}
-            value={sliderValue}
-            onValueChange={(v) => setSliderValue(Math.round(v))}
-            minimumTrackTintColor={Colors.calmWave}
-            maximumTrackTintColor={colors.textSecondary + '40'}
-            thumbTintColor={Colors.deepTide}
-            accessibilityLabel={question.text}
-          />
-          <View style={styles.anchors}>
-            <Text style={styles.anchorText}>{question.anchorLow}</Text>
-            <Text style={styles.anchorText}>{question.anchorHigh}</Text>
-          </View>
-        </View>
-
-        <View style={styles.ticks}>
-          {Array.from({ length: 11 }, (_, i) => (
-            <Text
-              key={i}
-              style={[styles.tick, i === sliderValue && styles.tickActive]}
-            >
-              {i}
-            </Text>
-          ))}
-        </View>
-
-        {question.excludeZero && sliderValue === 0 && (
-          <View style={styles.zeroNote}>
-            <Text style={styles.zeroNoteText}>
-              Selecting 0 means tinnitus had no impact this week — this response
-              is noted separately in your score.
-            </Text>
-          </View>
-        )}
+        <ResponseScale
+          value={responses[currentIndex]}
+          onChange={handleSelect}
+          questionText={question.text}
+        />
       </View>
 
       <View style={styles.footer}>
-        <Pressable
-          style={({ pressed }) => [styles.nextButton, pressed && styles.nextButtonPressed]}
-          onPress={handleNext}
-          accessibilityRole="button"
-          accessibilityLabel={isLast ? 'Submit retest' : 'Next question'}
-        >
-          <Text style={styles.nextLabel}>{isLast ? 'Submit' : 'Next →'}</Text>
-        </Pressable>
+        <Text style={styles.footerHint}>
+          {isLast ? 'Selecting an option submits your retest' : 'Select an option to continue'}
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -241,46 +196,6 @@ function makeStyles(
       gap: Spacing.xl,
     },
     questionText: { ...typography.heading1, color: colors.textPrimary, lineHeight: 30 },
-    valueDisplay: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'center',
-    },
-    valueNumber: {
-      fontSize: 52,
-      fontWeight: '400',
-      color: Colors.deepTide,
-      lineHeight: 60,
-    },
-    valueMax:        { ...typography.heading1, color: colors.textSecondary },
-    sliderContainer: { gap: Spacing.xs },
-    slider:          { width: '100%', height: 40 },
-    anchors: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: Spacing.xs,
-    },
-    anchorText: { ...typography.caption, color: colors.textSecondary, maxWidth: '45%' },
-    ticks: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: Spacing.xs,
-    },
-    tick: {
-      ...typography.caption,
-      color: colors.textSecondary + '80',
-      textAlign: 'center',
-      minWidth: 16,
-    },
-    tickActive: { color: Colors.deepTide, fontWeight: '500' },
-    zeroNote: {
-      backgroundColor: colors.surfaceVariant,
-      borderRadius: Radius.chip,
-      padding: Spacing.md,
-      borderLeftWidth: 3,
-      borderLeftColor: Colors.calmWave,
-    },
-    zeroNoteText: { ...typography.caption, color: Colors.deepTide, lineHeight: 18 },
     footer: {
       paddingHorizontal: Spacing.xl,
       paddingBottom: Spacing.xl,
@@ -288,13 +203,10 @@ function makeStyles(
       borderTopWidth: Border.width,
       borderTopColor: colors.textSecondary + '20',
     },
-    nextButton: {
-      backgroundColor: Colors.deepTide,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.base,
-      alignItems: 'center',
+    footerHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
     },
-    nextButtonPressed: { opacity: 0.85 },
-    nextLabel: { ...typography.heading2, color: Colors.white },
   });
 }

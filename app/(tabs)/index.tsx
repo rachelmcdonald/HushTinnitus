@@ -153,7 +153,7 @@ function formatSoundName(raw: string): string {
   return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-function shouldShowTFICheckIn(prefs: ReturnType<typeof getPreferences>): { show: boolean; weekNumber: number } {
+function shouldShowCRESTCheckIn(prefs: ReturnType<typeof getPreferences>): { show: boolean; weekNumber: number } {
   const { firstLaunchDate, week4Prompted, week8Prompted } = prefs;
   const days = (Date.now() - new Date(firstLaunchDate).getTime()) / 86400000;
   if (days >= 56 && !week8Prompted) return { show: true, weekNumber: 8 };
@@ -175,7 +175,7 @@ export default function HomeScreen() {
   const [todayEntry, setTodayEntry] = useState<SymptomLog | null>(null);
   const [todaySessionCount, setTodaySessionCount] = useState(0);
   const [recentSessions, setRecentSessions] = useState<SoundSession[]>([]);
-  const [tfiCheckIn, setTfiCheckIn] = useState<{ show: boolean; weekNumber: number }>({
+  const [crestCheckIn, setCrestCheckIn] = useState<{ show: boolean; weekNumber: number }>({
     show: false,
     weekNumber: 0,
   });
@@ -193,7 +193,7 @@ export default function HomeScreen() {
       setTodaySessionCount(all.filter(s => s.date.substring(0, 10) === today).length);
       setRecentSessions(all.slice(0, 5));
 
-      setTfiCheckIn(shouldShowTFICheckIn(getPreferences()));
+      setCrestCheckIn(shouldShowCRESTCheckIn(getPreferences()));
     }, [])
   );
 
@@ -317,22 +317,22 @@ export default function HomeScreen() {
         </ScrollView>
       )}
 
-      {/* TFI check-in reminder */}
-      {tfiCheckIn.show && (
+      {/* CREST check-in reminder */}
+      {crestCheckIn.show && (
         <Pressable
-          style={styles.tfiCard}
+          style={styles.crestCard}
           onPress={() =>
             router.push({
-              pathname: '/(tabs)/progress/tfi-retest',
-              params: { weekNumber: String(tfiCheckIn.weekNumber) },
+              pathname: '/(tabs)/progress/crest-retest',
+              params: { weekNumber: String(crestCheckIn.weekNumber) },
             })
           }
         >
-          <Text style={styles.tfiTitle}>{`Week ${tfiCheckIn.weekNumber} check-in`}</Text>
-          <Text style={styles.tfiBody}>
-            Time for your tinnitus questionnaire. It takes about 5 minutes and helps you track how things are changing.
+          <Text style={styles.crestTitle}>{`Week ${crestCheckIn.weekNumber} check-in`}</Text>
+          <Text style={styles.crestBody}>
+            Time for your CREST check-in. It takes about 4 minutes and helps you track how things are changing.
           </Text>
-          <Text style={styles.tfiCta}>Start check-in {'›'}</Text>
+          <Text style={styles.crestCta}>Start check-in {'›'}</Text>
         </Pressable>
       )}
 
@@ -501,8 +501,8 @@ function makeStyles(
       paddingVertical: Spacing.sm,
     },
 
-    // TFI check-in
-    tfiCard: {
+    // CREST check-in
+    crestCard: {
       backgroundColor: colors.deepTide,
       borderRadius: Radius.card,
       padding: Spacing.base,
@@ -510,18 +510,18 @@ function makeStyles(
       elevation: 0,
       shadowOpacity: 0,
     },
-    tfiTitle: {
+    crestTitle: {
       ...typography.heading2,
       color: colors.white,
       marginBottom: Spacing.xs,
     },
-    tfiBody: {
+    crestBody: {
       ...typography.body,
       color: colors.white,
       opacity: 0.85,
       marginBottom: Spacing.md,
     },
-    tfiCta: {
+    crestCta: {
       ...typography.body,
       color: colors.calmWave,
       fontWeight: '600',

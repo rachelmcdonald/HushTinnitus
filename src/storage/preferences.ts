@@ -10,7 +10,7 @@ type PreferencesRow = {
   notificationsEnabled: number;
   notificationTime: string;
   firstLaunchDate: string;
-  lastTFIDate: string | null;
+  lastCRESTDate: string | null;
   week4Prompted: number;
   week8Prompted: number;
   matchedPitchHz: number | null;
@@ -24,7 +24,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   notificationsEnabled: false,
   notificationTime: '09:00',
   firstLaunchDate: new Date().toISOString(),
-  lastTFIDate: null,
+  lastCRESTDate: null,
   week4Prompted: false,
   week8Prompted: false,
   matchedPitchHz: null,
@@ -39,7 +39,7 @@ function rowToPreferences(row: PreferencesRow): UserPreferences {
     notificationsEnabled: row.notificationsEnabled === 1,
     notificationTime: row.notificationTime,
     firstLaunchDate: row.firstLaunchDate,
-    lastTFIDate: row.lastTFIDate,
+    lastCRESTDate: row.lastCRESTDate,
     week4Prompted: row.week4Prompted === 1,
     week8Prompted: row.week8Prompted === 1,
     matchedPitchHz: row.matchedPitchHz ?? null,
@@ -63,7 +63,7 @@ export function savePreferences(prefs: UserPreferences): void {
     `INSERT OR REPLACE INTO preferences (
       id, onboardingComplete, isPremium, darkMode, textSize,
       notificationsEnabled, notificationTime, firstLaunchDate,
-      lastTFIDate, week4Prompted, week8Prompted, matchedPitchHz
+      lastCRESTDate, week4Prompted, week8Prompted, matchedPitchHz
     ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       prefs.onboardingComplete ? 1 : 0,
@@ -73,7 +73,7 @@ export function savePreferences(prefs: UserPreferences): void {
       prefs.notificationsEnabled ? 1 : 0,
       prefs.notificationTime,
       prefs.firstLaunchDate,
-      prefs.lastTFIDate,
+      prefs.lastCRESTDate,
       prefs.week4Prompted ? 1 : 0,
       prefs.week8Prompted ? 1 : 0,
       prefs.matchedPitchHz,

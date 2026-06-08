@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -7,16 +7,16 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Slider from '@react-native-community/slider';
 import { router } from 'expo-router';
-import { TFI_QUESTIONS } from '@/src/data/tfiQuestions';
-import { scoreTFI } from '@/src/utils/tfiScoring';
-import { getInitialDraftState, saveDraft, clearDraft, buildAndSaveAssessment } from '@/src/storage/tfi';
+import { CREST_QUESTIONS } from '@/src/data/crestQuestions';
+import { scoreCREST } from '@/src/utils/crestScoring';
+import { getInitialDraftState, saveDraft, clearDraft, buildAndSaveAssessment } from '@/src/storage/crest';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ResponseScale from '@/src/components/ResponseScale';
 
-const TOTAL = TFI_QUESTIONS.length; // 25
+const TOTAL = CREST_QUESTIONS.length; // 12
 
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 
@@ -44,9 +44,18 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   );
 }
 
-// ─── Subscale badge ───────────────────────────────────────────────────────────
+// ─── Domain badge ─────────────────────────────────────────────────────────────
 
-function SubscaleBadge({ label }: { label: string }) {
+const DOMAIN_LABELS: Record<string, string> = {
+  intrusion: 'Intrusion',
+  emotional: 'Emotional',
+  cognitive: 'Cognitive',
+  sleep: 'Sleep',
+  social: 'Social',
+  control: 'Control',
+};
+
+function DomainBadge({ label }: { label: string }) {
   const { colors, typography } = useTheme();
   const badgeStyles = useMemo(() => StyleSheet.create({
     container: {
@@ -71,23 +80,17 @@ function SubscaleBadge({ label }: { label: string }) {
 
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
-export default function TFIQuestionnaireScreen() {
+export default function CRESTQuestionnaireScreen() {
   const { updatePreferences } = usePreferences();
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const [responses, setResponses] = useState<number[]>(() =>
-    Platform.OS === 'web' ? Array(25).fill(5) : getInitialDraftState().responses
+    Platform.OS === 'web' ? Array(TOTAL).fill(2) : getInitialDraftState().responses
   );
   const [currentIndex, setCurrentIndex] = useState<number>(() =>
     Platform.OS === 'web' ? 0 : getInitialDraftState().currentIndex
   );
-  const [sliderValue, setSliderValue] = useState<number>(5);
-
-  // Sync slider to the current question's saved response whenever index changes
-  useEffect(() => {
-    setSliderValue(responses[currentIndex]);
-  }, [currentIndex]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persistDraft = useCallback(
     (updatedResponses: number[], nextIndex: number) => {
@@ -98,35 +101,30 @@ export default function TFIQuestionnaireScreen() {
     []
   );
 
-  function commitCurrentResponse(): number[] {
+  function handleSelect(value: number) {
     const updated = [...responses];
-    updated[currentIndex] = sliderValue;
+    updated[currentIndex] = value;
     setResponses(updated);
-    return updated;
-  }
-
-  function handleNext() {
-    const updated = commitCurrentResponse();
 
     if (currentIndex === TOTAL - 1) {
-      // All 25 answered — score and save
-      const score = scoreTFI(updated);
+      // All 12 answered — score and save
+      const score = scoreCREST(updated);
       if (Platform.OS !== 'web') {
         const assessment = buildAndSaveAssessment(updated, score, true, 0);
         clearDraft();
-        updatePreferences({ lastTFIDate: assessment.date });
+        updatePreferences({ lastCRESTDate: assessment.date });
         router.replace({
-          pathname: '/onboarding/tfi-result',
+          pathname: '/onboarding/crest-result',
           params: { assessmentId: assessment.id },
         });
       } else {
         // Web: skip DB, pass all score data via params
         router.replace({
-          pathname: '/onboarding/tfi-result',
+          pathname: '/onboarding/crest-result',
           params: {
             totalScore: String(score.totalScore),
-            grade: score.grade,
-            subscalesJson: JSON.stringify(score.subscales),
+            severity: score.severity,
+            domainsJson: JSON.stringify(score.domains),
           },
         });
       }
@@ -137,12 +135,11 @@ export default function TFIQuestionnaireScreen() {
   }
 
   function handleBack() {
-    const updated = commitCurrentResponse();
-    persistDraft(updated, currentIndex - 1);
+    persistDraft(responses, currentIndex - 1);
     setCurrentIndex(currentIndex - 1);
   }
 
-  const question = TFI_QUESTIONS[currentIndex];
+  const question = CREST_QUESTIONS[currentIndex];
   const isFirst = currentIndex === 0;
   const isLast = currentIndex === TOTAL - 1;
 
@@ -172,75 +169,22 @@ export default function TFIQuestionnaireScreen() {
 
       {/* Content */}
       <View style={styles.content}>
-        <SubscaleBadge label={question.subscale} />
+        <DomainBadge label={DOMAIN_LABELS[question.domain]} />
 
         <Text style={styles.questionText}>{question.text}</Text>
 
-        {/* Current value display */}
-        <View style={styles.valueDisplay}>
-          <Text style={styles.valueNumber}>{sliderValue}</Text>
-          <Text style={styles.valueMax}> / 10</Text>
-        </View>
-
-        {/* Slider */}
-        <View style={styles.sliderContainer}>
-          <Slider
-            style={styles.slider}
-            minimumValue={0}
-            maximumValue={10}
-            step={1}
-            value={sliderValue}
-            onValueChange={(val) => setSliderValue(Math.round(val))}
-            minimumTrackTintColor={colors.calmWave}
-            maximumTrackTintColor={colors.textSecondary + '40'}
-            thumbTintColor={colors.deepTide}
-            accessibilityLabel={question.text}
-          />
-          {/* Anchor labels */}
-          <View style={styles.anchors}>
-            <Text style={styles.anchorText}>{question.anchorLow}</Text>
-            <Text style={styles.anchorText}>{question.anchorHigh}</Text>
-          </View>
-        </View>
-
-        {/* Tick marks 0–10 */}
-        <View style={styles.ticks}>
-          {Array.from({ length: 11 }, (_, i) => (
-            <Text
-              key={i}
-              style={[styles.tick, i === sliderValue && styles.tickActive]}
-            >
-              {i}
-            </Text>
-          ))}
-        </View>
-
-        {/* Q1 and Q2 zero note */}
-        {question.excludeZero && sliderValue === 0 && (
-          <View style={styles.zeroNote}>
-            <Text style={styles.zeroNoteText}>
-              Selecting 0 means tinnitus had no impact this week — this response
-              is noted separately in your score.
-            </Text>
-          </View>
-        )}
+        <ResponseScale
+          value={responses[currentIndex]}
+          onChange={handleSelect}
+          questionText={question.text}
+        />
       </View>
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Pressable
-          style={({ pressed }) => [
-            styles.nextButton,
-            pressed && styles.nextButtonPressed,
-          ]}
-          onPress={handleNext}
-          accessibilityRole="button"
-          accessibilityLabel={isLast ? 'Submit assessment' : 'Next question'}
-        >
-          <Text style={styles.nextLabel}>
-            {isLast ? 'Submit' : 'Next →'}
-          </Text>
-        </Pressable>
+        <Text style={styles.footerHint}>
+          {isLast ? 'Selecting an option submits your assessment' : 'Select an option to continue'}
+        </Text>
       </View>
     </SafeAreaView>
   );
@@ -297,73 +241,6 @@ function makeStyles(
       lineHeight: 30,
     },
 
-    // Value display
-    valueDisplay: {
-      flexDirection: 'row',
-      alignItems: 'baseline',
-      justifyContent: 'center',
-    },
-    valueNumber: {
-      fontSize: 52,
-      fontWeight: '400',
-      color: colors.deepTide,
-      lineHeight: 60,
-    },
-    valueMax: {
-      ...typography.heading1,
-      color: colors.textSecondary,
-    },
-
-    // Slider
-    sliderContainer: {
-      gap: Spacing.xs,
-    },
-    slider: {
-      width: '100%',
-      height: 40,
-    },
-    anchors: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: Spacing.xs,
-    },
-    anchorText: {
-      ...typography.caption,
-      color: colors.textSecondary,
-      maxWidth: '45%',
-    },
-
-    // Tick marks
-    ticks: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      paddingHorizontal: Spacing.xs,
-    },
-    tick: {
-      ...typography.caption,
-      color: colors.textSecondary + '80',
-      textAlign: 'center',
-      minWidth: 16,
-    },
-    tickActive: {
-      color: colors.deepTide,
-      fontWeight: '500',
-    },
-
-    // Q1/Q2 zero note
-    zeroNote: {
-      backgroundColor: colors.surfaceVariant,
-      borderRadius: Radius.chip,
-      padding: Spacing.md,
-      borderLeftWidth: 3,
-      borderLeftColor: colors.calmWave,
-    },
-    zeroNoteText: {
-      ...typography.caption,
-      color: colors.deepTide,
-      lineHeight: 18,
-    },
-
     // Footer
     footer: {
       paddingHorizontal: Spacing.xl,
@@ -372,18 +249,10 @@ function makeStyles(
       borderTopWidth: Border.width,
       borderTopColor: colors.textSecondary + '20',
     },
-    nextButton: {
-      backgroundColor: colors.deepTide,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.base,
-      alignItems: 'center',
-    },
-    nextButtonPressed: {
-      opacity: 0.85,
-    },
-    nextLabel: {
-      ...typography.heading2,
-      color: colors.white,
+    footerHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
     },
   });
 }
