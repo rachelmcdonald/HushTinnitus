@@ -23,6 +23,24 @@ const DOMAIN_LABELS: Record<DomainKey, string> = {
   control: 'Sense of control',
 };
 
+const DOMAIN_FRIENDLY: Record<DomainKey, string> = {
+  intrusion: 'intrusion',
+  emotional: 'emotional wellbeing',
+  cognitive: 'concentration',
+  sleep: 'sleep',
+  social: 'social enjoyment',
+  control: 'sense of control',
+};
+
+function getSeverityMessage(severity: CRESTAssessment['severity'], topDomains: DomainKey[]): string {
+  if (severity === 'minimal') {
+    return "Your scores suggest tinnitus is having a minimal impact right now. The app's tools are here to help keep it that way — explore the Sound tab or check in with a breathing exercise when you need a moment of calm.";
+  }
+  const d1 = DOMAIN_FRIENDLY[topDomains[0]];
+  const d2 = DOMAIN_FRIENDLY[topDomains[1]];
+  return `Based on your results, your ${d1} and ${d2} scores are your highest areas of impact. The Sound and Relax tabs are tailored to support both — try starting with a sound therapy session or a breathing exercise today.`;
+}
+
 function severityColors(severity: CRESTAssessment['severity']) {
   return CRESTSeverityColors[severity];
 }
@@ -167,19 +185,10 @@ export default function CRESTRetestResultScreen() {
         </View>
 
         <View style={[styles.scoreCard, { backgroundColor: gc.background }]}>
-          <View style={styles.scoreRow}>
-            <View>
-              <Text style={styles.scoreNumber}>
-                {Math.round(totalScore)}
-              </Text>
-              <Text style={styles.scoreOf}>out of 100</Text>
-            </View>
-            <View style={styles.gradeBadge}>
-              <Text style={styles.gradeBadgeText}>
-                {severityLabel(severity)}
-              </Text>
-            </View>
-          </View>
+          <Text style={styles.scoreNumber}>{Math.round(totalScore)}</Text>
+          <Text style={styles.scoreOf}>out of 100</Text>
+          <Text style={styles.severityLabel}>{severityLabel(severity)}</Text>
+          <Text style={styles.scoreMessage}>{getSeverityMessage(severity, sortedKeys)}</Text>
 
           {delta !== null && (
             <View style={styles.deltaRow}>
@@ -272,24 +281,23 @@ function makeStyles(
       borderRadius: Radius.card,
       padding: Spacing.xl,
       gap: Spacing.md,
+      alignItems: 'flex-start',
     },
-    scoreRow: {
-      flexDirection: 'row',
-      alignItems: 'flex-end',
-      justifyContent: 'space-between',
+    scoreNumber: { fontSize: 60, fontWeight: '400' as const, lineHeight: 66, letterSpacing: -1, color: Colors.calmWave },
+    scoreOf:     { ...typography.body, color: Colors.midGray },
+    severityLabel: {
+      fontSize: 12,
+      fontWeight: '700' as const,
+      color: Colors.deepTide,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase' as const,
     },
-    scoreNumber:    { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1, color: Colors.calmWave },
-    scoreOf:        { ...typography.body, color: Colors.midGray },
-    gradeBadge: {
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.xs,
-      alignSelf: 'flex-end',
-      backgroundColor: Colors.calmWave + '20',
+    scoreMessage: {
+      ...typography.body,
+      lineHeight: 24,
+      color: Colors.darkText,
     },
-    // Score card bg is always a light severity pastel — badge text must always be dark.
-    gradeBadgeText: { ...typography.micro, color: Colors.deepTide },
-    deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
+    deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap', alignSelf: 'stretch' },
     // deltaLabel sits inside the score card (always-light bg) — use fixed dark text.
     deltaLabel: { ...typography.caption, flex: 1, color: Colors.darkText },
 

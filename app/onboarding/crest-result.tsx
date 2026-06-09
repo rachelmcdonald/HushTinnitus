@@ -17,22 +17,6 @@ import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
-// ─── Severity content — Section 4.5 ──────────────────────────────────────────
-
-// Tone and plain-language interpretation per Section 5.3 (no prohibited words)
-const SEVERITY_MESSAGES: Record<CRESTAssessment['severity'], string> = {
-  minimal:
-    'Your tinnitus is having minimal impact on your daily life. The tools in this app are designed to keep it that way and support you in building habits that may prevent it from becoming more bothersome.',
-  mild:
-    'Your tinnitus is mildly bothersome at the moment. Many people at this level find that simple, consistent daily habits make a real difference — and this app has the tools to help.',
-  moderate:
-    'Your tinnitus is affecting daily life in noticeable ways. The app will focus on the areas most relevant to you. If you haven\'t already spoken with a GP or audiologist about your tinnitus, it may be worth a check-in.',
-  significant:
-    'Your tinnitus is having a substantial impact on your daily life. This app will guide you step by step through the tools that can help. If you haven\'t had your tinnitus assessed, we recommend mentioning it to your GP — especially if you haven\'t had a hearing test.',
-  severe:
-    'Your tinnitus appears to be having a significant impact on your life. We strongly encourage you to see a GP or ENT specialist soon. All features of this app are available to you right now, and we\'ll be here to support you every step of the way.',
-};
-
 // ─── Domain display ───────────────────────────────────────────────────────────
 
 type DomainKey = keyof CRESTAssessment['domains'];
@@ -46,6 +30,24 @@ const DOMAIN_LABELS: Record<DomainKey, string> = {
   control: 'Sense of control',
 };
 
+const DOMAIN_FRIENDLY: Record<DomainKey, string> = {
+  intrusion: 'intrusion',
+  emotional: 'emotional wellbeing',
+  cognitive: 'concentration',
+  sleep: 'sleep',
+  social: 'social enjoyment',
+  control: 'sense of control',
+};
+
+function getSeverityMessage(severity: CRESTAssessment['severity'], topDomains: DomainKey[]): string {
+  if (severity === 'minimal') {
+    return "Your scores suggest tinnitus is having a minimal impact right now. The app's tools are here to help keep it that way — explore the Sound tab or check in with a breathing exercise when you need a moment of calm.";
+  }
+  const d1 = DOMAIN_FRIENDLY[topDomains[0]];
+  const d2 = DOMAIN_FRIENDLY[topDomains[1]];
+  return `Based on your results, your ${d1} and ${d2} scores are your highest areas of impact. The Sound and Relax tabs are tailored to support both — try starting with a sound therapy session or a breathing exercise today.`;
+}
+
 function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
   const keys = Object.keys(domains) as DomainKey[];
   const sorted = [...keys].sort((a, b) => domains[b] - domains[a]);
@@ -53,33 +55,6 @@ function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) {
-  const gradeColors = CRESTSeverityColors[severity];
-  // Score card background is always a light severity pastel — badge text must always be dark.
-  const badgeStyles = useMemo(() => StyleSheet.create({
-    container: {
-      alignSelf: 'flex-start',
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.xs,
-      backgroundColor: gradeColors.background,
-    },
-    text: {
-      fontSize: 11,
-      fontWeight: '600' as const,
-      color: Colors.deepTide,
-    },
-  }), [gradeColors]);
-
-  return (
-    <View style={badgeStyles.container}>
-      <Text style={badgeStyles.text}>
-        {severityLabel(severity)}
-      </Text>
-    </View>
-  );
-}
 
 type BarRowProps = {
   label: string;
@@ -314,7 +289,7 @@ export default function CRESTResultScreen() {
   const domainKeys = Object.keys(domains) as DomainKey[];
   // Sort descending for display — highest impact first
   const sortedKeys = [...domainKeys].sort((a, b) => domains[b] - domains[a]);
-  const message = SEVERITY_MESSAGES[severity];
+  const message = getSeverityMessage(severity, sortedKeys);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -328,7 +303,7 @@ export default function CRESTResultScreen() {
             {Math.round(totalScore)}
           </Text>
           <Text style={[styles.scoreOf, { color: Colors.midGray }]}>out of 100</Text>
-          <SeverityBadge severity={severity} />
+          <Text style={styles.severityLabel}>{severityLabel(severity)}</Text>
           <Text style={[styles.scoreMessage, { color: Colors.darkText }]}>
             {message}
           </Text>
@@ -420,6 +395,13 @@ function makeStyles(
     scoreOf: {
       ...typography.body,
       marginTop: -Spacing.md,
+    },
+    severityLabel: {
+      fontSize: 12,
+      fontWeight: '700' as const,
+      color: Colors.deepTide,
+      letterSpacing: 0.5,
+      textTransform: 'uppercase' as const,
     },
     scoreMessage: {
       ...typography.body,
