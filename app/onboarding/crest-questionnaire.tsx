@@ -85,15 +85,15 @@ export default function CRESTQuestionnaireScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
-  const [responses, setResponses] = useState<number[]>(() =>
-    Platform.OS === 'web' ? Array(TOTAL).fill(2) : getInitialDraftState().responses
+  const [responses, setResponses] = useState<(number | null)[]>(() =>
+    Platform.OS === 'web' ? Array(TOTAL).fill(null) : getInitialDraftState().responses
   );
   const [currentIndex, setCurrentIndex] = useState<number>(() =>
     Platform.OS === 'web' ? 0 : getInitialDraftState().currentIndex
   );
 
   const persistDraft = useCallback(
-    (updatedResponses: number[], nextIndex: number) => {
+    (updatedResponses: (number | null)[], nextIndex: number) => {
       if (Platform.OS !== 'web') {
         saveDraft(updatedResponses, nextIndex);
       }
@@ -108,9 +108,9 @@ export default function CRESTQuestionnaireScreen() {
 
     if (currentIndex === TOTAL - 1) {
       // All 12 answered — score and save
-      const score = scoreCREST(updated);
+      const score = scoreCREST(updated as number[]);
       if (Platform.OS !== 'web') {
-        const assessment = buildAndSaveAssessment(updated, score, true, 0);
+        const assessment = buildAndSaveAssessment(updated as number[], score, true, 0);
         clearDraft();
         updatePreferences({ lastCRESTDate: assessment.date });
         router.replace({

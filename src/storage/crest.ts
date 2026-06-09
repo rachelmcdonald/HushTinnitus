@@ -4,12 +4,12 @@ import { getDb, isNativePlatform } from './database';
 // ─── Draft (in-progress questionnaire) ───────────────────────────────────────
 
 export type CRESTDraft = {
-  responses: number[];    // 12 values, default 2 ("Sometimes") for unanswered
+  responses: (number | null)[];
   currentIndex: number;
   savedAt: string;
 };
 
-const DRAFT_DEFAULTS: number[] = Array(12).fill(2);
+const DRAFT_DEFAULTS: (number | null)[] = Array(12).fill(null);
 
 export function loadDraft(): CRESTDraft | null {
   if (!isNativePlatform()) return null;
@@ -28,7 +28,7 @@ export function loadDraft(): CRESTDraft | null {
   };
 }
 
-export function saveDraft(responses: number[], currentIndex: number): void {
+export function saveDraft(responses: (number | null)[], currentIndex: number): void {
   if (!isNativePlatform()) return;
   const db = getDb();
   db.runSync(
@@ -44,7 +44,7 @@ export function clearDraft(): void {
   db.runSync('DELETE FROM crest_draft WHERE id = 1');
 }
 
-export function getInitialDraftState(): { responses: number[]; currentIndex: number } {
+export function getInitialDraftState(): { responses: (number | null)[]; currentIndex: number } {
   const draft = loadDraft();
   return {
     responses: draft?.responses ?? [...DRAFT_DEFAULTS],

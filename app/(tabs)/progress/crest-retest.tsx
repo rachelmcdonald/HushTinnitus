@@ -80,7 +80,7 @@ export default function CRESTRetestScreen() {
   const weekNumber = parseInt(params.weekNumber ?? '4', 10) as 4 | 8;
   const { updatePreferences } = usePreferences();
 
-  const [responses, setResponses] = useState<number[]>(() => Array(TOTAL).fill(2));
+  const [responses, setResponses] = useState<(number | null)[]>(() => Array(TOTAL).fill(null));
   const [currentIndex, setCurrentIndex] = useState(0);
 
   function handleSelect(value: number) {
@@ -90,8 +90,8 @@ export default function CRESTRetestScreen() {
 
     if (currentIndex === TOTAL - 1) {
       if (Platform.OS !== 'web') {
-        const score = scoreCREST(updated);
-        const assessment = buildAndSaveAssessment(updated, score, false, weekNumber);
+        const score = scoreCREST(updated as number[]);
+        const assessment = buildAndSaveAssessment(updated as number[], score, false, weekNumber);
         const prefPatch: Record<string, unknown> = { lastCRESTDate: assessment.date };
         if (weekNumber === 4) prefPatch.week4Prompted = true;
         if (weekNumber === 8) prefPatch.week8Prompted = true;
