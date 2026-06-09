@@ -67,8 +67,8 @@ function DomainRow({
   before: number;
   after: number;
 }) {
-  const { colors, typography } = useTheme();
-  const sub = useMemo(() => makeSubStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const sub = useMemo(() => makeSubStyles(colors, typography, isDark), [colors, typography, isDark]);
 
   const delta = Math.round(before - after);
   const pct = Math.min(100, Math.max(0, after));
@@ -92,6 +92,7 @@ function DomainRow({
 function makeSubStyles(
   colors: ReturnType<typeof useTheme>['colors'],
   typography: ReturnType<typeof useTheme>['typography'],
+  isDark: boolean,
 ) {
   return StyleSheet.create({
     row: { gap: 4 },
@@ -104,12 +105,12 @@ function makeSubStyles(
     track: {
       flex: 1,
       height: 6,
-      backgroundColor: colors.textSecondary + '25',
-      borderRadius: 3,
+      backgroundColor: isDark ? Colors.darkCard : Colors.tealLight,
+      borderRadius: 6,
       overflow: 'hidden',
     },
-    fill:  { height: '100%', backgroundColor: Colors.deepTide, borderRadius: 3 },
-    score: { ...typography.caption, color: colors.textPrimary, width: 24, textAlign: 'right' },
+    fill:  { height: '100%', backgroundColor: Colors.calmWave, borderRadius: 6 },
+    score: { ...typography.caption, color: Colors.calmWave, width: 24, textAlign: 'right' },
     delta: { ...typography.caption, fontWeight: '500' as const, width: 30, textAlign: 'right' },
   });
 }
@@ -117,8 +118,8 @@ function makeSubStyles(
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function CRESTRetestResultScreen() {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
 
   const params = useLocalSearchParams<{ assessmentId?: string }>();
   const [assessment, setAssessment] = useState<CRESTAssessment | null>(null);
@@ -168,13 +169,13 @@ export default function CRESTRetestResultScreen() {
         <View style={[styles.scoreCard, { backgroundColor: gc.background }]}>
           <View style={styles.scoreRow}>
             <View>
-              <Text style={[styles.scoreNumber, { color: gc.text }]}>
+              <Text style={styles.scoreNumber}>
                 {Math.round(totalScore)}
               </Text>
-              <Text style={[styles.scoreOf, { color: gc.text }]}>out of 100</Text>
+              <Text style={styles.scoreOf}>out of 100</Text>
             </View>
-            <View style={[styles.gradeBadge, { backgroundColor: gc.text + '18' }]}>
-              <Text style={[styles.gradeBadgeText, { color: gc.text }]}>
+            <View style={styles.gradeBadge}>
+              <Text style={styles.gradeBadgeText}>
                 {severityLabel(severity)}
               </Text>
             </View>
@@ -183,7 +184,7 @@ export default function CRESTRetestResultScreen() {
           {delta !== null && (
             <View style={styles.deltaRow}>
               <DeltaBadge delta={delta} />
-              <Text style={[styles.deltaLabel, { color: gc.text }]}>
+              <Text style={styles.deltaLabel}>
                 vs. your previous assessment ({Math.round(baseline!.totalScore)})
               </Text>
             </View>
@@ -244,6 +245,7 @@ export default function CRESTRetestResultScreen() {
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
   typography: ReturnType<typeof useTheme>['typography'],
+  isDark: boolean,
 ) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
@@ -276,29 +278,30 @@ function makeStyles(
       alignItems: 'flex-end',
       justifyContent: 'space-between',
     },
-    scoreNumber:    { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1 },
-    scoreOf:        { ...typography.body },
+    scoreNumber:    { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1, color: Colors.calmWave },
+    scoreOf:        { ...typography.body, color: colors.textSecondary },
     gradeBadge: {
       borderRadius: Radius.chip,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
       alignSelf: 'flex-end',
+      backgroundColor: Colors.calmWave + '20',
     },
-    gradeBadgeText: { ...typography.micro },
+    gradeBadgeText: { ...typography.micro, color: isDark ? Colors.warmSand : Colors.deepTide },
     deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-    deltaLabel: { ...typography.caption, flex: 1 },
+    deltaLabel: { ...typography.caption, flex: 1, color: colors.textPrimary },
 
     // Meaningful-change card
     meaningfulCard: {
-      backgroundColor: colors.surfaceVariant,
+      backgroundColor: Colors.tealLight,
       borderRadius: Radius.card,
       padding: Spacing.base,
       gap: Spacing.sm,
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    meaningfulTitle:    { ...typography.heading2, color: Colors.deepTide },
-    meaningfulBody:     { ...typography.body, color: colors.textPrimary, lineHeight: 22 },
+    meaningfulTitle:    { ...typography.heading2, color: '#085041' },
+    meaningfulBody:     { ...typography.body, color: '#085041', lineHeight: 22 },
     meaningfulCitation: { ...typography.caption, color: colors.textSecondary, fontStyle: 'italic' },
 
     // Domain card

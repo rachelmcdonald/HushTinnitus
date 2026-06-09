@@ -12,9 +12,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
 import { CRESTAssessment } from '@/src/types';
 import { getAssessmentById } from '@/src/storage/crest';
-import { severityFromScore, severityLabel } from '@/src/utils/crestScoring';
+import { severityLabel } from '@/src/utils/crestScoring';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Severity content — Section 4.5 ──────────────────────────────────────────
@@ -46,10 +46,6 @@ const DOMAIN_LABELS: Record<DomainKey, string> = {
   control: 'Sense of control',
 };
 
-function severityColorsFromScore(score: number): { background: string; text: string } {
-  return CRESTSeverityColors[severityFromScore(score)];
-}
-
 function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
   const keys = Object.keys(domains) as DomainKey[];
   const sorted = [...keys].sort((a, b) => domains[b] - domains[a]);
@@ -59,6 +55,7 @@ function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) {
+  const { isDark } = useTheme();
   const gradeColors = CRESTSeverityColors[severity];
   const badgeStyles = useMemo(() => StyleSheet.create({
     container: {
@@ -71,9 +68,9 @@ function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) 
     text: {
       fontSize: 11,
       fontWeight: '600' as const,
-      color: gradeColors.text,
+      color: isDark ? Colors.warmSand : Colors.deepTide,
     },
-  }), [gradeColors]);
+  }), [gradeColors, isDark]);
 
   return (
     <View style={badgeStyles.container}>
@@ -91,8 +88,7 @@ type BarRowProps = {
 };
 
 function BarRow({ label, score, isFocusArea }: BarRowProps) {
-  const { colors, typography } = useTheme();
-  const gradeColors = severityColorsFromScore(score);
+  const { colors, typography, isDark } = useTheme();
   const pct = Math.min(100, Math.max(0, score));
   const barStyles = useMemo(() => StyleSheet.create({
     row: {
@@ -121,19 +117,21 @@ function BarRow({ label, score, isFocusArea }: BarRowProps) {
     },
     track: {
       height: 6,
-      backgroundColor: colors.textSecondary + '25',
-      borderRadius: 3,
+      backgroundColor: isDark ? Colors.darkCard : Colors.tealLight,
+      borderRadius: 6,
       overflow: 'hidden',
     },
     fill: {
       height: '100%',
-      borderRadius: 3,
+      backgroundColor: Colors.calmWave,
+      borderRadius: 6,
     },
     score: {
       ...typography.caption,
+      color: Colors.calmWave,
       fontWeight: '500' as const,
     },
-  }), [colors, typography]);
+  }), [colors, typography, isDark]);
 
   return (
     <View style={barStyles.row}>
@@ -146,14 +144,9 @@ function BarRow({ label, score, isFocusArea }: BarRowProps) {
         )}
       </View>
       <View style={barStyles.track}>
-        <View
-          style={[
-            barStyles.fill,
-            { width: `${pct}%`, backgroundColor: gradeColors.text },
-          ]}
-        />
+        <View style={[barStyles.fill, { width: `${pct}%` }]} />
       </View>
-      <Text style={[barStyles.score, { color: gradeColors.text }]}>
+      <Text style={barStyles.score}>
         {Math.round(score)}
       </Text>
     </View>
@@ -331,12 +324,12 @@ export default function CRESTResultScreen() {
       >
         {/* Score display */}
         <View style={[styles.scoreCard, { backgroundColor: gradeColors.background }]}>
-          <Text style={[styles.scoreNumber, { color: gradeColors.text }]}>
+          <Text style={[styles.scoreNumber, { color: Colors.calmWave }]}>
             {Math.round(totalScore)}
           </Text>
-          <Text style={[styles.scoreOf, { color: gradeColors.text }]}>out of 100</Text>
+          <Text style={[styles.scoreOf, { color: colors.textSecondary }]}>out of 100</Text>
           <SeverityBadge severity={severity} />
-          <Text style={[styles.scoreMessage, { color: gradeColors.text }]}>
+          <Text style={[styles.scoreMessage, { color: colors.textPrimary }]}>
             {message}
           </Text>
         </View>
