@@ -55,8 +55,8 @@ function topTwoDomains(domains: CRESTAssessment['domains']): Set<DomainKey> {
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) {
-  const { isDark } = useTheme();
   const gradeColors = CRESTSeverityColors[severity];
+  // Score card background is always a light severity pastel — badge text must always be dark.
   const badgeStyles = useMemo(() => StyleSheet.create({
     container: {
       alignSelf: 'flex-start',
@@ -68,9 +68,9 @@ function SeverityBadge({ severity }: { severity: CRESTAssessment['severity'] }) 
     text: {
       fontSize: 11,
       fontWeight: '600' as const,
-      color: isDark ? Colors.warmSand : Colors.deepTide,
+      color: Colors.deepTide,
     },
-  }), [gradeColors, isDark]);
+  }), [gradeColors]);
 
   return (
     <View style={badgeStyles.container}>
@@ -327,9 +327,9 @@ export default function CRESTResultScreen() {
           <Text style={[styles.scoreNumber, { color: Colors.calmWave }]}>
             {Math.round(totalScore)}
           </Text>
-          <Text style={[styles.scoreOf, { color: colors.textSecondary }]}>out of 100</Text>
+          <Text style={[styles.scoreOf, { color: Colors.midGray }]}>out of 100</Text>
           <SeverityBadge severity={severity} />
-          <Text style={[styles.scoreMessage, { color: colors.textPrimary }]}>
+          <Text style={[styles.scoreMessage, { color: Colors.darkText }]}>
             {message}
           </Text>
         </View>

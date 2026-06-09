@@ -266,7 +266,7 @@ function makeStyles(
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
     },
-    weekBadgeText: { ...typography.micro, color: Colors.deepTide },
+    weekBadgeText: { ...typography.micro, color: isDark ? Colors.calmWave : Colors.deepTide },
 
     scoreCard: {
       borderRadius: Radius.card,
@@ -279,7 +279,7 @@ function makeStyles(
       justifyContent: 'space-between',
     },
     scoreNumber:    { fontSize: 60, fontWeight: '400', lineHeight: 66, letterSpacing: -1, color: Colors.calmWave },
-    scoreOf:        { ...typography.body, color: colors.textSecondary },
+    scoreOf:        { ...typography.body, color: Colors.midGray },
     gradeBadge: {
       borderRadius: Radius.chip,
       paddingHorizontal: Spacing.md,
@@ -287,9 +287,11 @@ function makeStyles(
       alignSelf: 'flex-end',
       backgroundColor: Colors.calmWave + '20',
     },
-    gradeBadgeText: { ...typography.micro, color: isDark ? Colors.warmSand : Colors.deepTide },
+    // Score card bg is always a light severity pastel — badge text must always be dark.
+    gradeBadgeText: { ...typography.micro, color: Colors.deepTide },
     deltaRow:  { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm, flexWrap: 'wrap' },
-    deltaLabel: { ...typography.caption, flex: 1, color: colors.textPrimary },
+    // deltaLabel sits inside the score card (always-light bg) — use fixed dark text.
+    deltaLabel: { ...typography.caption, flex: 1, color: Colors.darkText },
 
     // Meaningful-change card
     meaningfulCard: {
@@ -326,7 +328,7 @@ function makeStyles(
       borderLeftWidth: 3,
       borderLeftColor: Colors.calmWave,
     },
-    citationLabel: { ...typography.micro, color: Colors.deepTide },
+    citationLabel: { ...typography.micro, color: isDark ? Colors.calmWave : Colors.deepTide },
     citationText:  { ...typography.caption, color: colors.textSecondary, lineHeight: 20 },
 
     // Done button
