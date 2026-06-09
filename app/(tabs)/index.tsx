@@ -384,13 +384,13 @@ function makeStyles(
     // Streak
     streakRow: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       gap: Spacing.md,
       marginBottom: Spacing.sm,
     },
     streakNumbers: {
       flexDirection: 'row',
-      alignItems: 'center',
+      alignItems: 'flex-end',
       gap: Spacing.sm,
     },
     streakCount: {
