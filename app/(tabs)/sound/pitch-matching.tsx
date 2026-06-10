@@ -9,12 +9,15 @@ import {
   hzToSlider,
   formatHz,
   formatHzPrecise,
+  SLIDER_RESOLUTION,
 } from '@/src/audio/PitchMatchEngine';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
-const SLIDER_STEPS = 1000;
+const FINE_ADJUST_HZ = 50;
+const MIN_HZ = 100;
+const MAX_HZ = 16000;
 
 // ─── Back button ──────────────────────────────────────────────────────────────
 
@@ -44,13 +47,39 @@ function makeBackStyles(typography: ReturnType<typeof useTheme>['typography']) {
 
 // ─── Frequency display ────────────────────────────────────────────────────────
 
-function FrequencyDisplay({ hz }: { hz: number }) {
+function FrequencyDisplay({
+  hz,
+  onDecrease,
+  onIncrease,
+}: {
+  hz: number;
+  onDecrease: () => void;
+  onIncrease: () => void;
+}) {
   const { colors, typography } = useTheme();
   const freq = useMemo(() => makeFreqStyles(colors, typography), [colors, typography]);
   const label = formatHzPrecise(hz);
   return (
     <View style={freq.container}>
-      <Text style={freq.value}>{label}</Text>
+      <View style={freq.valueRow}>
+        <Pressable
+          style={({ pressed }) => [freq.adjustButton, pressed && freq.adjustButtonPressed]}
+          onPress={onDecrease}
+          accessibilityRole="button"
+          accessibilityLabel={`Decrease frequency by ${FINE_ADJUST_HZ} Hz`}
+        >
+          <Text style={freq.adjustIcon}>−</Text>
+        </Pressable>
+        <Text style={freq.value}>{label}</Text>
+        <Pressable
+          style={({ pressed }) => [freq.adjustButton, pressed && freq.adjustButtonPressed]}
+          onPress={onIncrease}
+          accessibilityRole="button"
+          accessibilityLabel={`Increase frequency by ${FINE_ADJUST_HZ} Hz`}
+        >
+          <Text style={freq.adjustIcon}>+</Text>
+        </Pressable>
+      </View>
       <Text style={freq.range}>100 Hz — 16 kHz</Text>
       <Text style={freq.headphoneNote}>For best results above 8kHz, use headphones</Text>
     </View>
@@ -63,12 +92,33 @@ function makeFreqStyles(
 ) {
   return StyleSheet.create({
     container: { alignItems: 'center', gap: Spacing.xs },
+    valueRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.md,
+    },
     value: {
       fontSize: 52,
       fontWeight: '400',
       color: Colors.deepTide,
       letterSpacing: -1,
       lineHeight: 60,
+    },
+    adjustButton: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: '#E1F5EE',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    adjustButtonPressed: { opacity: 0.7 },
+    adjustIcon: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: '#0D4F5C',
+      lineHeight: 22,
     },
     range: { ...typography.caption, color: colors.textSecondary },
     headphoneNote: {
@@ -186,6 +236,21 @@ export default function PitchMatchingScreen() {
     []
   );
 
+  const handleFineAdjust = useCallback(
+    (delta: number) => {
+      setHz((prev) => {
+        const newHz = Math.max(MIN_HZ, Math.min(MAX_HZ, Math.round((prev + delta) * 10) / 10));
+        setSliderValue(hzToSlider(newHz));
+        setSaved(false);
+        if (Platform.OS !== 'web') {
+          pitchMatchEngine.setFrequency(newHz);
+        }
+        return newHz;
+      });
+    },
+    []
+  );
+
   function handlePlayStop() {
     if (Platform.OS === 'web') {
       setIsPlaying((prev) => !prev);
@@ -227,7 +292,11 @@ export default function PitchMatchingScreen() {
           </Text>
         </View>
 
-        <FrequencyDisplay hz={hz} />
+        <FrequencyDisplay
+          hz={hz}
+          onDecrease={() => handleFineAdjust(-FINE_ADJUST_HZ)}
+          onIncrease={() => handleFineAdjust(FINE_ADJUST_HZ)}
+        />
 
         <View style={styles.sliderSection}>
           <View style={styles.sliderLabelRow}>
@@ -237,7 +306,7 @@ export default function PitchMatchingScreen() {
           <Slider
             style={styles.slider}
             minimumValue={0}
-            maximumValue={SLIDER_STEPS}
+            maximumValue={SLIDER_RESOLUTION}
             step={1}
             value={sliderValue}
             onValueChange={handleSliderChange}

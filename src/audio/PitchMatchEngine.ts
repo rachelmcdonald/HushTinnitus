@@ -32,8 +32,13 @@ async function loadApi(): Promise<any> {
 // most tinnitus pitches fall — half of the slider's travel instead of a
 // fraction of a single 100Hz–16,000Hz log scale.
 
+// Number of discrete slider steps across the full 0.0–1.0 position range.
+// At the top of the high-frequency segment one step is ~27Hz, keeping
+// per-step jumps small enough that the oscillator never has to leap far.
+export const SLIDER_RESOLUTION = 2000;
+
 export function sliderToHz(sliderValue: number): number {
-  const pos = sliderValue / 1000;
+  const pos = sliderValue / SLIDER_RESOLUTION;
   const hz =
     pos <= 0.5
       ? MIN_HZ * Math.pow(MID_HZ / MIN_HZ, pos * 2)
@@ -47,7 +52,7 @@ export function hzToSlider(hz: number): number {
     clamped <= MID_HZ
       ? 0.5 * (Math.log(clamped / MIN_HZ) / Math.log(MID_HZ / MIN_HZ))
       : 0.5 + 0.5 * (Math.log(clamped / MID_HZ) / Math.log(MAX_HZ / MID_HZ));
-  return Math.round(pos * 1000);
+  return Math.round(pos * SLIDER_RESOLUTION);
 }
 
 export function formatHz(hz: number): string {
@@ -220,10 +225,12 @@ class PitchMatchEngine {
     }
 
     try {
-      // setTargetAtTime smoothly ramps to the new frequency (10ms time
-      // constant) rather than jumping instantly — avoids destabilising the
-      // oscillator on large/rapid slider jumps at high frequencies.
-      this.osc.frequency.setTargetAtTime(this._frequencyHz, this.ctx.currentTime, 0.01);
+      // exponentialRampToValueAtTime ramps to the new frequency over 20ms —
+      // fast enough to feel instant but smooth enough that the oscillator
+      // never jumps abruptly, even on large slider steps at high
+      // frequencies. _frequencyHz is always clamped to [MIN_HZ, MAX_HZ]
+      // above, so it is never 0 or negative (which this call would reject).
+      this.osc.frequency.exponentialRampToValueAtTime(this._frequencyHz, this.ctx.currentTime + 0.02);
     } catch {
       this.recreateOscillator();
     }
