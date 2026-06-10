@@ -137,10 +137,6 @@ class PitchMatchEngine {
       // some devices default to a lower rate (e.g. 22,050Hz), which silently
       // cuts frequencies above ~11,025Hz.
       this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
-      console.log(
-        '[PitchMatchEngine] AudioContext created — requested sampleRate:', AUDIO_SAMPLE_RATE,
-        '| actual sampleRate:', this.ctx.sampleRate,
-      );
     }
 
     // Android (and some react-native-audio-api builds) may start the context in
@@ -206,12 +202,6 @@ class PitchMatchEngine {
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
     if (!this.ctx) return;
 
-    console.log(
-      '[PitchMatchEngine] setFrequency:', this._frequencyHz, 'Hz',
-      '| sampleRate:', this.ctx.sampleRate,
-      '| state:', this.ctx.state,
-    );
-
     // Health check — resume a suspended context before touching the oscillator.
     if (this.ctx.state === 'suspended') {
       try { this.ctx.resume(); } catch {}
@@ -231,23 +221,6 @@ class PitchMatchEngine {
       // frequencies. _frequencyHz is always clamped to [MIN_HZ, MAX_HZ]
       // above, so it is never 0 or negative (which this call would reject).
       this.osc.frequency.exponentialRampToValueAtTime(this._frequencyHz, this.ctx.currentTime + 0.02);
-
-      // ─── TEMPORARY DIAGNOSTIC LOGGING — remove once >12kHz playback is verified ───
-      console.log(
-        '[PitchMatchEngine][diag] set to:', this._frequencyHz, 'Hz',
-        '| osc.frequency.value (immediate):', this.osc.frequency.value,
-        '| ctx.state:', this.ctx.state,
-        '| gain.gain.value:', this.gain ? this.gain.gain.value : null,
-      );
-      const osc = this.osc;
-      const ctx = this.ctx;
-      setTimeout(() => {
-        console.log(
-          '[PitchMatchEngine][diag] +100ms osc.frequency.value:', osc.frequency.value,
-          '| ctx.state:', ctx.state,
-        );
-      }, 100);
-      // ─── END TEMPORARY DIAGNOSTIC LOGGING ─────────────────────────────────────────
     } catch {
       this.recreateOscillator();
     }

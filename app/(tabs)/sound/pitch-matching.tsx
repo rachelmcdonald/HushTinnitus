@@ -81,7 +81,11 @@ function FrequencyDisplay({
         </Pressable>
       </View>
       <Text style={freq.range}>100 Hz — 16 kHz</Text>
-      <Text style={freq.headphoneNote}>For best results above 8kHz, use headphones</Text>
+      <Text style={freq.headphoneNote}>For best results, use headphones.</Text>
+      <Text style={freq.headphoneNote}>
+        Note: it is normal not to hear frequencies above 10–12kHz — high
+        frequency hearing naturally varies between individuals.
+      </Text>
     </View>
   );
 }
@@ -125,6 +129,7 @@ function makeFreqStyles(
       fontSize: 12,
       fontStyle: 'italic',
       color: '#666666',
+      textAlign: 'center',
     },
   });
 }
