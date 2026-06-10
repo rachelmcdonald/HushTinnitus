@@ -215,12 +215,16 @@ class PitchMatchEngine {
     }
 
     try {
-      // exponentialRampToValueAtTime ramps to the new frequency over 20ms —
-      // fast enough to feel instant but smooth enough that the oscillator
-      // never jumps abruptly, even on large slider steps at high
-      // frequencies. _frequencyHz is always clamped to [MIN_HZ, MAX_HZ]
-      // above, so it is never 0 or negative (which this call would reject).
-      this.osc.frequency.exponentialRampToValueAtTime(this._frequencyHz, this.ctx.currentTime + 0.02);
+      // linearRampToValueAtTime over 15ms — fast enough to feel instant but
+      // smooth enough that the oscillator never jumps abruptly. Linear
+      // interpolation avoids the precision loss exponentialRampToValueAtTime
+      // can suffer at high frequencies on some implementations, which was
+      // producing silent output above ~12kHz despite the oscillator
+      // reporting the correct frequency value.
+      const now = this.ctx.currentTime;
+      this.osc.frequency.cancelScheduledValues(now);
+      this.osc.frequency.setValueAtTime(this.osc.frequency.value, now);
+      this.osc.frequency.linearRampToValueAtTime(this._frequencyHz, now + 0.015);
     } catch {
       this.recreateOscillator();
     }
