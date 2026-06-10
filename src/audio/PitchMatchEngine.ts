@@ -88,14 +88,20 @@ class PitchMatchEngine {
       this.ctx = new api.AudioContext();
     }
 
+    // Android (and some react-native-audio-api builds) may start the context in
+    // 'suspended' state — oscillators can produce no audible output until resumed.
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch {}
+    }
+
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, frequencyHz));
 
     this.osc = this.ctx.createOscillator();
     this.osc.type = 'sine';
-    this.osc.frequency.value = this._frequencyHz;
+    this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
 
     this.gain = this.ctx.createGain();
-    this.gain.gain.value = volume;
+    this.gain.gain.setValueAtTime(volume, this.ctx.currentTime);
 
     this.osc.connect(this.gain);
     this.gain.connect(this.ctx.destination);
@@ -118,8 +124,8 @@ class PitchMatchEngine {
 
   setFrequency(hz: number): void {
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
-    if (this.osc) {
-      this.osc.frequency.value = this._frequencyHz;
+    if (this.osc && this.ctx) {
+      this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
     }
   }
 }
