@@ -29,7 +29,7 @@ async function loadApi(): Promise<any> {
 
 export function sliderToHz(sliderValue: number): number {
   const hz = MIN_HZ * Math.pow(MAX_HZ / MIN_HZ, sliderValue / 1000);
-  return Math.round(hz);
+  return Math.round(hz * 10) / 10;
 }
 
 export function hzToSlider(hz: number): number {
@@ -43,6 +43,13 @@ export function formatHz(hz: number): string {
   return `${hz} Hz`;
 }
 
+// Always shows one decimal place with thousands separators, e.g. "4,250.0 Hz".
+// Used by the pitch matching frequency display for precise readout as the
+// slider moves.
+export function formatHzPrecise(hz: number): string {
+  return `${hz.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Hz`;
+}
+
 // ─── Engine ───────────────────────────────────────────────────────────────────
 
 class PitchMatchEngine {
@@ -53,6 +60,7 @@ class PitchMatchEngine {
   private gain: any = null;
   private _isPlaying = false;
   private _frequencyHz = 1000;
+  private _oscEnded = false;
 
   private constructor() {}
 
@@ -103,6 +111,8 @@ class PitchMatchEngine {
     this.osc = this.ctx.createOscillator();
     this.osc.type = 'sine';
     this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
+    this._oscEnded = false;
+    this.osc.onended = () => { this._oscEnded = true; };
 
     this.gain = this.ctx.createGain();
     this.gain.gain.setValueAtTime(volume, this.ctx.currentTime);
@@ -112,6 +122,29 @@ class PitchMatchEngine {
     this.osc.start();
 
     this._isPlaying = true;
+  }
+
+  // Recreates the oscillator at the current frequency, reusing the existing
+  // GainNode so gain/connection to destination is untouched and there is no
+  // audio gap. Used as a recovery path if the oscillator has died or throws
+  // when its frequency is updated at high values.
+  private recreateOscillator(): void {
+    if (!this.ctx || !this.gain) return;
+
+    if (this.osc) {
+      try { this.osc.stop(); } catch {}
+      try { this.osc.disconnect(); } catch {}
+    }
+
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
+    osc.onended = () => { this._oscEnded = true; };
+    osc.connect(this.gain);
+    osc.start();
+
+    this.osc = osc;
+    this._oscEnded = false;
   }
 
   stop(): void {
@@ -131,8 +164,27 @@ class PitchMatchEngine {
     if (this._frequencyHz === MAX_HZ) {
       console.log('[PitchMatchEngine] Slider at maximum — setting oscillator frequency to', this._frequencyHz, 'Hz');
     }
-    if (this.osc && this.ctx) {
-      this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
+    if (!this.ctx) return;
+
+    // Health check — resume a suspended context before touching the oscillator.
+    if (this.ctx.state === 'suspended') {
+      try { this.ctx.resume(); } catch {}
+    }
+
+    // If the oscillator has silently stopped (or was never created), recreate
+    // it at the current frequency through the existing GainNode.
+    if (!this.osc || this._oscEnded) {
+      this.recreateOscillator();
+      return;
+    }
+
+    try {
+      // setTargetAtTime smoothly ramps to the new frequency (10ms time
+      // constant) rather than jumping instantly — avoids destabilising the
+      // oscillator on large/rapid slider jumps at high frequencies.
+      this.osc.frequency.setTargetAtTime(this._frequencyHz, this.ctx.currentTime, 0.01);
+    } catch {
+      this.recreateOscillator();
     }
   }
 }

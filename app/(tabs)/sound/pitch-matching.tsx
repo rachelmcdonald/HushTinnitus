@@ -8,6 +8,7 @@ import {
   sliderToHz,
   hzToSlider,
   formatHz,
+  formatHzPrecise,
 } from '@/src/audio/PitchMatchEngine';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
@@ -46,7 +47,7 @@ function makeBackStyles(typography: ReturnType<typeof useTheme>['typography']) {
 function FrequencyDisplay({ hz }: { hz: number }) {
   const { colors, typography } = useTheme();
   const freq = useMemo(() => makeFreqStyles(colors, typography), [colors, typography]);
-  const label = formatHz(hz);
+  const label = formatHzPrecise(hz);
   return (
     <View style={freq.container}>
       <Text style={freq.value}>{label}</Text>
