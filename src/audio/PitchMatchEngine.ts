@@ -231,6 +231,23 @@ class PitchMatchEngine {
       // frequencies. _frequencyHz is always clamped to [MIN_HZ, MAX_HZ]
       // above, so it is never 0 or negative (which this call would reject).
       this.osc.frequency.exponentialRampToValueAtTime(this._frequencyHz, this.ctx.currentTime + 0.02);
+
+      // ─── TEMPORARY DIAGNOSTIC LOGGING — remove once >12kHz playback is verified ───
+      console.log(
+        '[PitchMatchEngine][diag] set to:', this._frequencyHz, 'Hz',
+        '| osc.frequency.value (immediate):', this.osc.frequency.value,
+        '| ctx.state:', this.ctx.state,
+        '| gain.gain.value:', this.gain ? this.gain.gain.value : null,
+      );
+      const osc = this.osc;
+      const ctx = this.ctx;
+      setTimeout(() => {
+        console.log(
+          '[PitchMatchEngine][diag] +100ms osc.frequency.value:', osc.frequency.value,
+          '| ctx.state:', ctx.state,
+        );
+      }, 100);
+      // ─── END TEMPORARY DIAGNOSTIC LOGGING ─────────────────────────────────────────
     } catch {
       this.recreateOscillator();
     }
