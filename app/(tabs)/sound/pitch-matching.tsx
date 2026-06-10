@@ -164,6 +164,9 @@ export default function PitchMatchingScreen() {
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    if (Platform.OS !== 'web') {
+      pitchMatchEngine.ensureContext();
+    }
     return () => {
       pitchMatchEngine.stop();
     };

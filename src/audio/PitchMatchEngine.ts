@@ -5,9 +5,10 @@ import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 const MIN_HZ = 100;
+const MID_HZ = 3000;
 const MAX_HZ = 16000;
 const DEFAULT_VOLUME = 0.5;
-const AUDIO_SAMPLE_RATE = 44100;
+const AUDIO_SAMPLE_RATE = 48000;
 
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
@@ -25,16 +26,28 @@ async function loadApi(): Promise<any> {
   return _api;
 }
 
-// ─── Logarithmic frequency ↔ slider mapping ───────────────────────────────────
+// ─── Two-segment logarithmic frequency ↔ slider mapping ───────────────────────
+// Slider 0.0–0.5 maps log-scale across 100Hz–3,000Hz; slider 0.5–1.0 maps
+// log-scale across 3,000Hz–16,000Hz. This gives the 3kHz–16kHz range — where
+// most tinnitus pitches fall — half of the slider's travel instead of a
+// fraction of a single 100Hz–16,000Hz log scale.
 
 export function sliderToHz(sliderValue: number): number {
-  const hz = MIN_HZ * Math.pow(MAX_HZ / MIN_HZ, sliderValue / 1000);
+  const pos = sliderValue / 1000;
+  const hz =
+    pos <= 0.5
+      ? MIN_HZ * Math.pow(MID_HZ / MIN_HZ, pos * 2)
+      : MID_HZ * Math.pow(MAX_HZ / MID_HZ, (pos - 0.5) * 2);
   return Math.round(hz * 10) / 10;
 }
 
 export function hzToSlider(hz: number): number {
   const clamped = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
-  return Math.round((Math.log(clamped / MIN_HZ) / Math.log(MAX_HZ / MIN_HZ)) * 1000);
+  const pos =
+    clamped <= MID_HZ
+      ? 0.5 * (Math.log(clamped / MIN_HZ) / Math.log(MID_HZ / MIN_HZ))
+      : 0.5 + 0.5 * (Math.log(clamped / MID_HZ) / Math.log(MAX_HZ / MID_HZ));
+  return Math.round(pos * 1000);
 }
 
 export function formatHz(hz: number): string {
@@ -74,6 +87,27 @@ class PitchMatchEngine {
   get isPlaying(): boolean { return this._isPlaying; }
   get frequencyHz(): number { return this._frequencyHz; }
 
+  // Creates the AudioContext if it doesn't exist yet (without starting
+  // playback) and logs the actual sample rate the device granted us. A
+  // sampleRate of 22,050Hz or lower means the Nyquist limit sits at or below
+  // 11,025Hz, which would explain a hard cutoff around 11kHz.
+  async ensureContext(): Promise<void> {
+    if (Platform.OS === 'web') return;
+    const api = await loadApi();
+    if (!api) return;
+
+    if (!this.ctx) {
+      this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
+      console.log(
+        '[PitchMatchEngine] AudioContext created — requested sampleRate:', AUDIO_SAMPLE_RATE,
+        '| actual sampleRate:', this.ctx.sampleRate,
+        '| state:', this.ctx.state,
+      );
+    } else {
+      console.log('[PitchMatchEngine] AudioContext sampleRate:', this.ctx.sampleRate, '| state:', this.ctx.state);
+    }
+  }
+
   // start() returns void immediately; audio setup runs asynchronously.
   start(frequencyHz: number = this._frequencyHz, volume = DEFAULT_VOLUME): void {
     if (Platform.OS === 'web') return;
@@ -94,10 +128,14 @@ class PitchMatchEngine {
     }
 
     if (!this.ctx) {
-      // Explicit sample rate ensures a Nyquist limit of 22,050Hz — without this
-      // some devices default to a lower rate (e.g. 24,000Hz), which silently
-      // cuts frequencies above ~12,000Hz.
+      // Explicit sample rate ensures a Nyquist limit of 24,000Hz — without this
+      // some devices default to a lower rate (e.g. 22,050Hz), which silently
+      // cuts frequencies above ~11,025Hz.
       this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
+      console.log(
+        '[PitchMatchEngine] AudioContext created — requested sampleRate:', AUDIO_SAMPLE_RATE,
+        '| actual sampleRate:', this.ctx.sampleRate,
+      );
     }
 
     // Android (and some react-native-audio-api builds) may start the context in
@@ -161,10 +199,13 @@ class PitchMatchEngine {
 
   setFrequency(hz: number): void {
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
-    if (this._frequencyHz === MAX_HZ) {
-      console.log('[PitchMatchEngine] Slider at maximum — setting oscillator frequency to', this._frequencyHz, 'Hz');
-    }
     if (!this.ctx) return;
+
+    console.log(
+      '[PitchMatchEngine] setFrequency:', this._frequencyHz, 'Hz',
+      '| sampleRate:', this.ctx.sampleRate,
+      '| state:', this.ctx.state,
+    );
 
     // Health check — resume a suspended context before touching the oscillator.
     if (this.ctx.state === 'suspended') {
