@@ -50,7 +50,8 @@ function FrequencyDisplay({ hz }: { hz: number }) {
   return (
     <View style={freq.container}>
       <Text style={freq.value}>{label}</Text>
-      <Text style={freq.range}>100 Hz — 15 kHz</Text>
+      <Text style={freq.range}>100 Hz — 16 kHz</Text>
+      <Text style={freq.headphoneNote}>For best results above 8kHz, use headphones</Text>
     </View>
   );
 }
@@ -69,6 +70,11 @@ function makeFreqStyles(
       lineHeight: 60,
     },
     range: { ...typography.caption, color: colors.textSecondary },
+    headphoneNote: {
+      fontSize: 12,
+      fontStyle: 'italic',
+      color: '#666666',
+    },
   });
 }
 
@@ -222,7 +228,7 @@ export default function PitchMatchingScreen() {
         <View style={styles.sliderSection}>
           <View style={styles.sliderLabelRow}>
             <Text style={styles.sliderEndLabel}>100 Hz</Text>
-            <Text style={styles.sliderEndLabel}>15 kHz</Text>
+            <Text style={styles.sliderEndLabel}>16 kHz</Text>
           </View>
           <Slider
             style={styles.slider}

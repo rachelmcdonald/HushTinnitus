@@ -5,8 +5,9 @@ import { Alert, Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 const MIN_HZ = 100;
-const MAX_HZ = 15000;
+const MAX_HZ = 16000;
 const DEFAULT_VOLUME = 0.5;
+const AUDIO_SAMPLE_RATE = 44100;
 
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
@@ -85,7 +86,10 @@ class PitchMatchEngine {
     }
 
     if (!this.ctx) {
-      this.ctx = new api.AudioContext();
+      // Explicit sample rate ensures a Nyquist limit of 22,050Hz — without this
+      // some devices default to a lower rate (e.g. 24,000Hz), which silently
+      // cuts frequencies above ~12,000Hz.
+      this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
     }
 
     // Android (and some react-native-audio-api builds) may start the context in
@@ -124,6 +128,9 @@ class PitchMatchEngine {
 
   setFrequency(hz: number): void {
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
+    if (this._frequencyHz === MAX_HZ) {
+      console.log('[PitchMatchEngine] Slider at maximum — setting oscillator frequency to', this._frequencyHz, 'Hz');
+    }
     if (this.osc && this.ctx) {
       this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
     }
