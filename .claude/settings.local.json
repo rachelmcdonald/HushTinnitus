@@ -81,7 +81,10 @@
       "Bash(sed -n '105,115p' \"app/onboarding/red-flag.tsx\")",
       "Bash(sed -n '70,80p' \"app/onboarding/urgent-referral.tsx\")",
       "Bash(git rm *)",
-      "Bash(git mv *)"
+      "Bash(git mv *)",
+      "Bash(npm show *)",
+      "Bash(gh release *)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }

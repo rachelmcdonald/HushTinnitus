@@ -270,48 +270,6 @@ export default function PitchMatchingScreen() {
     }
   }
 
-  // ─── TEMPORARY: 13kHz test tone — remove once high-frequency fix is verified ───
-  function handleTest13kHz() {
-    if (Platform.OS === 'web') return;
-    pitchMatchEngine.start(13000);
-    setIsPlaying(true);
-    setTimeout(() => {
-      pitchMatchEngine.stop();
-      setIsPlaying(false);
-    }, 2000);
-  }
-  // ─── END TEMPORARY ──────────────────────────────────────────────────────────────
-
-  // ─── TEMPORARY: raw bypass test — remove once high-frequency fix is verified ───
-  // Creates a brand-new AudioContext + OscillatorNode directly, with no
-  // PitchMatchEngine, no GainNode, no shared state — isolates whether a
-  // 13kHz ceiling exists in react-native-audio-api itself.
-  async function handleRawTest13kHz() {
-    if (Platform.OS === 'web') return;
-    const api = await import('react-native-audio-api');
-    const ctx = new api.AudioContext({ sampleRate: 48000 });
-    console.log('[RawTest] AudioContext sampleRate:', ctx.sampleRate, '| state:', ctx.state);
-
-    await ctx.resume();
-    console.log('[RawTest] AudioContext resumed — state:', ctx.state);
-
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    gain.gain.value = 0.5;
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'sine';
-
-    osc.start();
-    osc.frequency.setValueAtTime(13000, ctx.currentTime);
-    console.log('[RawTest] Started raw 13kHz oscillator — osc.frequency.value:', osc.frequency.value);
-
-    setTimeout(() => {
-      try { osc.stop(); } catch {}
-    }, 2000);
-  }
-  // ─── END TEMPORARY ──────────────────────────────────────────────────────────────
-
   function handleSave() {
     updatePreferences({ matchedPitchHz: hz });
     if (isPlaying && Platform.OS !== 'web') {
@@ -368,26 +326,6 @@ export default function PitchMatchingScreen() {
         </View>
 
         <PlayStopButton isPlaying={isPlaying} onPress={handlePlayStop} />
-
-        {/* TEMPORARY: 13kHz test tone — remove once high-frequency fix is verified */}
-        <Pressable
-          style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
-          onPress={handleTest13kHz}
-          accessibilityRole="button"
-          accessibilityLabel="Play a 13 kilohertz test tone for 2 seconds"
-        >
-          <Text style={styles.testButtonLabel}>Test 13kHz</Text>
-        </Pressable>
-
-        {/* TEMPORARY: raw bypass test — remove once high-frequency fix is verified */}
-        <Pressable
-          style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
-          onPress={handleRawTest13kHz}
-          accessibilityRole="button"
-          accessibilityLabel="Play a raw, unprocessed 13 kilohertz test tone for 2 seconds"
-        >
-          <Text style={styles.testButtonLabel}>Raw 13kHz test</Text>
-        </Pressable>
 
         <View style={styles.instructionCard}>
           <Text style={styles.instructionHeading}>How to use</Text>
@@ -483,16 +421,6 @@ function makeStyles(
     sliderEndLabel: { ...typography.caption, color: colors.textSecondary },
     slider: { width: '100%', height: 40 },
 
-    // TEMPORARY: 13kHz test tone button — remove once high-frequency fix is verified
-    testButton: {
-      borderWidth: Border.width,
-      borderColor: colors.textSecondary + '60',
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.sm,
-      alignItems: 'center',
-    },
-    testButtonPressed: { opacity: 0.7 },
-    testButtonLabel: { ...typography.caption, color: colors.textSecondary },
     sliderHint: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
 
     instructionCard: {

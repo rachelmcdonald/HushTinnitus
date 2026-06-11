@@ -10,6 +10,12 @@ const MAX_HZ = 16000;
 const DEFAULT_VOLUME = 0.5;
 const AUDIO_SAMPLE_RATE = 48000;
 
+// react-native-audio-api@0.12.2 silently ignores osc.frequency.setValueAtTime()
+// above ~12kHz on Android (oscillator falls back to its 440Hz default). Above
+// this threshold we synthesise a looping PCM sine buffer instead, which
+// bypasses the oscillator entirely.
+const BUFFER_TONE_THRESHOLD_HZ = 10000;
+
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
 let _api: any = null;
@@ -76,9 +82,11 @@ class PitchMatchEngine {
   private ctx: any = null;
   private osc: any = null;
   private gain: any = null;
+  private bufferSource: any = null;
   private _isPlaying = false;
   private _frequencyHz = 1000;
   private _oscEnded = false;
+  private _isBufferMode = false;
 
   private constructor() {}
 
@@ -156,24 +164,69 @@ class PitchMatchEngine {
 
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, frequencyHz));
 
-    this.osc = this.ctx.createOscillator();
-    this.osc.type = 'sine';
-    this._oscEnded = false;
-    this.osc.onended = () => { this._oscEnded = true; };
-
     this.gain = this.ctx.createGain();
     this.gain.gain.setValueAtTime(volume, this.ctx.currentTime);
-
-    this.osc.connect(this.gain);
     this.gain.connect(this.ctx.destination);
 
-    // On react-native-audio-api/Android, frequency.value set before start()
-    // is silently ignored (oscillator falls back to its 440Hz default) — the
-    // frequency must be set after start().
-    this.osc.start();
-    this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
+    if (this._frequencyHz > BUFFER_TONE_THRESHOLD_HZ) {
+      this.startBufferTone(this._frequencyHz);
+    } else {
+      this.osc = this.ctx.createOscillator();
+      this.osc.type = 'sine';
+      this._oscEnded = false;
+      this.osc.onended = () => { this._oscEnded = true; };
+      this.osc.connect(this.gain);
+
+      // On react-native-audio-api/Android, frequency.value set before start()
+      // is silently ignored (oscillator falls back to its 440Hz default) — the
+      // frequency must be set after start().
+      this.osc.start();
+      this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
+      this._isBufferMode = false;
+    }
 
     this._isPlaying = true;
+  }
+
+  // Generates a looping PCM sine buffer at `frequency` and plays it through
+  // the existing GainNode. Used above BUFFER_TONE_THRESHOLD_HZ to bypass the
+  // oscillator's broken high-frequency setValueAtTime() on Android.
+  private startBufferTone(frequency: number): void {
+    if (!this.ctx || !this.gain) return;
+
+    this.stopBufferTone();
+    if (this.osc) {
+      try { this.osc.stop(); this.osc.disconnect(); } catch {}
+      this.osc = null;
+    }
+
+    const sampleRate = this.ctx.sampleRate;
+    // Round the buffer to a whole number of cycles so the loop point is
+    // seamless (no click at the wrap-around).
+    const cycles = Math.max(1, Math.round(frequency));
+    const length = Math.round((cycles * sampleRate) / frequency);
+
+    const buffer = this.ctx.createBuffer(1, length, sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = Math.sin((2 * Math.PI * frequency * i) / sampleRate);
+    }
+
+    const source = this.ctx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+    source.connect(this.gain);
+    source.start();
+
+    this.bufferSource = source;
+    this._isBufferMode = true;
+  }
+
+  private stopBufferTone(): void {
+    if (this.bufferSource) {
+      try { this.bufferSource.stop(); this.bufferSource.disconnect(); } catch {}
+      this.bufferSource = null;
+    }
   }
 
   // Recreates the oscillator at the current frequency, reusing the existing
@@ -183,6 +236,7 @@ class PitchMatchEngine {
   private recreateOscillator(): void {
     if (!this.ctx || !this.gain) return;
 
+    this.stopBufferTone();
     if (this.osc) {
       try { this.osc.stop(); } catch {}
       try { this.osc.disconnect(); } catch {}
@@ -199,6 +253,7 @@ class PitchMatchEngine {
 
     this.osc = osc;
     this._oscEnded = false;
+    this._isBufferMode = false;
   }
 
   stop(): void {
@@ -206,11 +261,13 @@ class PitchMatchEngine {
       try { this.osc.stop(); this.osc.disconnect(); } catch {}
       this.osc = null;
     }
+    this.stopBufferTone();
     if (this.gain) {
       try { this.gain.disconnect(); } catch {}
       this.gain = null;
     }
     this._isPlaying = false;
+    this._isBufferMode = false;
   }
 
   setFrequency(hz: number): void {
@@ -222,9 +279,19 @@ class PitchMatchEngine {
       try { this.ctx.resume(); } catch {}
     }
 
-    // If the oscillator has silently stopped (or was never created), recreate
-    // it at the current frequency through the existing GainNode.
-    if (!this.osc || this._oscEnded) {
+    const wantBuffer = this._frequencyHz > BUFFER_TONE_THRESHOLD_HZ;
+
+    // Above the threshold, react-native-audio-api's oscillator can't be
+    // retuned (setValueAtTime is silently ignored on Android), so every
+    // change re-synthesises the PCM buffer at the new frequency.
+    if (wantBuffer) {
+      this.startBufferTone(this._frequencyHz);
+      return;
+    }
+
+    // Coming back down from buffer mode — recreate the oscillator at the
+    // new frequency.
+    if (this._isBufferMode || !this.osc || this._oscEnded) {
       this.recreateOscillator();
       return;
     }
