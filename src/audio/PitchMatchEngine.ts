@@ -14,7 +14,14 @@ const AUDIO_SAMPLE_RATE = 48000;
 // above ~12kHz on Android (oscillator falls back to its 440Hz default). Above
 // this threshold we synthesise a looping PCM sine buffer instead, which
 // bypasses the oscillator entirely.
-const BUFFER_TONE_THRESHOLD_HZ = 10000;
+const BUFFER_TONE_THRESHOLD_HZ = 10500;
+
+// Crossfade duration when re-synthesising the buffer tone at a new frequency
+// (used to avoid the click caused by abruptly stopping/starting a buffer
+// mid-waveform). The previous buffer source is stopped shortly after the
+// crossfade completes.
+const CROSSFADE_SEC = 0.02;
+const CROSSFADE_STOP_MS = 25;
 
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
@@ -83,6 +90,7 @@ class PitchMatchEngine {
   private osc: any = null;
   private gain: any = null;
   private bufferSource: any = null;
+  private bufferGain: any = null;
   private _isPlaying = false;
   private _frequencyHz = 1000;
   private _oscEnded = false;
@@ -189,12 +197,19 @@ class PitchMatchEngine {
   }
 
   // Generates a looping PCM sine buffer at `frequency` and plays it through
-  // the existing GainNode. Used above BUFFER_TONE_THRESHOLD_HZ to bypass the
-  // oscillator's broken high-frequency setValueAtTime() on Android.
-  private startBufferTone(frequency: number): void {
+  // a per-source GainNode feeding into the shared GainNode. Used above
+  // BUFFER_TONE_THRESHOLD_HZ to bypass the oscillator's broken high-frequency
+  // setValueAtTime() on Android.
+  //
+  // When `crossfade` is true (used for in-place frequency changes while
+  // already in buffer mode), the previous buffer source is faded out while
+  // the new one fades in over CROSSFADE_SEC, avoiding the click caused by
+  // abruptly stopping a buffer mid-waveform. On the initial transition into
+  // buffer mode there is no previous buffer source to fade, so it starts at
+  // full level immediately.
+  private startBufferTone(frequency: number, crossfade = false): void {
     if (!this.ctx || !this.gain) return;
 
-    this.stopBufferTone();
     if (this.osc) {
       try { this.osc.stop(); this.osc.disconnect(); } catch {}
       this.osc = null;
@@ -209,16 +224,45 @@ class PitchMatchEngine {
     const buffer = this.ctx.createBuffer(1, length, sampleRate);
     const data = buffer.getChannelData(0);
     for (let i = 0; i < length; i++) {
-      data[i] = Math.sin((2 * Math.PI * frequency * i) / sampleRate);
+      // Sample amplitude is halved to match the perceived loudness of the
+      // oscillator path through the same shared GainNode.
+      data[i] = Math.sin((2 * Math.PI * frequency * i) / sampleRate) * 0.5;
     }
 
     const source = this.ctx.createBufferSource();
     source.buffer = buffer;
     source.loop = true;
-    source.connect(this.gain);
-    source.start();
+
+    const sourceGain = this.ctx.createGain();
+    source.connect(sourceGain);
+    sourceGain.connect(this.gain);
+
+    const now = this.ctx.currentTime;
+    const previousSource = this.bufferSource;
+    const previousGain = this.bufferGain;
+
+    if (crossfade && previousSource && previousGain) {
+      sourceGain.gain.setValueAtTime(0, now);
+      sourceGain.gain.linearRampToValueAtTime(1, now + CROSSFADE_SEC);
+
+      previousGain.gain.cancelScheduledValues(now);
+      previousGain.gain.setValueAtTime(previousGain.gain.value, now);
+      previousGain.gain.linearRampToValueAtTime(0, now + CROSSFADE_SEC);
+
+      source.start();
+
+      setTimeout(() => {
+        try { previousSource.stop(); previousSource.disconnect(); } catch {}
+        try { previousGain.disconnect(); } catch {}
+      }, CROSSFADE_STOP_MS);
+    } else {
+      sourceGain.gain.setValueAtTime(1, now);
+      this.stopBufferTone();
+      source.start();
+    }
 
     this.bufferSource = source;
+    this.bufferGain = sourceGain;
     this._isBufferMode = true;
   }
 
@@ -226,6 +270,10 @@ class PitchMatchEngine {
     if (this.bufferSource) {
       try { this.bufferSource.stop(); this.bufferSource.disconnect(); } catch {}
       this.bufferSource = null;
+    }
+    if (this.bufferGain) {
+      try { this.bufferGain.disconnect(); } catch {}
+      this.bufferGain = null;
     }
   }
 
@@ -285,7 +333,7 @@ class PitchMatchEngine {
     // retuned (setValueAtTime is silently ignored on Android), so every
     // change re-synthesises the PCM buffer at the new frequency.
     if (wantBuffer) {
-      this.startBufferTone(this._frequencyHz);
+      this.startBufferTone(this._frequencyHz, this._isBufferMode);
       return;
     }
 
