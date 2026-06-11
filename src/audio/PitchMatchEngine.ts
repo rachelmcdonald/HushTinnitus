@@ -8,14 +8,6 @@ const MIN_HZ = 100;
 const MID_HZ = 3000;
 const MAX_HZ = 16000;
 const DEFAULT_VOLUME = 0.5;
-const AUDIO_SAMPLE_RATE = 48000;
-
-// react-native-audio-api@0.12.2 silently ignores osc.frequency.setValueAtTime()
-// above ~12kHz on Android (oscillator falls back to its 440Hz default). Above
-// this threshold we synthesise a looping PCM sine buffer instead, which
-// bypasses the oscillator entirely.
-// Below this, the oscillator works cleanly (confirmed up to ~11,980Hz).
-const BUFFER_TONE_THRESHOLD_HZ = 12000;
 
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
@@ -40,8 +32,6 @@ async function loadApi(): Promise<any> {
 // fraction of a single 100Hz–16,000Hz log scale.
 
 // Number of discrete slider steps across the full 0.0–1.0 position range.
-// At the top of the high-frequency segment one step is ~27Hz, keeping
-// per-step jumps small enough that the oscillator never has to leap far.
 export const SLIDER_RESOLUTION = 2000;
 
 export function sliderToHz(sliderValue: number): number {
@@ -75,19 +65,95 @@ export function formatHzPrecise(hz: number): string {
   return `${hz.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} Hz`;
 }
 
+// ─── Pre-generated pitch tone files ────────────────────────────────────────────
+// react-native-audio-api@0.12.2's oscillator has confirmed bugs above ~12kHz on
+// Android (frequency.setValueAtTime() silently ignored). Rather than fight the
+// oscillator/buffer-synthesis APIs, pitch matching plays pre-rendered 3-second
+// looping sine tone MP3s (generated via ffmpeg, see assets/sounds/pitch/) using
+// the same file-based player pattern as the nature sounds in AudioEngine.ts.
+// The slider/display still report the exact two-segment log-scale frequency —
+// only the audio played snaps to the nearest available file.
+
+export const PITCH_FREQUENCIES: number[] = [
+  100, 200, 300, 400, 500, 600, 700, 800, 900, 1000,
+  1200, 1400, 1600, 1800, 2000,
+  2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500,
+  8000, 8500, 9000, 9500, 10000, 10500, 11000, 11500, 12000, 12500,
+  13000, 13500, 14000, 14500, 15000, 15500, 16000,
+];
+
+const PITCH_FILES: Record<number, any> = {
+  100: require('@/assets/sounds/pitch/100.mp3'),
+  200: require('@/assets/sounds/pitch/200.mp3'),
+  300: require('@/assets/sounds/pitch/300.mp3'),
+  400: require('@/assets/sounds/pitch/400.mp3'),
+  500: require('@/assets/sounds/pitch/500.mp3'),
+  600: require('@/assets/sounds/pitch/600.mp3'),
+  700: require('@/assets/sounds/pitch/700.mp3'),
+  800: require('@/assets/sounds/pitch/800.mp3'),
+  900: require('@/assets/sounds/pitch/900.mp3'),
+  1000: require('@/assets/sounds/pitch/1000.mp3'),
+  1200: require('@/assets/sounds/pitch/1200.mp3'),
+  1400: require('@/assets/sounds/pitch/1400.mp3'),
+  1600: require('@/assets/sounds/pitch/1600.mp3'),
+  1800: require('@/assets/sounds/pitch/1800.mp3'),
+  2000: require('@/assets/sounds/pitch/2000.mp3'),
+  2500: require('@/assets/sounds/pitch/2500.mp3'),
+  3000: require('@/assets/sounds/pitch/3000.mp3'),
+  3500: require('@/assets/sounds/pitch/3500.mp3'),
+  4000: require('@/assets/sounds/pitch/4000.mp3'),
+  4500: require('@/assets/sounds/pitch/4500.mp3'),
+  5000: require('@/assets/sounds/pitch/5000.mp3'),
+  5500: require('@/assets/sounds/pitch/5500.mp3'),
+  6000: require('@/assets/sounds/pitch/6000.mp3'),
+  6500: require('@/assets/sounds/pitch/6500.mp3'),
+  7000: require('@/assets/sounds/pitch/7000.mp3'),
+  7500: require('@/assets/sounds/pitch/7500.mp3'),
+  8000: require('@/assets/sounds/pitch/8000.mp3'),
+  8500: require('@/assets/sounds/pitch/8500.mp3'),
+  9000: require('@/assets/sounds/pitch/9000.mp3'),
+  9500: require('@/assets/sounds/pitch/9500.mp3'),
+  10000: require('@/assets/sounds/pitch/10000.mp3'),
+  10500: require('@/assets/sounds/pitch/10500.mp3'),
+  11000: require('@/assets/sounds/pitch/11000.mp3'),
+  11500: require('@/assets/sounds/pitch/11500.mp3'),
+  12000: require('@/assets/sounds/pitch/12000.mp3'),
+  12500: require('@/assets/sounds/pitch/12500.mp3'),
+  13000: require('@/assets/sounds/pitch/13000.mp3'),
+  13500: require('@/assets/sounds/pitch/13500.mp3'),
+  14000: require('@/assets/sounds/pitch/14000.mp3'),
+  14500: require('@/assets/sounds/pitch/14500.mp3'),
+  15000: require('@/assets/sounds/pitch/15000.mp3'),
+  15500: require('@/assets/sounds/pitch/15500.mp3'),
+  16000: require('@/assets/sounds/pitch/16000.mp3'),
+};
+
+// Returns the closest frequency in PITCH_FREQUENCIES to `hz`.
+export function findNearestFrequency(hz: number): number {
+  let nearest = PITCH_FREQUENCIES[0];
+  let minDiff = Math.abs(hz - nearest);
+  for (const f of PITCH_FREQUENCIES) {
+    const diff = Math.abs(hz - f);
+    if (diff < minDiff) {
+      minDiff = diff;
+      nearest = f;
+    }
+  }
+  return nearest;
+}
+
 // ─── Engine ───────────────────────────────────────────────────────────────────
 
 class PitchMatchEngine {
   private static _instance: PitchMatchEngine | null = null;
 
   private ctx: any = null;
-  private osc: any = null;
   private gain: any = null;
-  private bufferSource: any = null;
+  private source: any = null;
   private _isPlaying = false;
   private _frequencyHz = 1000;
-  private _oscEnded = false;
-  private _isBufferMode = false;
+  private _loadedFrequencyHz: number | null = null;
+  private _loadToken = 0;
 
   private constructor() {}
 
@@ -102,31 +168,17 @@ class PitchMatchEngine {
   get frequencyHz(): number { return this._frequencyHz; }
 
   // Creates the AudioContext if it doesn't exist yet (without starting
-  // playback) and logs the actual sample rate the device granted us. A
-  // sampleRate of 22,050Hz or lower means the Nyquist limit sits at or below
-  // 11,025Hz, which would explain a hard cutoff around 11kHz.
+  // playback) and resumes it if suspended.
   async ensureContext(): Promise<void> {
     if (Platform.OS === 'web') return;
     const api = await loadApi();
     if (!api) return;
 
     if (!this.ctx) {
-      this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
-      console.log(
-        '[PitchMatchEngine] AudioContext created — requested sampleRate:', AUDIO_SAMPLE_RATE,
-        '| actual sampleRate:', this.ctx.sampleRate,
-        '| state:', this.ctx.state,
-      );
-    } else {
-      console.log('[PitchMatchEngine] AudioContext sampleRate:', this.ctx.sampleRate, '| state:', this.ctx.state);
+      this.ctx = new api.AudioContext();
     }
-
-    // The context can stay 'suspended' on Android until explicitly resumed —
-    // resume eagerly so it's already 'running' by the time start()/setFrequency()
-    // touch the oscillator.
     if (this.ctx.state === 'suspended') {
       try { await this.ctx.resume(); } catch {}
-      console.log('[PitchMatchEngine] AudioContext resumed — state:', this.ctx.state);
     }
   }
 
@@ -150,17 +202,10 @@ class PitchMatchEngine {
     }
 
     if (!this.ctx) {
-      // Explicit sample rate ensures a Nyquist limit of 24,000Hz — without this
-      // some devices default to a lower rate (e.g. 22,050Hz), which silently
-      // cuts frequencies above ~11,025Hz.
-      this.ctx = new api.AudioContext({ sampleRate: AUDIO_SAMPLE_RATE });
+      this.ctx = new api.AudioContext();
     }
-
-    // Android (and some react-native-audio-api builds) may start the context in
-    // 'suspended' state — oscillators can produce no audible output until resumed.
     if (this.ctx.state === 'suspended') {
       try { await this.ctx.resume(); } catch {}
-      console.log('[PitchMatchEngine] AudioContext resumed — state:', this.ctx.state);
     }
 
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, frequencyHz));
@@ -169,172 +214,73 @@ class PitchMatchEngine {
     this.gain.gain.setValueAtTime(volume, this.ctx.currentTime);
     this.gain.connect(this.ctx.destination);
 
-    if (this._frequencyHz > BUFFER_TONE_THRESHOLD_HZ) {
-      this.startBufferTone(this._frequencyHz);
-    } else {
-      this.osc = this.ctx.createOscillator();
-      this.osc.type = 'sine';
-      this._oscEnded = false;
-      this.osc.onended = () => { this._oscEnded = true; };
-      this.osc.connect(this.gain);
-
-      // On react-native-audio-api/Android, frequency.value set before start()
-      // is silently ignored (oscillator falls back to its 440Hz default) — the
-      // frequency must be set after start().
-      this.osc.start();
-      this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
-      this._isBufferMode = false;
-    }
-
     this._isPlaying = true;
+    await this.loadAndPlay(findNearestFrequency(this._frequencyHz));
   }
 
-  // Generates a looping PCM sine buffer at `frequency` and plays it through
-  // the shared GainNode (gain 0.5). Used above BUFFER_TONE_THRESHOLD_HZ to
-  // bypass the oscillator's broken high-frequency setValueAtTime() on Android.
-  //
-  // If a buffer source is already playing, it is stopped immediately and the
-  // new source is started after a setTimeout(0) — giving the audio engine one
-  // processing cycle to cleanly end the previous source before the new one
-  // starts, which avoids the click of an abrupt stop/start without needing
-  // crossfade gain nodes.
-  private startBufferTone(frequency: number): void {
+  // Loads the pre-generated tone file for `nearestHz` and plays it as a
+  // looping buffer through the shared GainNode, replacing any currently
+  // playing source. A token guards against a stale (slow) load overwriting
+  // a more recent one if the user moves the slider quickly.
+  private async loadAndPlay(nearestHz: number): Promise<void> {
     if (!this.ctx || !this.gain) return;
+    if (nearestHz === this._loadedFrequencyHz && this.source) return;
 
-    if (this.osc) {
-      try { this.osc.stop(); this.osc.disconnect(); } catch {}
-      this.osc = null;
+    const token = ++this._loadToken;
+
+    const { Asset } = await import('expo-asset');
+    const asset = Asset.fromModule(PITCH_FILES[nearestHz]);
+    await asset.downloadAsync();
+    const response = await fetch(asset.localUri!);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+
+    // A newer load (or a stop()) happened while this one was in flight.
+    if (token !== this._loadToken || !this.ctx || !this.gain) return;
+
+    if (this.source) {
+      try { this.source.stop(); this.source.disconnect(); } catch {}
+      this.source = null;
     }
 
-    const previousSource = this.bufferSource;
-    this.bufferSource = null;
-    if (previousSource) {
-      try { previousSource.stop(); previousSource.disconnect(); } catch {}
-    }
+    const source = this.ctx.createBufferSource();
+    source.buffer = audioBuffer;
+    source.loop = true;
+    source.connect(this.gain);
+    source.start();
 
-    const createAndStart = () => {
-      if (!this.ctx || !this.gain) return;
-
-      const sampleRate = this.ctx.sampleRate;
-      // Round the buffer to a whole number of cycles so the loop point is
-      // seamless (no click at the wrap-around).
-      const cycles = Math.max(1, Math.round(frequency));
-      const length = Math.round((cycles * sampleRate) / frequency);
-
-      const buffer = this.ctx.createBuffer(1, length, sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < length; i++) {
-        // Sample amplitude is halved to match the perceived loudness of the
-        // oscillator path through the same shared GainNode.
-        data[i] = Math.sin((2 * Math.PI * frequency * i) / sampleRate) * 0.5;
-      }
-
-      const source = this.ctx.createBufferSource();
-      source.buffer = buffer;
-      source.loop = true;
-      source.connect(this.gain);
-      source.start();
-
-      this.bufferSource = source;
-    };
-
-    if (previousSource) {
-      setTimeout(createAndStart, 0);
-    } else {
-      createAndStart();
-    }
-
-    this._isBufferMode = true;
-  }
-
-  private stopBufferTone(): void {
-    if (this.bufferSource) {
-      try { this.bufferSource.stop(); this.bufferSource.disconnect(); } catch {}
-      this.bufferSource = null;
-    }
-  }
-
-  // Recreates the oscillator at the current frequency, reusing the existing
-  // GainNode so gain/connection to destination is untouched and there is no
-  // audio gap. Used as a recovery path if the oscillator has died or throws
-  // when its frequency is updated at high values.
-  private recreateOscillator(): void {
-    if (!this.ctx || !this.gain) return;
-
-    this.stopBufferTone();
-    if (this.osc) {
-      try { this.osc.stop(); } catch {}
-      try { this.osc.disconnect(); } catch {}
-    }
-
-    const osc = this.ctx.createOscillator();
-    osc.type = 'sine';
-    osc.onended = () => { this._oscEnded = true; };
-    osc.connect(this.gain);
-
-    // Frequency must be set after start() — see _doStart for why.
-    osc.start();
-    osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
-
-    this.osc = osc;
-    this._oscEnded = false;
-    this._isBufferMode = false;
+    this.source = source;
+    this._loadedFrequencyHz = nearestHz;
   }
 
   stop(): void {
-    if (this.osc) {
-      try { this.osc.stop(); this.osc.disconnect(); } catch {}
-      this.osc = null;
+    this._loadToken++;
+    if (this.source) {
+      try { this.source.stop(); this.source.disconnect(); } catch {}
+      this.source = null;
     }
-    this.stopBufferTone();
     if (this.gain) {
       try { this.gain.disconnect(); } catch {}
       this.gain = null;
     }
+    this._loadedFrequencyHz = null;
     this._isPlaying = false;
-    this._isBufferMode = false;
   }
 
+  // Updates the target frequency and, if the nearest available tone file has
+  // changed, swaps the looping buffer to the new one. Display-only frequency
+  // changes that snap to the same file are a no-op.
   setFrequency(hz: number): void {
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, hz));
-    if (!this.ctx) return;
+    if (!this.ctx || !this._isPlaying) return;
 
-    // Health check — resume a suspended context before touching the oscillator.
     if (this.ctx.state === 'suspended') {
       try { this.ctx.resume(); } catch {}
     }
 
-    const wantBuffer = this._frequencyHz > BUFFER_TONE_THRESHOLD_HZ;
-
-    // Above the threshold, react-native-audio-api's oscillator can't be
-    // retuned (setValueAtTime is silently ignored on Android), so every
-    // change re-synthesises the PCM buffer at the new frequency.
-    if (wantBuffer) {
-      this.startBufferTone(this._frequencyHz);
-      return;
-    }
-
-    // Coming back down from buffer mode — recreate the oscillator at the
-    // new frequency.
-    if (this._isBufferMode || !this.osc || this._oscEnded) {
-      this.recreateOscillator();
-      return;
-    }
-
-    try {
-      // linearRampToValueAtTime over 15ms — fast enough to feel instant but
-      // smooth enough that the oscillator never jumps abruptly. Linear
-      // interpolation avoids the precision loss exponentialRampToValueAtTime
-      // can suffer at high frequencies on some implementations, which was
-      // producing silent output above ~12kHz despite the oscillator
-      // reporting the correct frequency value.
-      const now = this.ctx.currentTime;
-      this.osc.frequency.cancelScheduledValues(now);
-      this.osc.frequency.setValueAtTime(this.osc.frequency.value, now);
-      this.osc.frequency.linearRampToValueAtTime(this._frequencyHz, now + 0.015);
-    } catch {
-      this.recreateOscillator();
-    }
+    const nearest = findNearestFrequency(this._frequencyHz);
+    if (nearest === this._loadedFrequencyHz) return;
+    this.loadAndPlay(nearest);
   }
 }
 

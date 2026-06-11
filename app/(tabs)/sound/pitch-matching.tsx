@@ -9,13 +9,14 @@ import {
   hzToSlider,
   formatHz,
   formatHzPrecise,
+  findNearestFrequency,
+  PITCH_FREQUENCIES,
   SLIDER_RESOLUTION,
 } from '@/src/audio/PitchMatchEngine';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
-const FINE_ADJUST_HZ = 50;
 const MIN_HZ = 100;
 const MAX_HZ = 16000;
 
@@ -59,6 +60,7 @@ function FrequencyDisplay({
   const { colors, typography } = useTheme();
   const freq = useMemo(() => makeFreqStyles(colors, typography), [colors, typography]);
   const label = formatHzPrecise(hz);
+  const nearestHz = findNearestFrequency(hz);
   return (
     <View style={freq.container}>
       <View style={freq.valueRow}>
@@ -66,7 +68,7 @@ function FrequencyDisplay({
           style={({ pressed }) => [freq.adjustButton, pressed && freq.adjustButtonPressed]}
           onPress={onDecrease}
           accessibilityRole="button"
-          accessibilityLabel={`Decrease frequency by ${FINE_ADJUST_HZ} Hz`}
+          accessibilityLabel="Step to previous tone"
         >
           <Text style={freq.adjustIcon}>−</Text>
         </Pressable>
@@ -75,12 +77,13 @@ function FrequencyDisplay({
           style={({ pressed }) => [freq.adjustButton, pressed && freq.adjustButtonPressed]}
           onPress={onIncrease}
           accessibilityRole="button"
-          accessibilityLabel={`Increase frequency by ${FINE_ADJUST_HZ} Hz`}
+          accessibilityLabel="Step to next tone"
         >
           <Text style={freq.adjustIcon}>+</Text>
         </Pressable>
       </View>
       <Text style={freq.range}>100 Hz — 16 kHz</Text>
+      <Text style={freq.nearestNote}>Playing nearest tone: {formatHz(nearestHz)}</Text>
       <Text style={freq.headphoneNote}>For best results, use headphones.</Text>
       <Text style={freq.headphoneNote}>
         Note: it is normal not to hear frequencies above 10–12kHz — high
@@ -125,6 +128,11 @@ function makeFreqStyles(
       lineHeight: 22,
     },
     range: { ...typography.caption, color: colors.textSecondary },
+    nearestNote: {
+      fontSize: 11,
+      color: '#666666',
+      textAlign: 'center',
+    },
     headphoneNote: {
       fontSize: 12,
       fontStyle: 'italic',
@@ -241,10 +249,14 @@ export default function PitchMatchingScreen() {
     []
   );
 
+  // Steps to the previous/next frequency in PITCH_FREQUENCIES (the
+  // pre-generated tone list) relative to the current nearest tone.
   const handleFineAdjust = useCallback(
-    (delta: number) => {
+    (direction: -1 | 1) => {
       setHz((prev) => {
-        const newHz = Math.max(MIN_HZ, Math.min(MAX_HZ, Math.round((prev + delta) * 10) / 10));
+        const nearestIndex = PITCH_FREQUENCIES.indexOf(findNearestFrequency(prev));
+        const newIndex = Math.max(0, Math.min(PITCH_FREQUENCIES.length - 1, nearestIndex + direction));
+        const newHz = PITCH_FREQUENCIES[newIndex];
         setSliderValue(hzToSlider(newHz));
         setSaved(false);
         if (Platform.OS !== 'web') {
@@ -299,8 +311,8 @@ export default function PitchMatchingScreen() {
 
         <FrequencyDisplay
           hz={hz}
-          onDecrease={() => handleFineAdjust(-FINE_ADJUST_HZ)}
-          onIncrease={() => handleFineAdjust(FINE_ADJUST_HZ)}
+          onDecrease={() => handleFineAdjust(-1)}
+          onIncrease={() => handleFineAdjust(1)}
         />
 
         <View style={styles.sliderSection}>
