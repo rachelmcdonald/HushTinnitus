@@ -282,6 +282,30 @@ export default function PitchMatchingScreen() {
   }
   // ─── END TEMPORARY ──────────────────────────────────────────────────────────────
 
+  // ─── TEMPORARY: raw bypass test — remove once high-frequency fix is verified ───
+  // Creates a brand-new AudioContext + OscillatorNode directly, with no
+  // PitchMatchEngine, no GainNode, no shared state — isolates whether a
+  // 13kHz ceiling exists in react-native-audio-api itself.
+  async function handleRawTest13kHz() {
+    if (Platform.OS === 'web') return;
+    const api = await import('react-native-audio-api');
+    const ctx = new api.AudioContext({ sampleRate: 48000 });
+    console.log('[RawTest] AudioContext sampleRate:', ctx.sampleRate, '| state:', ctx.state);
+    if (ctx.state === 'suspended') {
+      try { await ctx.resume(); } catch {}
+    }
+    const osc = ctx.createOscillator();
+    osc.type = 'sine';
+    osc.frequency.value = 13000;
+    osc.connect(ctx.destination);
+    osc.start();
+    console.log('[RawTest] Started raw 13kHz oscillator — osc.frequency.value:', osc.frequency.value);
+    setTimeout(() => {
+      try { osc.stop(); } catch {}
+    }, 2000);
+  }
+  // ─── END TEMPORARY ──────────────────────────────────────────────────────────────
+
   function handleSave() {
     updatePreferences({ matchedPitchHz: hz });
     if (isPlaying && Platform.OS !== 'web') {
@@ -347,6 +371,16 @@ export default function PitchMatchingScreen() {
           accessibilityLabel="Play a 13 kilohertz test tone for 2 seconds"
         >
           <Text style={styles.testButtonLabel}>Test 13kHz</Text>
+        </Pressable>
+
+        {/* TEMPORARY: raw bypass test — remove once high-frequency fix is verified */}
+        <Pressable
+          style={({ pressed }) => [styles.testButton, pressed && styles.testButtonPressed]}
+          onPress={handleRawTest13kHz}
+          accessibilityRole="button"
+          accessibilityLabel="Play a raw, unprocessed 13 kilohertz test tone for 2 seconds"
+        >
+          <Text style={styles.testButtonLabel}>Raw 13kHz test</Text>
         </Pressable>
 
         <View style={styles.instructionCard}>
