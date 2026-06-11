@@ -291,15 +291,21 @@ export default function PitchMatchingScreen() {
     const api = await import('react-native-audio-api');
     const ctx = new api.AudioContext({ sampleRate: 48000 });
     console.log('[RawTest] AudioContext sampleRate:', ctx.sampleRate, '| state:', ctx.state);
-    if (ctx.state === 'suspended') {
-      try { await ctx.resume(); } catch {}
-    }
+
+    await ctx.resume();
+    console.log('[RawTest] AudioContext resumed — state:', ctx.state);
+
     const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0.5;
+    osc.connect(gain);
+    gain.connect(ctx.destination);
     osc.type = 'sine';
-    osc.frequency.value = 13000;
-    osc.connect(ctx.destination);
+
     osc.start();
+    osc.frequency.setValueAtTime(13000, ctx.currentTime);
     console.log('[RawTest] Started raw 13kHz oscillator — osc.frequency.value:', osc.frequency.value);
+
     setTimeout(() => {
       try { osc.stop(); } catch {}
     }, 2000);

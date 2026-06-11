@@ -111,6 +111,14 @@ class PitchMatchEngine {
     } else {
       console.log('[PitchMatchEngine] AudioContext sampleRate:', this.ctx.sampleRate, '| state:', this.ctx.state);
     }
+
+    // The context can stay 'suspended' on Android until explicitly resumed —
+    // resume eagerly so it's already 'running' by the time start()/setFrequency()
+    // touch the oscillator.
+    if (this.ctx.state === 'suspended') {
+      try { await this.ctx.resume(); } catch {}
+      console.log('[PitchMatchEngine] AudioContext resumed — state:', this.ctx.state);
+    }
   }
 
   // start() returns void immediately; audio setup runs asynchronously.
@@ -143,13 +151,13 @@ class PitchMatchEngine {
     // 'suspended' state — oscillators can produce no audible output until resumed.
     if (this.ctx.state === 'suspended') {
       try { await this.ctx.resume(); } catch {}
+      console.log('[PitchMatchEngine] AudioContext resumed — state:', this.ctx.state);
     }
 
     this._frequencyHz = Math.max(MIN_HZ, Math.min(MAX_HZ, frequencyHz));
 
     this.osc = this.ctx.createOscillator();
     this.osc.type = 'sine';
-    this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
     this._oscEnded = false;
     this.osc.onended = () => { this._oscEnded = true; };
 
@@ -158,7 +166,12 @@ class PitchMatchEngine {
 
     this.osc.connect(this.gain);
     this.gain.connect(this.ctx.destination);
+
+    // On react-native-audio-api/Android, frequency.value set before start()
+    // is silently ignored (oscillator falls back to its 440Hz default) — the
+    // frequency must be set after start().
     this.osc.start();
+    this.osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
 
     this._isPlaying = true;
   }
@@ -177,10 +190,12 @@ class PitchMatchEngine {
 
     const osc = this.ctx.createOscillator();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
     osc.onended = () => { this._oscEnded = true; };
     osc.connect(this.gain);
+
+    // Frequency must be set after start() — see _doStart for why.
     osc.start();
+    osc.frequency.setValueAtTime(this._frequencyHz, this.ctx.currentTime);
 
     this.osc = osc;
     this._oscEnded = false;
