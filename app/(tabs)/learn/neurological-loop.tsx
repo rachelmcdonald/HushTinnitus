@@ -189,8 +189,8 @@ function LoopDiagram() {
 // ─── Reusable content components ─────────────────────────────────────────────
 
 function BackButton() {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
 
   return (
     <Pressable
@@ -205,8 +205,8 @@ function BackButton() {
 }
 
 function Body({ children }: { children: React.ReactNode }) {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
   return <Text style={styles.body}>{children}</Text>;
 }
 
@@ -217,8 +217,8 @@ function NodeExplanation({
   label: string;
   children: string;
 }) {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
 
   return (
     <View style={styles.nodeRow}>
@@ -233,8 +233,8 @@ function NodeExplanation({
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function NeurologicalLoopScreen() {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -350,6 +350,7 @@ export default function NeurologicalLoopScreen() {
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
   typography: ReturnType<typeof useTheme>['typography'],
+  isDark: boolean,
 ) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
@@ -387,7 +388,7 @@ function makeStyles(
 
     // Highlight card
     highlightCard: {
-      backgroundColor: colors.background,
+      backgroundColor: isDark ? colors.darkCard : colors.background,
       borderRadius: Radius.card,
       padding: Spacing.base,
       gap: Spacing.sm,
