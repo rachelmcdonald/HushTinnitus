@@ -217,7 +217,7 @@ function makeTmrStyles(
       backgroundColor: Colors.calmWave,
       borderColor: Colors.calmWave,
     },
-    pillLabel:       { ...typography.micro, color: Colors.deepTide },
+    pillLabel:       { ...typography.micro, color: '#5DCAA5' },
     pillLabelActive: { color: Colors.white },
   });
 }
