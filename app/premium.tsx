@@ -3,7 +3,7 @@ import {
   ScrollView, View, Text, Pressable, Alert, StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Ellipse, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Radius } from '@/src/theme';
@@ -12,8 +12,6 @@ const DEEP_TIDE = '#0D4F5C';
 const CALM_WAVE = '#5DCAA5';
 const WHITE     = '#FFFFFF';
 const GRAY      = '#666666';
-
-const WAVEFORM  = 'M8 19 Q11 12 14 19 Q17 26 19 19 Q21 14 23 19 Q25 24 27 19 Q29 15 30 19';
 
 const FEATURES = [
   '3-source sound mixer',
@@ -61,21 +59,15 @@ export default function PremiumScreen() {
           <Ionicons name="close" size={24} color={WHITE} />
         </Pressable>
 
-        {/* Logo mark — waveform centred */}
+        {/* Logo mark — drops and ripple icon */}
         <View style={styles.logoWrap}>
-          <Svg
-            width={240}
-            height={80}
-            viewBox="5 10 28 18"
-            accessibilityLabel="Hush Tinnitus waveform logo"
-          >
-            <Path
-              d={WAVEFORM}
-              fill="none"
-              stroke={CALM_WAVE}
-              strokeWidth={1.5}
-              strokeLinecap="round"
-            />
+          <Svg viewBox="0 0 48 48" width={80} height={80} fill="none" accessibilityLabel="Hush Tinnitus logo">
+            <Ellipse cx="24" cy="40" rx="18" ry="5.5" stroke="#5DCAA5" strokeWidth="2" opacity={0.3} fill="none"/>
+            <Ellipse cx="24" cy="40" rx="12" ry="3.5" stroke="#5DCAA5" strokeWidth="2.2" opacity={0.55} fill="none"/>
+            <Ellipse cx="24" cy="40" rx="6" ry="2" stroke="#5DCAA5" strokeWidth="2.5" opacity={0.9} fill="none"/>
+            <Circle cx="24" cy="30" r="4" fill="#5DCAA5"/>
+            <Circle cx="24" cy="20" r="3" fill="#5DCAA5" opacity={0.75}/>
+            <Circle cx="24" cy="12" r="2" fill="#5DCAA5" opacity={0.5}/>
           </Svg>
         </View>
 
@@ -184,6 +176,7 @@ const styles = StyleSheet.create({
   logoWrap: {
     alignItems: 'center',
     marginTop: Spacing.sm,
+    marginBottom: 16,
   },
 
   heading: {
