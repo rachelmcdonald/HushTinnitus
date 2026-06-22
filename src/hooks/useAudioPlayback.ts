@@ -158,7 +158,7 @@ export function useAudioPlayback(): AudioPlaybackState {
   // ─── Toggle play/stop ─────────────────────────────────────────────────────
 
   const toggle = useCallback(
-    (soundId: SoundSource) => {
+    async (soundId: SoundSource) => {
       if (currentSound === soundId && !isPaused) {
         performStop();
         return;
@@ -172,6 +172,9 @@ export function useAudioPlayback(): AudioPlaybackState {
 
       if (currentSound !== null && Platform.OS !== 'web') {
         audioEngine.stop();
+        // Brief gap lets the native audio thread finish tearing down the previous
+        // sound's nodes before new ones are connected, preventing bleed-through.
+        await new Promise<void>(resolve => setTimeout(resolve, 50));
       }
 
       if (Platform.OS !== 'web') {

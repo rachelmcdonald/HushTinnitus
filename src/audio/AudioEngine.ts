@@ -34,6 +34,11 @@ async function loadApi(): Promise<any> {
   return _api;
 }
 
+// ─── Asset URI cache ──────────────────────────────────────────────────────────
+// Populated by preloadAssets() on Sound tab mount. Subsequent plays skip the
+// downloadAsync step and go straight to fetch → decodeAudioData.
+const _assetUriCache = new Map<string, string>();
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const BUFFER_SECONDS = 10;
@@ -120,7 +125,7 @@ class AudioEngine {
       const notch = this.ctx.createBiquadFilter();
       notch.type = 'notch';
       notch.frequency.value = this._notchedFrequencyHz;
-      notch.Q.value = 1.0;
+      notch.Q.value = 25; // Narrow notch per Okamoto et al. 2010 (Q ≈ 20–30)
       gain.connect(notch);
       notch.connect(this.ctx.destination);
       this.notchFilter = notch;
@@ -196,6 +201,28 @@ class AudioEngine {
     if (this._currentSound) this.play(this._currentSound, this._volume);
   }
 
+  // Downloads all file-based sound assets in parallel and caches their local
+  // URIs. Called once on Sound tab mount so subsequent plays skip the download
+  // step and go straight to fetch → decodeAudioData.
+  async preloadAssets(): Promise<void> {
+    if (Platform.OS === 'web') return;
+    const api = await loadApi();
+    if (!api) return;
+    try {
+      const { Asset } = await import('expo-asset');
+      await Promise.all(
+        Object.entries(AudioEngine.NOISE_MODULES).map(async ([id, module]) => {
+          if (_assetUriCache.has(id)) return;
+          const asset = Asset.fromModule(module);
+          await asset.downloadAsync();
+          if (asset.localUri) {
+            _assetUriCache.set(id, asset.localUri);
+          }
+        })
+      );
+    } catch {}
+  }
+
   // ─── Node builders ────────────────────────────────────────────────────────
 
   private buildBufferNodes(soundId: SoundSource, gain: any): void {
@@ -266,13 +293,19 @@ class AudioEngine {
     'stream':      require('@/assets/sounds/stream.mp3'),
     'forest':      require('@/assets/sounds/forest.mp3'),
     'fire':        require('@/assets/sounds/fire.mp3'),
+    'cafe':        require('@/assets/sounds/cafe-ambience.mp3'),
   };
 
   private async buildNoiseFileNodes(soundId: SoundSource, gain: any): Promise<void> {
-    const { Asset } = await import('expo-asset');
-    const asset = Asset.fromModule(AudioEngine.NOISE_MODULES[soundId]);
-    await asset.downloadAsync();
-    const response = await fetch(asset.localUri!);
+    let localUri = _assetUriCache.get(soundId);
+    if (!localUri) {
+      const { Asset } = await import('expo-asset');
+      const asset = Asset.fromModule(AudioEngine.NOISE_MODULES[soundId]);
+      await asset.downloadAsync();
+      localUri = asset.localUri!;
+      _assetUriCache.set(soundId, localUri);
+    }
+    const response = await fetch(localUri);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
     const source = this.ctx.createBufferSource();
@@ -288,10 +321,15 @@ class AudioEngine {
   // via archive.org), decodes via Web Audio API, and plays as a looping buffer.
 
   private async buildCafeFileNodes(gain: any): Promise<void> {
-    const { Asset } = await import('expo-asset');
-    const asset = Asset.fromModule(require('@/assets/sounds/cafe-ambience.mp3'));
-    await asset.downloadAsync();
-    const response = await fetch(asset.localUri!);
+    let localUri = _assetUriCache.get('cafe');
+    if (!localUri) {
+      const { Asset } = await import('expo-asset');
+      const asset = Asset.fromModule(AudioEngine.NOISE_MODULES['cafe']);
+      await asset.downloadAsync();
+      localUri = asset.localUri!;
+      _assetUriCache.set('cafe', localUri);
+    }
+    const response = await fetch(localUri);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
     const source = this.ctx.createBufferSource();

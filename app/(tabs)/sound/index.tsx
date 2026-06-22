@@ -679,6 +679,12 @@ export default function SoundScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
+  // Preload all file-based sound assets in the background on first mount so
+  // the per-play download step is already complete when the user taps a card.
+  useEffect(() => {
+    audioEngine.preloadAssets();
+  }, []);
+
   const {
     currentSound,
     isPlaying,
