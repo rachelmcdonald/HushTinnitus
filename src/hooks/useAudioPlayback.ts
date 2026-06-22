@@ -174,7 +174,7 @@ export function useAudioPlayback(): AudioPlaybackState {
         audioEngine.stop();
         // Brief gap lets the native audio thread finish tearing down the previous
         // sound's nodes before new ones are connected, preventing bleed-through.
-        await new Promise<void>(resolve => setTimeout(resolve, 50));
+        await new Promise<void>(resolve => setTimeout(resolve, 10));
       }
 
       if (Platform.OS !== 'web') {
