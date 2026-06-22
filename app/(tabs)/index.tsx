@@ -420,7 +420,7 @@ function makeStyles(
     },
     snapshotTitle: {
       ...typography.micro,
-      color: colors.deepTide,
+      color: '#5DCAA5',
       marginBottom: Spacing.md,
     },
     snapshotRow: {
@@ -433,7 +433,7 @@ function makeStyles(
     },
     snapshotRowLabel: {
       ...typography.caption,
-      color: colors.deepTide,
+      color: '#5DCAA5',
       fontWeight: '500',
       marginBottom: 2,
     },
