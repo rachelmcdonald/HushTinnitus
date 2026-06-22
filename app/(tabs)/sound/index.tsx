@@ -523,7 +523,7 @@ function makePtStyles(
       borderColor: Colors.softGold + '50',
     },
     lockIcon:     { fontSize: 18 },
-    cardTitle:    { ...typography.heading2, color: colors.textPrimary },
+    cardTitle:    { ...typography.heading2, fontWeight: '600' as const, color: '#1A2B2B', opacity: 1 },
     cardSubtitle: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
     moreLabel:    { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
     btn: {

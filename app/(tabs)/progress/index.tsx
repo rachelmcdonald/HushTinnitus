@@ -655,7 +655,7 @@ function makeStyles(
       borderWidth: Border.width,
       borderColor: Colors.calmWave + '33',
     },
-    statValue: { fontSize: 28, fontWeight: '400', color: Colors.deepTide },
+    statValue: { fontSize: 28, fontWeight: '400', color: '#5DCAA5' },
     statLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
 
     // CREST card
@@ -672,7 +672,7 @@ function makeStyles(
       alignItems: 'flex-end',
       justifyContent: 'space-between',
     },
-    crestScore: { fontSize: 40, fontWeight: '400', color: Colors.deepTide, lineHeight: 44 },
+    crestScore: { fontSize: 40, fontWeight: '400', color: '#5DCAA5', lineHeight: 44 },
     crestScoreOf: { ...typography.caption, color: colors.textSecondary },
     gradeBadge: {
       borderRadius: Radius.chip,
@@ -750,7 +750,7 @@ function makeStyles(
       paddingHorizontal: Spacing.xs,
     },
     crestTrendLabel: { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
-    crestTrendScore: { ...typography.body, color: Colors.deepTide, fontWeight: '500' as const },
+    crestTrendScore: { ...typography.body, color: '#5DCAA5', fontWeight: '500' as const },
     meaningfulNote: {
       flexDirection: 'row',
       alignItems: 'flex-start',

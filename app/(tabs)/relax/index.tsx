@@ -190,7 +190,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
     },
     premiumCardPressed: { opacity: 0.8 },
     lockIcon: { fontSize: 16 },
-    premiumCardTitle: { ...typography.heading2, color: colors.darkText },
+    premiumCardTitle: { ...typography.heading2, fontWeight: '600' as const, color: '#1A2B2B', opacity: 1 },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
     moreCaption: {
