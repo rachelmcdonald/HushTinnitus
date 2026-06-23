@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { View, Text, Image, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,7 +24,15 @@ export default function LaunchScreen() {
     router.replace(preferences?.onboardingComplete ? '/(tabs)' : '/onboarding');
   };
 
-  // All timers stored here so every one can be cleared on unmount.
+  // Hide the native splash screen on the first rendered frame so there is no
+  // white gap between the splash and the launch screen content.
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      SplashScreen.hideAsync().catch(() => {});
+    });
+  }, []);
+
+  // All animation timers stored here so every one can be cleared on unmount.
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   // ── Shared values ──────────────────────────────────────────────────────────
