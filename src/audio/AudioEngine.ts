@@ -266,6 +266,10 @@ class AudioEngine {
     const ctx = this.ctx;
     const { leftHz, rightHz } = binauralFrequencies(soundId);
 
+    console.log(
+      `[AudioEngine] binaural: ${soundId} | left: ${leftHz} Hz | right: ${rightHz} Hz | beat: ${rightHz - leftHz} Hz`
+    );
+
     const leftOsc = ctx.createOscillator();
     leftOsc.type = 'sine';
     leftOsc.frequency.value = leftHz;
@@ -409,8 +413,12 @@ function buildFilter(ctx: any, soundId: SoundSource): any {
 
 function binauralFrequencies(soundId: SoundSource): { leftHz: number; rightHz: number } {
   switch (soundId) {
+    // Alpha (8–12 Hz range): 10 Hz beat, carrier centred ~205 Hz
     case 'binaural-alpha': return { leftHz: 200, rightHz: 210 };
-    case 'binaural-theta': return { leftHz: 200, rightHz: 206 };
+    // Theta (4–8 Hz range): 6 Hz beat, carrier centred ~197 Hz
+    // Left channel uses 194 Hz (not 200 Hz) so the two sounds have distinct
+    // pitches and are perceptible even without headphones.
+    case 'binaural-theta': return { leftHz: 194, rightHz: 200 };
     default:               return { leftHz: 200, rightHz: 210 };
   }
 }
