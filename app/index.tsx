@@ -1,23 +1,9 @@
 import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
-import { usePreferences } from '@/src/context/PreferencesContext';
-import { useTheme } from '@/src/context/ThemeContext';
 
+// Always show the animated launch screen first.
+// launch.tsx reads preferences and navigates to the correct destination
+// (home tab for returning users, onboarding for new users) after the
+// animation completes.
 export default function Index() {
-  const { preferences, isLoading } = usePreferences();
-  const { colors } = useTheme();
-
-  if (isLoading || !preferences) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator color={colors.deepTide} />
-      </View>
-    );
-  }
-
-  if (preferences.onboardingComplete) {
-    return <Redirect href="/(tabs)" />;
-  }
-
-  return <Redirect href="/onboarding" />;
+  return <Redirect href="/launch" />;
 }
