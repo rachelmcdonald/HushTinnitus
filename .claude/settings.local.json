@@ -88,7 +88,9 @@
       "Bash(ffmpeg -f lavfi -i \"sine=frequency=1000:duration=3\" -af \"afade=t=out:st=2.9:d=0.1,volume=0.5\" -ar 48000 -y /Users/Rachel/HushTinnitus/assets/sounds/pitch/1000.mp3)",
       "Bash(awk '{print $9, $5}')",
       "Skill(claude-api)",
-      "Bash(textutil -convert txt -stdout /Users/Rachel/HushTinnitus/hush_tinnitus_handoff.docx)"
+      "Bash(textutil -convert txt -stdout /Users/Rachel/HushTinnitus/hush_tinnitus_handoff.docx)",
+      "Read(//mnt/**)",
+      "Bash(ls -la /mnt/)"
     ]
   }
 }
