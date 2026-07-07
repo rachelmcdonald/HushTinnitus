@@ -13,7 +13,8 @@ import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getDb } from '@/src/storage/database';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -88,11 +89,9 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
           <Text style={gate.backLabel}>← Learn</Text>
         </Pressable>
 
-        {/* Premium badge + header */}
+        {/* Coming soon badge + header */}
         <View style={gate.header}>
-          <View style={gate.badge}>
-            <Text style={gate.badgeText}>Premium feature</Text>
-          </View>
+          <ComingSoonBadge />
           <Text style={gate.title}>CBT Thought Journal</Text>
           <Text style={gate.subtitle}>
             A guided cognitive reframe to help you examine and shift distressing
@@ -104,9 +103,7 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
         {/* Preview (dimmed) */}
         <View style={gate.previewWrapper}>
           <View style={gate.previewOverlay}>
-            <View style={gate.lockPill}>
-              <Text style={gate.lockText}>🔒  Unlock to access</Text>
-            </View>
+            <ComingSoonBadge />
           </View>
           {/* Mockup of Step 1 */}
           <View style={gate.preview} pointerEvents="none">
@@ -153,18 +150,23 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
           </Text>
         </View>
 
-        {/* Unlock button */}
+        {/* Learn more */}
         <Pressable
           style={({ pressed }) => [gate.unlockBtn, pressed && gate.unlockBtnPressed]}
           onPress={() => setModalVisible(true)}
           accessibilityRole="button"
-          accessibilityLabel="Unlock Premium to access the thought journal"
+          accessibilityLabel="Coming soon — tap for details"
         >
-          <Text style={gate.unlockLabel}>Unlock Premium</Text>
+          <Text style={gate.unlockLabel}>Coming soon — tap for details</Text>
         </Pressable>
       </ScrollView>
 
-      <UpgradeModal visible={modalVisible} onClose={() => setModalVisible(false)} />
+      <ComingSoonModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        featureName="Thought Journal"
+        description="A structured CBT-based journaling tool that guides you through identifying a distressing thought about your tinnitus and reframing it using evidence-based cognitive techniques."
+      />
     </SafeAreaView>
   );
 }
@@ -183,14 +185,6 @@ function makeGateStyles(typography: ReturnType<typeof useTheme>['typography']) {
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: Colors.softGold },
     header: { gap: Spacing.md },
-    badge: {
-      alignSelf: 'flex-start',
-      backgroundColor: Colors.softGold,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.md,
-      paddingVertical: Spacing.xs,
-    },
-    badgeText: { ...typography.micro, color: Colors.white },
     title: { ...typography.display, color: Colors.darkText },
     subtitle: { ...typography.body, color: Colors.midGray, lineHeight: 24 },
     // Preview
@@ -202,15 +196,6 @@ function makeGateStyles(typography: ReturnType<typeof useTheme>['typography']) {
       justifyContent: 'center',
       alignItems: 'center',
     },
-    lockPill: {
-      backgroundColor: Colors.warmSand,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.base,
-      paddingVertical: Spacing.sm,
-      borderWidth: 1,
-      borderColor: Colors.softGold,
-    },
-    lockText: { ...typography.heading2, color: Colors.softGold },
     preview: {
       backgroundColor: Colors.warmSand,
       borderRadius: Radius.card,
@@ -259,15 +244,15 @@ function makeGateStyles(typography: ReturnType<typeof useTheme>['typography']) {
     citationText: { ...typography.caption, color: Colors.darkText, lineHeight: 20 },
     citationItalic: { fontStyle: 'italic' },
     citationNote: { ...typography.caption, color: Colors.midGray, lineHeight: 18 },
-    // Unlock button
+    // Learn more button
     unlockBtn: {
-      backgroundColor: Colors.softGold,
+      backgroundColor: Colors.deepTide,
       borderRadius: Radius.chip,
       paddingVertical: Spacing.base,
       alignItems: 'center',
     },
     unlockBtnPressed: { opacity: 0.85 },
-    unlockLabel: { ...typography.heading2, color: Colors.white },
+    unlockLabel: { ...typography.heading2, color: Colors.calmWave },
   });
 }
 

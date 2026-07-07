@@ -14,7 +14,8 @@ import Animated, {
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Timing ───────────────────────────────────────────────────────────────────
@@ -416,6 +417,9 @@ export default function DiaphragmaticScreen() {
         </Pressable>
 
         <View style={styles.header}>
+          <View style={styles.badgeRow}>
+            <ComingSoonBadge />
+          </View>
           <Text style={styles.title}>Diaphragmatic Breathing</Text>
           <Text style={styles.lead}>
             Most people breathe shallowly into their chest without realising
@@ -480,15 +484,20 @@ export default function DiaphragmaticScreen() {
               style={({ pressed }) => [styles.btn, styles.btnUnlock, pressed && styles.btnPressed]}
               onPress={() => setUpgradeVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Unlock Premium to start"
+              accessibilityLabel="Coming soon — tap for details"
             >
-              <Text style={styles.btnLabel}>Unlock Premium</Text>
+              <Text style={styles.btnUnlockLabel}>Coming soon — tap for details</Text>
             </Pressable>
           )}
         </View>
       </ScrollView>
 
-      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+      <ComingSoonModal
+        visible={upgradeVisible}
+        onClose={() => setUpgradeVisible(false)}
+        featureName="Diaphragmatic Breathing"
+        description="A guided practice teaching slow, deep belly breathing with an animated visual guide — shown to reduce stress and calm the nervous system's response to tinnitus."
+      />
     </SafeAreaView>
   );
 }
@@ -510,6 +519,7 @@ function makeStyles(
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: colors.deepTide },
     header: { gap: Spacing.sm },
+    badgeRow: { flexDirection: 'row' },
     title: { ...typography.display, color: colors.textPrimary },
     lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
     section: { gap: Spacing.md },
@@ -550,9 +560,10 @@ function makeStyles(
     },
     btnStart:  { backgroundColor: Colors.deepTide },
     btnStop:   { backgroundColor: Colors.warmCoral },
-    btnUnlock: { backgroundColor: Colors.softGold },
+    btnUnlock: { borderWidth: 1.5, borderColor: Colors.deepTide },
     btnPressed: { opacity: 0.85 },
     btnLabel: { ...typography.heading2, color: Colors.white },
+    btnUnlockLabel: { ...typography.heading2, color: Colors.deepTide },
 
     // ── Practice screen ──
     practiceScreen: {

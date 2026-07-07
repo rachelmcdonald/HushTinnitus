@@ -3,7 +3,8 @@ import { StyleSheet, Text, View, Pressable, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -195,8 +196,11 @@ export default function MindfulnessScreen() {
         </Pressable>
         <View style={styles.introContent}>
           <View style={styles.introHeader}>
+            <View style={styles.introBadgeRow}>
+              <ComingSoonBadge />
+            </View>
             <Text style={styles.introTitle}>Mindfulness Practice</Text>
-            <Text style={styles.introDuration}>5 min · Premium</Text>
+            <Text style={styles.introDuration}>5 min</Text>
           </View>
           <Text style={styles.introBody}>
             A guided session using mindful awareness to support a calmer
@@ -222,13 +226,18 @@ export default function MindfulnessScreen() {
               style={({ pressed }) => [styles.unlockBtn, pressed && styles.btnPressed]}
               onPress={() => setUpgradeVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Unlock Premium"
+              accessibilityLabel="Coming soon — tap for details"
             >
-              <Text style={styles.unlockBtnLabel}>Unlock Premium</Text>
+              <Text style={styles.unlockBtnLabel}>Coming soon — tap for details</Text>
             </Pressable>
           )}
         </View>
-        <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+        <ComingSoonModal
+          visible={upgradeVisible}
+          onClose={() => setUpgradeVisible(false)}
+          featureName="Mindfulness Tinnitus Acceptance"
+          description="A guided mindfulness session specifically designed for tinnitus — learning to acknowledge the sound without judgement, reducing its emotional impact over time."
+        />
       </SafeAreaView>
     );
   }
@@ -337,6 +346,7 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
       gap: Spacing.lg,
     },
     introHeader: { gap: Spacing.xs },
+    introBadgeRow: { flexDirection: 'row' },
     introTitle: { ...typography.display, color: Colors.white },
     introDuration: { ...typography.caption, color: Colors.calmWave },
     introBody: { ...typography.body, color: Colors.white + 'B3', lineHeight: 26 },
@@ -349,13 +359,14 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     },
     beginBtnLabel: { ...typography.heading2, color: Colors.deepTide },
     unlockBtn: {
-      backgroundColor: Colors.softGold,
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
       borderRadius: Radius.chip,
       paddingVertical: Spacing.base,
       alignItems: 'center',
       marginTop: Spacing.md,
     },
-    unlockBtnLabel: { ...typography.heading2, color: Colors.white },
+    unlockBtnLabel: { ...typography.heading2, color: Colors.calmWave },
 
     // ── Done ──────────────────────────────────────────────────────────────────
     doneContent: {

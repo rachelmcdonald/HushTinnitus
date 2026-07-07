@@ -1,17 +1,15 @@
-import { useState, useCallback } from 'react';
 import {
-  ScrollView, View, Text, Pressable, Alert, StyleSheet,
+  ScrollView, View, Text, Pressable, StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Ellipse, Circle } from 'react-native-svg';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Spacing, Radius } from '@/src/theme';
+import { Spacing } from '@/src/theme';
 
 const DEEP_TIDE = '#0D4F5C';
 const CALM_WAVE = '#5DCAA5';
 const WHITE     = '#FFFFFF';
-const GRAY      = '#666666';
 
 const FEATURES = [
   '3-source sound mixer',
@@ -25,24 +23,6 @@ const FEATURES = [
 ];
 
 export default function PremiumScreen() {
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
-
-  const handleSubscribe = useCallback(() => {
-    Alert.alert(
-      'Payment processing coming soon',
-      'In-app purchases will be available in the next update. Thank you for your patience.',
-      [{ text: 'OK' }],
-    );
-  }, []);
-
-  const handleRestore = useCallback(() => {
-    Alert.alert(
-      'Restore purchases',
-      'No previous purchases found on this device.',
-      [{ text: 'OK' }],
-    );
-  }, []);
-
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
@@ -72,9 +52,11 @@ export default function PremiumScreen() {
         </View>
 
         {/* Headings */}
-        <Text style={styles.heading}>Unlock Hush Premium</Text>
+        <Text style={styles.heading}>Coming Soon — Premium Features</Text>
         <Text style={styles.subheading}>
-          Support independent development and unlock the full app
+          We're launching with all core features completely free. Premium
+          features are currently in development and will be available in a
+          future update.
         </Text>
 
         {/* Feature list */}
@@ -87,66 +69,8 @@ export default function PremiumScreen() {
           ))}
         </View>
 
-        {/* Pricing cards */}
-        <View style={styles.plansRow}>
-          {/* Monthly */}
-          <Pressable
-            style={[styles.planCard, selectedPlan === 'monthly' && styles.planCardSelected]}
-            onPress={() => setSelectedPlan('monthly')}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: selectedPlan === 'monthly' }}
-            accessibilityLabel="Monthly plan, AU$8.99 per month"
-          >
-            <Text style={styles.planLabel}>Monthly</Text>
-            <Text style={styles.planPrice}>AU$8.99</Text>
-            <Text style={styles.planPer}>per month</Text>
-          </Pressable>
-
-          {/* Annual — recommended */}
-          <Pressable
-            style={[
-              styles.planCard,
-              styles.planCardAnnual,
-              selectedPlan === 'annual' && styles.planCardSelected,
-            ]}
-            onPress={() => setSelectedPlan('annual')}
-            accessibilityRole="radio"
-            accessibilityState={{ selected: selectedPlan === 'annual' }}
-            accessibilityLabel="Annual plan, AU$59.99 per year, save 44 percent"
-          >
-            <View style={styles.saveBadge}>
-              <Text style={styles.saveBadgeText}>Save 44%</Text>
-            </View>
-            <Text style={styles.planLabel}>Annual</Text>
-            <Text style={styles.planPrice}>AU$59.99</Text>
-            <Text style={styles.planPer}>per year</Text>
-          </Pressable>
-        </View>
-
-        {/* Subscribe */}
-        <Pressable
-          style={({ pressed }) => [styles.subscribeBtn, pressed && styles.subscribeBtnPressed]}
-          onPress={handleSubscribe}
-          accessibilityRole="button"
-          accessibilityLabel="Get Premium"
-        >
-          <Text style={styles.subscribeBtnLabel}>Get Premium</Text>
-        </Pressable>
-
-        {/* Fine print */}
-        <Text style={styles.finePrint}>
-          Cancel anytime · Secure payment · No hidden fees
-        </Text>
-
-        {/* Restore */}
-        <Pressable
-          style={({ pressed }) => [styles.restoreBtn, pressed && styles.restoreBtnPressed]}
-          onPress={handleRestore}
-          accessibilityRole="button"
-          accessibilityLabel="Restore purchases"
-        >
-          <Text style={styles.restoreText}>Restore purchases</Text>
-        </Pressable>
+        {/* Stay tuned — no purchase flow during the free launch period */}
+        <Text style={styles.stayTuned}>Stay tuned for updates</Text>
       </ScrollView>
     </SafeAreaView>
   );
@@ -213,96 +137,11 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
 
-  plansRow: {
-    flexDirection: 'row',
-    gap: 12,
-    alignSelf: 'stretch',
-    paddingTop: 16,      // room for the absolute-positioned badge
-    alignItems: 'flex-end',
-  },
-
-  planCard: {
-    flex: 1,
-    borderRadius: 10,
-    borderWidth: 1.5,
-    borderColor: CALM_WAVE + '50',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  planCardAnnual: {
-    paddingTop: 20,
-    paddingBottom: 18,
-  },
-  planCardSelected: {
-    borderColor: CALM_WAVE,
-    backgroundColor: 'rgba(93,202,165,0.12)',
-  },
-
-  saveBadge: {
-    position: 'absolute',
-    top: -14,
-    alignSelf: 'center',
-    backgroundColor: CALM_WAVE,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 3,
-  },
-  saveBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: DEEP_TIDE,
-  },
-
-  planLabel: {
-    fontSize: 11,
-    color: CALM_WAVE,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  planPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: WHITE,
-    marginTop: 2,
-  },
-  planPer: {
-    fontSize: 11,
-    color: GRAY,
-  },
-
-  subscribeBtn: {
-    alignSelf: 'stretch',
-    backgroundColor: CALM_WAVE,
-    borderRadius: 8,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  subscribeBtnPressed: { opacity: 0.85 },
-  subscribeBtnLabel: {
+  stayTuned: {
     fontSize: 16,
     fontWeight: '500',
-    color: DEEP_TIDE,
-  },
-
-  finePrint: {
-    fontSize: 11,
-    color: GRAY,
+    color: CALM_WAVE,
     textAlign: 'center',
-    marginTop: -8,
-  },
-
-  restoreBtn: {
-    paddingVertical: 8,
-    marginTop: 4,
-  },
-  restoreBtnPressed: { opacity: 0.6 },
-  restoreText: {
-    fontSize: 13,
-    color: GRAY,
-    textAlign: 'center',
+    marginTop: 8,
   },
 });

@@ -19,6 +19,8 @@ import NowPlayingBar from '@/src/components/NowPlayingBar';
 import { isAudioAvailable } from '@/src/audio/AudioEngine';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
 
@@ -466,17 +468,22 @@ const PREMIUM_FEATURES = [
     id: 'mixer',
     title: '3-source mixer',
     subtitle: 'Layer sounds at custom volumes',
+    description:
+      'Blend up to three sounds simultaneously, each with its own volume control — create your perfect personalised soundscape combining noise, nature sounds, and binaural beats.',
   },
   {
     id: 'balance',
     title: 'Per-ear balance',
     subtitle: 'Adjust L/R volume independently',
+    description:
+      'Adjust the left and right volume balance independently, ideal for people whose tinnitus is louder in one ear than the other.',
   },
 ] as const;
 
-function PremiumTeaser({ onGetPremium }: { onGetPremium: () => void }) {
+function PremiumTeaser() {
   const { colors, typography } = useTheme();
   const pt = useMemo(() => makePtStyles(colors, typography), [colors, typography]);
+  const [activeFeature, setActiveFeature] = useState<(typeof PREMIUM_FEATURES)[number] | null>(null);
 
   return (
     <View style={pt.wrapper}>
@@ -486,22 +493,27 @@ function PremiumTeaser({ onGetPremium }: { onGetPremium: () => void }) {
         contentContainerStyle={pt.scroll}
       >
         {PREMIUM_FEATURES.map((f) => (
-          <View key={f.id} style={pt.card}>
-            <Text style={pt.lockIcon}>🔒</Text>
+          <Pressable
+            key={f.id}
+            style={({ pressed }) => [pt.card, pressed && pt.cardPressed]}
+            onPress={() => setActiveFeature(f)}
+            accessibilityRole="button"
+            accessibilityLabel={`${f.title} — coming soon. Tap for details.`}
+          >
+            <ComingSoonBadge />
             <Text style={pt.cardTitle}>{f.title}</Text>
             <Text style={pt.cardSubtitle}>{f.subtitle}</Text>
-          </View>
+          </Pressable>
         ))}
       </ScrollView>
-      <Text style={pt.moreLabel}>...and more with Premium</Text>
-      <Pressable
-        style={({ pressed }) => [pt.btn, pressed && pt.btnPressed]}
-        onPress={onGetPremium}
-        accessibilityRole="button"
-        accessibilityLabel="Get Premium"
-      >
-        <Text style={pt.btnLabel}>Get Premium</Text>
-      </Pressable>
+      <Text style={pt.moreLabel}>...and more coming soon</Text>
+
+      <ComingSoonModal
+        visible={activeFeature !== null}
+        onClose={() => setActiveFeature(null)}
+        featureName={activeFeature?.title ?? ''}
+        description={activeFeature?.description ?? ''}
+      />
     </View>
   );
 }
@@ -514,26 +526,18 @@ function makePtStyles(
     wrapper: { gap: Spacing.md },
     scroll:  { gap: Spacing.md, paddingRight: Spacing.sm },
     card: {
-      backgroundColor: Colors.goldLight,
+      backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
       padding: Spacing.base,
       width: 190,
       gap: Spacing.xs,
       borderWidth: Border.width,
-      borderColor: Colors.softGold + '50',
+      borderColor: Colors.deepTide + '30',
     },
-    lockIcon:     { fontSize: 18 },
-    cardTitle:    { ...typography.heading2, fontWeight: '600' as const, color: '#1A2B2B', opacity: 1 },
+    cardPressed:  { opacity: 0.8 },
+    cardTitle:    { ...typography.heading2, fontWeight: '600' as const, color: colors.textPrimary },
     cardSubtitle: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
     moreLabel:    { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },
-    btn: {
-      backgroundColor: Colors.softGold,
-      borderRadius: 8,
-      paddingVertical: Spacing.base,
-      alignItems: 'center',
-    },
-    btnPressed: { opacity: 0.85 },
-    btnLabel:   { ...typography.heading2, color: Colors.white },
   });
 }
 
@@ -762,8 +766,8 @@ export default function SoundScreen() {
         </View>
 
         <View style={styles.section}>
-          <SectionHeading label="Unlock Premium" />
-          <PremiumTeaser onGetPremium={() => router.push('/premium' as any)} />
+          <SectionHeading label="Coming Soon" />
+          <PremiumTeaser />
         </View>
 
         <View style={styles.section}>

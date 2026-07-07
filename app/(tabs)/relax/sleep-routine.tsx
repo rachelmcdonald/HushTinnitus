@@ -13,10 +13,11 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import { useTheme } from '@/src/context/ThemeContext';
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
@@ -390,7 +391,12 @@ export default function SleepRoutineScreen() {
   if (stage === 'intro') {
     return (
       <SafeAreaView style={styles.safe}>
-        <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+        <ComingSoonModal
+          visible={upgradeVisible}
+          onClose={() => setUpgradeVisible(false)}
+          featureName="Sleep Preparation Routine"
+          description="A combined three-stage bedtime routine — breathing exercise, body scan, and gentle background sound — designed to ease the transition to sleep for tinnitus sufferers."
+        />
         <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -403,9 +409,7 @@ export default function SleepRoutineScreen() {
 
           <View style={styles.introHeader}>
             <View style={styles.introBadgeRow}>
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumBadgeText}>Premium</Text>
-              </View>
+              <ComingSoonBadge />
             </View>
             <Text style={styles.introTitle}>Sleep Preparation</Text>
             <Text style={styles.introDuration}>~10 minutes · 3 stages</Text>
@@ -455,9 +459,9 @@ export default function SleepRoutineScreen() {
               style={({ pressed }) => [styles.unlockBtn, pressed && styles.btnPressed]}
               onPress={() => setUpgradeVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Unlock Premium"
+              accessibilityLabel="Coming soon — tap for details"
             >
-              <Text style={styles.unlockBtnLabel}>Unlock Premium</Text>
+              <Text style={styles.unlockBtnLabel}>Coming soon — tap for details</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -633,15 +637,6 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     },
     introHeader: { gap: Spacing.xs },
     introBadgeRow: { flexDirection: 'row' },
-    premiumBadge: {
-      backgroundColor: Colors.goldLight,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 3,
-      borderWidth: Border.width,
-      borderColor: Colors.softGold,
-    },
-    premiumBadgeText: { ...typography.micro, color: Colors.softGold },
     introTitle: { ...typography.display, color: Colors.white },
     introDuration: { ...typography.caption, color: Colors.calmWave },
     introBody: { ...typography.body, color: Colors.white + 'B3', lineHeight: 26 },
@@ -677,12 +672,13 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     },
     beginBtnLabel: { ...typography.heading2, color: Colors.deepTide },
     unlockBtn: {
-      backgroundColor: Colors.softGold,
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
       borderRadius: Radius.chip,
       paddingVertical: Spacing.base,
       alignItems: 'center',
     },
-    unlockBtnLabel: { ...typography.heading2, color: Colors.white },
+    unlockBtnLabel: { ...typography.heading2, color: Colors.calmWave },
 
     // ── Done ──────────────────────────────────────────────────────────────────
     doneContent: {

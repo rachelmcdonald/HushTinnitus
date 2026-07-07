@@ -12,10 +12,11 @@ import Animated, {
   Easing,
 } from 'react-native-reanimated';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
-import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import { useTheme } from '@/src/context/ThemeContext';
 
 const TOTAL_SECONDS = 600; // 10 min
@@ -192,7 +193,12 @@ export default function GuidedImageryScreen() {
   if (stage === 'intro') {
     return (
       <SafeAreaView style={styles.safe}>
-        <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+        <ComingSoonModal
+          visible={upgradeVisible}
+          onClose={() => setUpgradeVisible(false)}
+          featureName="Guided Imagery"
+          description="A calming visualisation session that guides you through a peaceful natural scene, giving your mind a restorative break from tinnitus awareness."
+        />
         <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
@@ -205,9 +211,7 @@ export default function GuidedImageryScreen() {
 
           <View style={styles.introHeader}>
             <View style={styles.introBadgeRow}>
-              <View style={styles.premiumBadge}>
-                <Text style={styles.premiumBadgeText}>Premium</Text>
-              </View>
+              <ComingSoonBadge />
             </View>
             <Text style={styles.introTitle}>Guided Imagery</Text>
             <Text style={styles.introDuration}>10 minutes · Calm beach</Text>
@@ -253,9 +257,9 @@ export default function GuidedImageryScreen() {
               style={({ pressed }) => [styles.unlockBtn, pressed && styles.btnPressed]}
               onPress={() => setUpgradeVisible(true)}
               accessibilityRole="button"
-              accessibilityLabel="Unlock Premium"
+              accessibilityLabel="Coming soon — tap for details"
             >
-              <Text style={styles.unlockBtnLabel}>Unlock Premium</Text>
+              <Text style={styles.unlockBtnLabel}>Coming soon — tap for details</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -349,15 +353,6 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     },
     introHeader: { gap: Spacing.xs },
     introBadgeRow: { flexDirection: 'row' },
-    premiumBadge: {
-      backgroundColor: Colors.goldLight,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 3,
-      borderWidth: Border.width,
-      borderColor: Colors.softGold,
-    },
-    premiumBadgeText: { ...typography.micro, color: Colors.softGold },
     introTitle: { ...typography.display, color: Colors.white },
     introDuration: { ...typography.caption, color: Colors.calmWave },
     introBody: { ...typography.body, color: Colors.white + 'B3', lineHeight: 26 },
@@ -379,12 +374,13 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     },
     beginBtnLabel: { ...typography.heading2, color: Colors.deepTide },
     unlockBtn: {
-      backgroundColor: Colors.softGold,
+      borderWidth: 1,
+      borderColor: Colors.calmWave,
       borderRadius: Radius.chip,
       paddingVertical: Spacing.base,
       alignItems: 'center',
     },
-    unlockBtnLabel: { ...typography.heading2, color: Colors.white },
+    unlockBtnLabel: { ...typography.heading2, color: Colors.calmWave },
 
     // ── Done ──────────────────────────────────────────────────────────────────
     doneContent: {

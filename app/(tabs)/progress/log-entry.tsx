@@ -9,7 +9,8 @@ import Slider from '@react-native-community/slider';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { saveSymptomLog, updateSymptomLog, getSymptomLogById } from '@/src/storage/symptomLog';
 import { SymptomLog, TriggerTag } from '@/src/types';
-import UpgradeModal from '@/src/components/UpgradeModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -314,11 +315,9 @@ export default function LogEntryScreen() {
                 <Pressable
                   onPress={() => setUpgradeVisible(true)}
                   accessibilityRole="button"
-                  accessibilityLabel="Unlock trigger tagging — Premium feature"
+                  accessibilityLabel="Trigger tagging — coming soon. Tap for details."
                 >
-                  <View style={styles.premiumChip}>
-                    <Text style={styles.premiumChipText}>Premium</Text>
-                  </View>
+                  <ComingSoonBadge />
                 </Pressable>
               )}
             </View>
@@ -357,12 +356,12 @@ export default function LogEntryScreen() {
                 style={styles.triggerLocked}
                 onPress={() => setUpgradeVisible(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Unlock trigger tagging with Premium"
+                accessibilityLabel="Trigger tagging — coming soon. Tap for details."
               >
                 <Text style={styles.triggerLockedText}>
-                  Tag triggers like noise, stress, and sleep quality — available with Premium.
+                  Tag triggers like noise, stress, and sleep quality — coming in a future update.
                 </Text>
-                <Text style={styles.triggerLockedCTA}>Unlock Premium →</Text>
+                <Text style={styles.triggerLockedCTA}>Tap for details →</Text>
               </Pressable>
             )}
           </View>
@@ -396,7 +395,12 @@ export default function LogEntryScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <UpgradeModal visible={upgradeVisible} onClose={() => setUpgradeVisible(false)} />
+      <ComingSoonModal
+        visible={upgradeVisible}
+        onClose={() => setUpgradeVisible(false)}
+        featureName="Trigger Tagging"
+        description="Tag potential triggers (noise, stress, caffeine, alcohol, poor sleep, illness) alongside your daily log entries to identify patterns in what makes your tinnitus worse."
+      />
     </SafeAreaView>
   );
 }
@@ -484,23 +488,16 @@ function makeStyles(
     tagChipSelected: { backgroundColor: Colors.calmWave, borderColor: Colors.calmWave },
     tagChipLabel:         { ...typography.body, color: colors.textSecondary },
     tagChipLabelSelected: { color: Colors.white },
-    premiumChip: {
-      backgroundColor: Colors.softGold,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 2,
-    },
-    premiumChipText: { ...typography.micro, color: Colors.white },
     triggerLocked: {
-      backgroundColor: Colors.goldLight,
+      backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
       padding: Spacing.md,
       gap: Spacing.xs,
       borderWidth: 1,
-      borderColor: Colors.softGold + '50',
+      borderColor: Colors.deepTide + '30',
     },
     triggerLockedText: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
-    triggerLockedCTA:  { ...typography.caption, color: Colors.softGold, fontWeight: '500' as const },
+    triggerLockedCTA:  { ...typography.caption, color: Colors.deepTide, fontWeight: '500' as const },
 
     // Footer
     footer: {

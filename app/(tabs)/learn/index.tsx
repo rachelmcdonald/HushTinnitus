@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 
 // ─── Content catalogue ────────────────────────────────────────────────────────
 
@@ -77,11 +78,7 @@ function GridCard({ item, width }: { item: GridItem; width: number }) {
     >
       <View style={styles.gridCardTop}>
         <Ionicons name={item.icon} size={22} color={colors.headingAccent} />
-        {item.premium && (
-          <View style={styles.premiumBadge}>
-            <Text style={styles.premiumBadgeText}>Premium</Text>
-          </View>
-        )}
+        {item.premium && <ComingSoonBadge />}
       </View>
       <Text style={styles.gridCardTitle}>{item.title}</Text>
       <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
@@ -184,13 +181,6 @@ function makeStyles(
     },
     gridCardTitle: { ...typography.heading2, color: colors.textPrimary },
     gridCardDesc: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
-    premiumBadge: {
-      backgroundColor: colors.goldLight,
-      borderRadius: 4,
-      paddingHorizontal: Spacing.xs,
-      paddingVertical: 2,
-    },
-    premiumBadgeText: { ...typography.micro, fontSize: 9, color: colors.softGold },
 
     // About button
     aboutCard: {

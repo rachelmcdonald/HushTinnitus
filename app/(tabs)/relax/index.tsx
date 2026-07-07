@@ -1,24 +1,51 @@
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-// ─── Premium session catalogue ────────────────────────────────────────────────
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+// ─── Coming soon session catalogue ────────────────────────────────────────────
 
 type PremiumSession = {
   id: string;
   title: string;
   duration: string;
+  description: string;
 };
 
 const PREMIUM_SESSIONS: PremiumSession[] = [
-  { id: 'diaphragmatic', title: 'Diaphragmatic Breathing',        duration: '5–10 min' },
-  { id: 'mindfulness',   title: 'Mindfulness Practice',           duration: '5–10 min' },
-  { id: 'pmr',           title: 'Progressive Muscle Relaxation',  duration: '15 min' },
-  { id: 'body-scan',     title: 'Body Scan Meditation',           duration: '10 min' },
-  { id: 'guided-imagery',title: 'Guided Imagery',                 duration: '10 min' },
-  { id: 'sleep-routine', title: 'Sleep Preparation',              duration: '~10 min' },
+  {
+    id: 'diaphragmatic', title: 'Diaphragmatic Breathing', duration: '5–10 min',
+    description:
+      'A guided practice teaching slow, deep belly breathing with an animated visual guide — shown to reduce stress and calm the nervous system\'s response to tinnitus.',
+  },
+  {
+    id: 'mindfulness', title: 'Mindfulness Practice', duration: '5–10 min',
+    description:
+      'A guided mindfulness session specifically designed for tinnitus — learning to acknowledge the sound without judgement, reducing its emotional impact over time.',
+  },
+  {
+    id: 'pmr', title: 'Progressive Muscle Relaxation', duration: '15 min',
+    description:
+      'A 15-minute guided session that systematically tenses and releases muscle groups from feet to face, deeply releasing physical tension associated with tinnitus distress.',
+  },
+  {
+    id: 'body-scan', title: 'Body Scan Meditation', duration: '10 min',
+    description:
+      'A 10-minute guided awareness practice that gently moves attention through each part of the body, promoting deep relaxation and reducing tinnitus-related hypervigilance.',
+  },
+  {
+    id: 'guided-imagery', title: 'Guided Imagery', duration: '10 min',
+    description:
+      'A calming visualisation session that guides you through a peaceful natural scene, giving your mind a restorative break from tinnitus awareness.',
+  },
+  {
+    id: 'sleep-routine', title: 'Sleep Preparation', duration: '~10 min',
+    description:
+      'A combined three-stage bedtime routine — breathing exercise, body scan, and gentle background sound — designed to ease the transition to sleep for tinnitus sufferers.',
+  },
 ];
 
 // ─── Screen ───────────────────────────────────────────────────────────────────
@@ -26,6 +53,7 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
 export default function RelaxScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const [activeSession, setActiveSession] = useState<PremiumSession | null>(null);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -80,9 +108,9 @@ export default function RelaxScreen() {
           </View>
         </Pressable>
 
-        {/* Premium section */}
+        {/* Coming soon section */}
         <View style={styles.premiumSection}>
-          <Text style={styles.sectionLabel}>Unlock with Premium</Text>
+          <Text style={styles.sectionLabel}>Coming soon</Text>
 
           <ScrollView
             horizontal
@@ -93,30 +121,27 @@ export default function RelaxScreen() {
               <Pressable
                 key={item.id}
                 style={({ pressed }) => [styles.premiumCard, pressed && styles.premiumCardPressed]}
-                onPress={() => router.push('/premium' as any)}
+                onPress={() => setActiveSession(item)}
                 accessibilityRole="button"
-                accessibilityLabel={`${item.title} — Premium`}
+                accessibilityLabel={`${item.title} — coming soon. Tap for details.`}
               >
-                <Text style={styles.lockIcon}>🔒</Text>
+                <ComingSoonBadge />
                 <Text style={styles.premiumCardTitle} numberOfLines={2}>{item.title}</Text>
                 <Text style={styles.premiumCardDuration}>{item.duration}</Text>
               </Pressable>
             ))}
           </ScrollView>
 
-          <Text style={styles.moreCaption}>…and more with Premium</Text>
-
-          <Pressable
-            style={({ pressed }) => [styles.getPremiumBtn, pressed && styles.getPremiumBtnPressed]}
-            onPress={() => router.push('/premium' as any)}
-            accessibilityRole="button"
-            accessibilityLabel="Get Premium"
-          >
-            <Text style={styles.getPremiumLabel}>Get Premium</Text>
-          </Pressable>
+          <Text style={styles.moreCaption}>…and more coming soon</Text>
         </View>
       </ScrollView>
 
+      <ComingSoonModal
+        visible={activeSession !== null}
+        onClose={() => setActiveSession(null)}
+        featureName={activeSession?.title ?? ''}
+        description={activeSession?.description ?? ''}
+      />
     </SafeAreaView>
   );
 }
@@ -181,16 +206,15 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
     premiumCard: {
       width: 160,
       height: 100,
-      backgroundColor: colors.goldLight,
+      backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
       borderWidth: 1,
-      borderColor: colors.softGold + '60',
+      borderColor: colors.deepTide + '30',
       padding: Spacing.md,
       justifyContent: 'space-between',
     },
     premiumCardPressed: { opacity: 0.8 },
-    lockIcon: { fontSize: 16 },
-    premiumCardTitle: { ...typography.heading2, fontWeight: '600' as const, color: '#1A2B2B', opacity: 1 },
+    premiumCardTitle: { ...typography.heading2, fontWeight: '600' as const, color: colors.textPrimary },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
     moreCaption: {
@@ -199,15 +223,5 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       textAlign: 'center',
       paddingHorizontal: Spacing.xl,
     },
-
-    getPremiumBtn: {
-      marginHorizontal: Spacing.xl,
-      backgroundColor: colors.softGold,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.base,
-      alignItems: 'center',
-    },
-    getPremiumBtnPressed: { opacity: 0.85 },
-    getPremiumLabel: { ...typography.heading2, color: colors.white },
   });
 }

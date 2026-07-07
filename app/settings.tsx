@@ -16,6 +16,8 @@ import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
+import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import type { UserPreferences } from '@/src/types';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -463,6 +465,7 @@ export default function SettingsScreen() {
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
+  const [exportComingSoonVisible, setExportComingSoonVisible] = useState(false);
   const [notifApplying, setNotifApplying] = useState(false);
   const [notifUnavailable, setNotifUnavailable] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -753,12 +756,9 @@ export default function SettingsScreen() {
           ) : (
             <View style={styles.exportGate}>
               <View style={styles.exportGateTop}>
-                <Text style={styles.exportGateLockIcon}>🔒</Text>
                 <View style={styles.exportGateLabel}>
                   <Text style={styles.exportGateTitle}>Export my data</Text>
-                  <View style={styles.exportGateBadge}>
-                    <Text style={styles.exportGateBadgeText}>Premium feature</Text>
-                  </View>
+                  <ComingSoonBadge />
                 </View>
               </View>
               <Text style={styles.exportGateDesc}>
@@ -767,11 +767,11 @@ export default function SettingsScreen() {
               </Text>
               <Pressable
                 style={({ pressed }) => [styles.exportGateBtn, pressed && styles.exportGateBtnPressed]}
-                onPress={() => router.push('/premium' as any)}
+                onPress={() => setExportComingSoonVisible(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Get Premium"
+                accessibilityLabel="Coming soon — tap for details"
               >
-                <Text style={styles.exportGateBtnLabel}>Get Premium</Text>
+                <Text style={styles.exportGateBtnLabel}>Coming soon — tap for details</Text>
               </Pressable>
             </View>
           )}
@@ -781,6 +781,13 @@ export default function SettingsScreen() {
       <DisclaimerModal
         visible={disclaimerVisible}
         onClose={() => setDisclaimerVisible(false)}
+      />
+
+      <ComingSoonModal
+        visible={exportComingSoonVisible}
+        onClose={() => setExportComingSoonVisible(false)}
+        featureName="Export My Data"
+        description="Export all your personal app data as a structured text file — your symptom logs, CREST scores, and session history — for your own records or to share with a healthcare professional."
       />
     </SafeAreaView>
   );
@@ -884,36 +891,28 @@ function makeStyles(
     exportBtnDisabled: { opacity: 0.6 },
     exportBtnLabel:    { fontSize: 13, fontWeight: '500', color: Colors.white },
 
-    // Export — Premium gate card
+    // Export — coming soon gate card
     exportGate: {
-      backgroundColor: Colors.goldLight,
+      backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
       padding: Spacing.base,
       gap: Spacing.sm,
       borderWidth: Border.width,
-      borderColor: Colors.softGold + '50',
+      borderColor: Colors.deepTide + '30',
     },
     exportGateTop:      { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
-    exportGateLockIcon: { fontSize: 18 },
     exportGateLabel:    { flex: 1, gap: 4 },
     exportGateTitle:    { fontSize: 14, fontWeight: '500', color: colors.textPrimary },
-    exportGateBadge: {
-      alignSelf: 'flex-start',
-      backgroundColor: Colors.softGold,
-      borderRadius: Radius.chip,
-      paddingHorizontal: Spacing.sm,
-      paddingVertical: 2,
-    },
-    exportGateBadgeText: { fontSize: 10, fontWeight: '500', color: Colors.white },
     exportGateDesc:      { fontSize: 12, color: colors.textSecondary, lineHeight: 18 },
     exportGateBtn: {
-      backgroundColor: Colors.softGold,
+      borderWidth: 1.5,
+      borderColor: Colors.deepTide,
       borderRadius: Radius.chip,
       paddingVertical: Spacing.sm,
       alignItems: 'center',
     },
     exportGateBtnPressed: { opacity: 0.85 },
-    exportGateBtnLabel:   { fontSize: 13, fontWeight: '500', color: Colors.white },
+    exportGateBtnLabel:   { fontSize: 13, fontWeight: '500', color: Colors.deepTide },
 
     // Preview card
     previewCard: {

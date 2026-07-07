@@ -447,7 +447,11 @@ export default function ProgressScreen() {
 
         {/* ── 30-day symptom chart (Premium) ────────────────────────────────── */}
         <SectionLabel label="30-DAY TREND" />
-        <PremiumGate isPremium={isPremium} featureName="30-day symptom trend">
+        <PremiumGate
+          isPremium={isPremium}
+          featureName="Progress Dashboard"
+          description="A longitudinal chart showing your loudness and distress scores over time, helping you see your progress at a glance."
+        >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>Loudness &amp; distress</Text>
             {chartData.loudness.length >= 2 ? (
@@ -481,7 +485,11 @@ export default function ProgressScreen() {
 
         {/* ── CREST trend (Premium) ─────────────────────────────────────────── */}
         <SectionLabel label="CREST PROGRESS" />
-        <PremiumGate isPremium={isPremium} featureName="CREST trend chart">
+        <PremiumGate
+          isPremium={isPremium}
+          featureName="TFI Trend Chart"
+          description="A visual timeline of your CREST scores at baseline, week 4, and week 8 — showing whether your tinnitus impact is improving over time."
+        >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>CREST score over time</Text>
             {assessments.length >= 2 ? (
@@ -523,7 +531,11 @@ export default function ProgressScreen() {
 
         {/* ── Trigger patterns (Premium) ────────────────────────────────────── */}
         <SectionLabel label="TRIGGER PATTERNS" />
-        <PremiumGate isPremium={isPremium} featureName="Trigger pattern analysis">
+        <PremiumGate
+          isPremium={isPremium}
+          featureName="Trigger Pattern Analysis"
+          description="Analyses your logged triggers to show which ones correlate most strongly with higher distress scores on your personal data."
+        >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>Average distress by trigger</Text>
             {triggerStats.length > 0 ? (
@@ -557,7 +569,11 @@ export default function ProgressScreen() {
 
         {/* ── Clinician PDF export (Premium) ────────────────────────────────── */}
         <SectionLabel label="EXPORT" />
-        <PremiumGate isPremium={isPremium} featureName="Clinician PDF export">
+        <PremiumGate
+          isPremium={isPremium}
+          featureName="Clinician PDF Export"
+          description="Generate a formatted report of your symptom history, CREST scores, and session data — ready to share with your audiologist or GP."
+        >
           <View style={styles.exportCard}>
             <Text style={styles.exportTitle}>Clinician report</Text>
             <Text style={styles.exportBody}>
