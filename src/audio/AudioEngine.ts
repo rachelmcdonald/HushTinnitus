@@ -127,7 +127,8 @@ class AudioEngine {
       const notch = this.ctx.createBiquadFilter();
       notch.type = 'notch';
       notch.frequency.value = this._notchedFrequencyHz;
-      notch.Q.value = 25; // Narrow notch per Okamoto et al. 2010 (Q ≈ 20–30)
+      notch.Q.value = 1.4; // One-octave wide notch per Okamoto et al. 2010
+      notch.gain.value = -40; // Deep attenuation so the notch is perceptible
       gain.connect(notch);
       notch.connect(this.ctx.destination);
       this.notchFilter = notch;
