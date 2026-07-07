@@ -20,6 +20,7 @@ One or more of the following applies to my situation:
 • My tinnitus pulses or beats in time with my heartbeat
 • I can only hear the tinnitus in one ear
 • I have noticed a change in my hearing alongside the tinnitus
+• I have episodes of rotational vertigo (a spinning sensation) alongside my tinnitus
 
 I would welcome a hearing assessment and, if appropriate, a referral to an audiologist or ENT specialist for further evaluation.
 
@@ -75,6 +76,16 @@ const CONDITIONS: Condition[] = [
       'A combined sudden change in hearing and tinnitus is worth a prompt assessment. An audiologist or ENT specialist can determine the nature and extent of any hearing change and discuss the options available.',
     recommendedAction:
       'See your GP promptly — ideally within a few days — and describe both the tinnitus and the hearing change together.',
+  },
+  {
+    id: 'rotational-vertigo',
+    heading: 'Rotational Vertigo',
+    description:
+      'Rotational vertigo — a strong sensation that you or the room around you is spinning — can sometimes occur alongside tinnitus.',
+    whyItMatters:
+      'When vertigo and tinnitus appear together, particularly if the vertigo comes in episodes lasting minutes to hours, this combination can be associated with conditions affecting the inner ear that are worth discussing with a GP or ENT specialist.',
+    recommendedAction:
+      'If you experience sudden or severe rotational vertigo alongside your tinnitus, it is worth seeking a professional assessment.',
   },
 ];
 
