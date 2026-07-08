@@ -3,7 +3,7 @@ import {
   StyleSheet, Text, View, Pressable, ScrollView,
   FlatList, useWindowDimensions,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
@@ -22,6 +22,11 @@ import { useTheme } from '@/src/context/ThemeContext';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
+
+// Approximate rendered height of NowPlayingBar's content (excluding the safe
+// area inset, which is added separately) — used to keep scroll content clear
+// of the bar when it's overlaid at the bottom of the screen.
+const NOW_PLAYING_BAR_HEIGHT = 70;
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
 
@@ -724,6 +729,7 @@ function makeNtStyles(typography: ReturnType<typeof useTheme>['typography']) {
 export default function SoundScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const insets = useSafeAreaInsets();
 
   // Preload all file-based sound assets in the background on first mount so
   // the per-play download step is already complete when the user taps a card.
@@ -769,11 +775,21 @@ export default function SoundScreen() {
     cardWidth,
   };
 
+  const isNowPlayingVisible = isPlaying && !!currentSound;
+
   return (
-    <SafeAreaView style={styles.safe}>
+    // 'bottom' edge intentionally excluded — NowPlayingBar is absolutely
+    // positioned at the true bottom of this container and accounts for the
+    // safe-area inset itself, so double-insetting here would recreate the gap.
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <ScrollWithIndicator
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          isNowPlayingVisible && {
+            paddingBottom: NOW_PLAYING_BAR_HEIGHT + insets.bottom,
+          },
+        ]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.title}>Sound</Text>

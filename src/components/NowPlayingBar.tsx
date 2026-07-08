@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SoundSource } from '@/src/types';
 import { soundDisplayName } from '@/src/hooks/useAudioPlayback';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
@@ -34,12 +35,19 @@ export default function NowPlayingBar({
 }: Props) {
   const { typography } = useTheme();
   const styles = useMemo(() => makeStyles(typography), [typography]);
+  const insets = useSafeAreaInsets();
 
   const isFading = timeRemaining !== null && timeRemaining > 0 && timeRemaining <= 10;
   const name = soundDisplayName(currentSound);
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        styles.positioned,
+        { paddingBottom: Spacing.base + insets.bottom },
+      ]}
+    >
       {/* Top row: indicator + name + pause + stop */}
       <View style={styles.topRow}>
         <View style={styles.nameRow}>
@@ -128,6 +136,16 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
       gap: Spacing.sm,
       borderTopWidth: Border.width,
       borderTopColor: Colors.calmWave + '30',
+    },
+    // Anchored to the literal bottom of the screen (flush above the tab bar,
+    // which handles its own safe-area positioning) — the bar accounts for the
+    // bottom inset itself via paddingBottom rather than relying on a parent
+    // SafeAreaView, which would double up the inset and leave a gap.
+    positioned: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
     },
 
     // Top row
