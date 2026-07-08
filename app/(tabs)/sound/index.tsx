@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
-  FlatList, useWindowDimensions,
+  FlatList, useWindowDimensions, LayoutAnimation,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
@@ -602,6 +603,12 @@ type NotchedCardProps = {
 function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProps) {
   const { typography } = useTheme();
   const nt = useMemo(() => makeNtStyles(typography), [typography]);
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  function toggleExpanded() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setIsExpanded((prev) => !prev);
+  }
 
   return (
     <View style={nt.card}>
@@ -640,27 +647,47 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
         </View>
       ) : (
         <>
-          <Text style={nt.body}>
-            Notched sound therapy works by removing a narrow band of frequencies
-            centred on your personal tinnitus pitch from any sound you play. This
-            is based on a process called lateral inhibition — when the auditory
-            system processes sound with a frequency "notch", the brain regions
-            surrounding your tinnitus frequency become more active, which over
-            time may gradually reduce the hyperactivity associated with tinnitus
-            perception.
-          </Text>
-          <Text style={nt.body}>
-            To use this feature, first use the pitch matching tool above to
-            identify and save your tinnitus frequency. When notched therapy is
-            enabled, a precise filter is applied to all sounds played in the app,
-            centred on your saved frequency.
-          </Text>
-          <Text style={nt.body}>
-            This is an experimental supplementary approach based on research by
-            Okamoto et al. (2010). Results vary between individuals and it is
-            intended for use alongside — not as a replacement for — professional
-            audiological care.
-          </Text>
+          <Pressable
+            style={nt.infoRow}
+            onPress={toggleExpanded}
+            accessibilityRole="button"
+            accessibilityLabel="What is notched sound therapy?"
+            accessibilityState={{ expanded: isExpanded }}
+          >
+            <Text style={nt.infoRowLabel}>What is notched sound therapy?</Text>
+            <Ionicons
+              name={isExpanded ? 'chevron-up' : 'chevron-down'}
+              size={16}
+              color={Colors.calmWave}
+            />
+          </Pressable>
+
+          {isExpanded && (
+            <View style={nt.infoBody}>
+              <Text style={nt.body}>
+                Notched sound therapy works by removing a narrow band of frequencies
+                centred on your personal tinnitus pitch from any sound you play. This
+                is based on a process called lateral inhibition — when the auditory
+                system processes sound with a frequency "notch", the brain regions
+                surrounding your tinnitus frequency become more active, which over
+                time may gradually reduce the hyperactivity associated with tinnitus
+                perception.
+              </Text>
+              <Text style={nt.body}>
+                To use this feature, first use the pitch matching tool above to
+                identify and save your tinnitus frequency. When notched therapy is
+                enabled, a precise filter is applied to all sounds played in the app,
+                centred on your saved frequency.
+              </Text>
+              <Text style={nt.body}>
+                This is an experimental supplementary approach based on research by
+                Okamoto et al. (2010). Results vary between individuals and it is
+                intended for use alongside — not as a replacement for — professional
+                audiological care.
+              </Text>
+            </View>
+          )}
+
           {isActive && (
             <View style={nt.activeBadge}>
               <Text style={nt.activeBadgeText}>
@@ -704,7 +731,14 @@ function makeNtStyles(typography: ReturnType<typeof useTheme>['typography']) {
     togglePressed:     { opacity: 0.7 },
     toggleLabel:       { ...typography.micro, color: Colors.white },
     toggleLabelActive: { color: Colors.deepTide },
-    body:              { ...typography.body, color: Colors.calmWave + 'CC', lineHeight: 22 },
+    infoRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    infoRowLabel: { fontSize: 13, color: Colors.calmWave },
+    infoBody: { paddingTop: 12, paddingBottom: 0, gap: Spacing.sm },
+    body: { fontSize: 13, color: Colors.calmWave + 'CC', lineHeight: 20.8 },
     requiredNotice: {
       backgroundColor: Colors.white + '10',
       borderRadius: Radius.chip,
