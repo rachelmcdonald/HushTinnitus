@@ -4,7 +4,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 import {
-  StyleSheet, Text, View, Pressable, ScrollView,
+  StyleSheet, Text, View, Pressable,
   Switch, Alert, Platform, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -18,6 +18,7 @@ import { getDb } from '@/src/storage/database';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 import type { UserPreferences } from '@/src/types';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -557,7 +558,7 @@ export default function SettingsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -776,7 +777,7 @@ export default function SettingsScreen() {
             </View>
           )}
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
 
       <DisclaimerModal
         visible={disclaimerVisible}

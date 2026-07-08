@@ -1,11 +1,12 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { StyleSheet, Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Content catalogue ────────────────────────────────────────────────────────
 
@@ -114,7 +115,7 @@ export default function LearnScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -137,7 +138,7 @@ export default function LearnScreen() {
           Content here is for educational purposes. It is not a substitute for advice
           from a qualified healthcare professional.
         </Text>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Linking, Alert } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Linking, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Citation data ────────────────────────────────────────────────────────────
 
@@ -219,7 +220,7 @@ export default function EvidenceCitationsScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -252,7 +253,7 @@ export default function EvidenceCitationsScreen() {
             healthcare professional for clinical assessment.
           </Text>
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

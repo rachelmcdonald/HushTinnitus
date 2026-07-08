@@ -21,6 +21,7 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Sound catalogue ──────────────────────────────────────────────────────────
 
@@ -770,7 +771,7 @@ export default function SoundScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -822,7 +823,7 @@ export default function SoundScreen() {
         </View>
 
         <View style={styles.bottomSpacer} />
-      </ScrollView>
+      </ScrollWithIndicator>
 
       {isPlaying && currentSound && (
         <NowPlayingBar

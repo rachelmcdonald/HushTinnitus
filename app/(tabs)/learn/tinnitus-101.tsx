@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Reusable content components ─────────────────────────────────────────────
 
@@ -80,7 +81,7 @@ export default function Tinnitus101Screen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -211,7 +212,7 @@ export default function Tinnitus101Screen() {
             or ENT specialist. This content does not constitute medical advice.
           </Text>
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

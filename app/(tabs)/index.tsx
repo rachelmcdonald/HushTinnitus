@@ -11,6 +11,7 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import Svg, { Path, Ellipse, Circle } from 'react-native-svg';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 import { getTodayLogs } from '@/src/storage/symptomLog';
 import { getRecentSessions } from '@/src/storage/soundSessions';
 import { getPreferences } from '@/src/storage/preferences';
@@ -206,7 +207,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView
+    <ScrollWithIndicator
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
@@ -337,7 +338,7 @@ export default function HomeScreen() {
       )}
 
       <View style={styles.bottomSpacer} />
-    </ScrollView>
+    </ScrollWithIndicator>
   );
 }
 

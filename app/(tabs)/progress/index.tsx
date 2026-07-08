@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from 'react';
 import {
-  StyleSheet, Text, View, Pressable, ScrollView,
+  StyleSheet, Text, View, Pressable,
   Platform, Alert, useWindowDimensions, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { CRESTAssessment, SymptomLog } from '@/src/types';
 import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import PremiumGate from '@/src/components/PremiumGate';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Severity helpers ─────────────────────────────────────────────────────────
 
@@ -324,7 +325,7 @@ export default function ProgressScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -603,7 +604,7 @@ export default function ProgressScreen() {
         <Text style={styles.footerDisclaimer}>
           All data is stored privately on this device. Nothing is shared without your consent.
         </Text>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { G, Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
 import { Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Loop diagram ─────────────────────────────────────────────────────────────
 //
@@ -238,7 +239,7 @@ export default function NeurologicalLoopScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -340,7 +341,7 @@ export default function NeurologicalLoopScreen() {
             for advice from a qualified healthcare professional.
           </Text>
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

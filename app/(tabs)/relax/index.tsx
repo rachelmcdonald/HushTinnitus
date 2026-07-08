@@ -6,6 +6,7 @@ import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 // ─── Coming soon session catalogue ────────────────────────────────────────────
 
 type PremiumSession = {
@@ -57,7 +58,7 @@ export default function RelaxScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -134,7 +135,7 @@ export default function RelaxScreen() {
 
           <Text style={styles.moreCaption}>…and more coming soon</Text>
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
 
       <ComingSoonModal
         visible={activeSession !== null}

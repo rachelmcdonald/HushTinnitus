@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 const MICHAEL_PHOTO = require('@/assets/images/michael.jpg');
 const RACHEL_PHOTO = require('@/assets/images/rachel.jpg');
@@ -38,7 +39,7 @@ export default function AboutScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -161,7 +162,7 @@ export default function AboutScreen() {
             only in one ear, seek medical advice promptly.
           </Text>
         </View>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }

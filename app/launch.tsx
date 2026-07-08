@@ -282,13 +282,16 @@ const styles = StyleSheet.create({
     lineHeight: 56,
   },
 
-  // "tinnitus"
+  // "tinnitus" — centred under "hush" only, not "hush." (the trailing full
+  // stop widens the row it shares with "hush", so shift left by roughly half
+  // the full stop's advance width at fontSize 48 to correct for it).
   tinnitusText: {
     fontSize: 18,
     fontWeight: '300',
     color: TEAL,
     letterSpacing: 4,
     marginTop: 4,
+    marginLeft: -8,
     textAlign: 'center',
   },
 

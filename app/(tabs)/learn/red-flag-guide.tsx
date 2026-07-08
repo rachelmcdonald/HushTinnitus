@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, Alert, Platform } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Referral text ────────────────────────────────────────────────────────────
 //
@@ -164,7 +165,7 @@ export default function RedFlagGuideScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView
+      <ScrollWithIndicator
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
@@ -247,7 +248,7 @@ export default function RedFlagGuideScreen() {
           This guide reflects general information based on current clinical
           guidelines. It is not a substitute for professional medical advice.
         </Text>
-      </ScrollView>
+      </ScrollWithIndicator>
     </SafeAreaView>
   );
 }
