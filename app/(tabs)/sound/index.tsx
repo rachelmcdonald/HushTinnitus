@@ -588,7 +588,7 @@ function makePmStyles(typography: ReturnType<typeof useTheme>['typography']) {
 // ─── Notched therapy card (tool, not sound) ───────────────────────────────────
 
 type NotchedCardProps = {
-  frequencyHz: number;
+  frequencyHz: number | null;
   isActive: boolean;
   onToggle: () => void;
 };
@@ -601,35 +601,68 @@ function NotchedTherapyCard({ frequencyHz, isActive, onToggle }: NotchedCardProp
     <View style={nt.card}>
       <View style={nt.headerRow}>
         <View style={nt.titleBlock}>
-          <Text style={nt.title}>Notched sound therapy</Text>
-          <Text style={nt.frequency}>Notch at {formatHz(frequencyHz)}</Text>
+          <Text style={nt.title}>Notched Sound Therapy</Text>
+          {frequencyHz !== null && (
+            <Text style={nt.frequency}>Notch at {formatHz(frequencyHz)}</Text>
+          )}
         </View>
-        <Pressable
-          style={({ pressed }) => [
-            nt.toggle,
-            isActive && nt.toggleActive,
-            pressed && nt.togglePressed,
-          ]}
-          onPress={onToggle}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: isActive }}
-          accessibilityLabel={`Notched therapy ${isActive ? 'on' : 'off'}`}
-        >
-          <Text style={[nt.toggleLabel, isActive && nt.toggleLabelActive]}>
-            {isActive ? 'On' : 'Off'}
-          </Text>
-        </Pressable>
+        {frequencyHz !== null && (
+          <Pressable
+            style={({ pressed }) => [
+              nt.toggle,
+              isActive && nt.toggleActive,
+              pressed && nt.togglePressed,
+            ]}
+            onPress={onToggle}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: isActive }}
+            accessibilityLabel={`Notched therapy ${isActive ? 'on' : 'off'}`}
+          >
+            <Text style={[nt.toggleLabel, isActive && nt.toggleLabelActive]}>
+              {isActive ? 'On' : 'Off'}
+            </Text>
+          </Pressable>
+        )}
       </View>
-      <Text style={nt.body}>
-        Listening to sound with a narrow notch removed at your tinnitus frequency
-        may reduce auditory cortex activity at that frequency over time.
-      </Text>
-      {isActive && (
-        <View style={nt.activeBadge}>
-          <Text style={nt.activeBadgeText}>
-            Notch filter active — sounds play with a notch at {formatHz(frequencyHz)}
+
+      {frequencyHz === null ? (
+        <View style={nt.requiredNotice}>
+          <Text style={nt.requiredText}>
+            Pitch matching required — use the pitch matching tool above to find
+            and save your tinnitus frequency before enabling notched therapy.
           </Text>
         </View>
+      ) : (
+        <>
+          <Text style={nt.body}>
+            Notched sound therapy works by removing a narrow band of frequencies
+            centred on your personal tinnitus pitch from any sound you play. This
+            is based on a process called lateral inhibition — when the auditory
+            system processes sound with a frequency "notch", the brain regions
+            surrounding your tinnitus frequency become more active, which over
+            time may gradually reduce the hyperactivity associated with tinnitus
+            perception.
+          </Text>
+          <Text style={nt.body}>
+            To use this feature, first use the pitch matching tool above to
+            identify and save your tinnitus frequency. When notched therapy is
+            enabled, a precise filter is applied to all sounds played in the app,
+            centred on your saved frequency.
+          </Text>
+          <Text style={nt.body}>
+            This is an experimental supplementary approach based on research by
+            Okamoto et al. (2010). Results vary between individuals and it is
+            intended for use alongside — not as a replacement for — professional
+            audiological care.
+          </Text>
+          {isActive && (
+            <View style={nt.activeBadge}>
+              <Text style={nt.activeBadgeText}>
+                Notch filter active — sounds play with a notch at {formatHz(frequencyHz)}
+              </Text>
+            </View>
+          )}
+        </>
       )}
     </View>
   );
@@ -666,6 +699,14 @@ function makeNtStyles(typography: ReturnType<typeof useTheme>['typography']) {
     toggleLabel:       { ...typography.micro, color: Colors.white },
     toggleLabelActive: { color: Colors.deepTide },
     body:              { ...typography.body, color: Colors.calmWave + 'CC', lineHeight: 22 },
+    requiredNotice: {
+      backgroundColor: Colors.white + '10',
+      borderRadius: Radius.chip,
+      padding: Spacing.sm,
+      borderLeftWidth: 3,
+      borderLeftColor: Colors.white + '40',
+    },
+    requiredText: { ...typography.caption, color: Colors.calmWave, lineHeight: 18 },
     activeBadge: {
       backgroundColor: Colors.calmWave + '22',
       borderRadius: Radius.chip,
@@ -773,13 +814,11 @@ export default function SoundScreen() {
         <View style={styles.section}>
           <SectionHeading label="Pitch matching & therapy" />
           <PitchMatchingEntry savedHz={savedPitchHz} />
-          {savedPitchHz !== null && (
-            <NotchedTherapyCard
-              frequencyHz={savedPitchHz}
-              isActive={notchedActive}
-              onToggle={handleNotchedToggle}
-            />
-          )}
+          <NotchedTherapyCard
+            frequencyHz={savedPitchHz}
+            isActive={notchedActive}
+            onToggle={handleNotchedToggle}
+          />
         </View>
 
         <View style={styles.bottomSpacer} />
