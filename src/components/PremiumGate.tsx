@@ -1,8 +1,9 @@
-// Wraps any feature that isn't built yet. Content is visible (soft-dimmed) with
-// a "Coming Soon" badge. Tapping opens a modal explaining what the feature will do.
+// Wraps any feature that isn't built yet. Renders as a small "Coming Soon"
+// card — same visual style as the Relax tab's coming-soon cards — instead of
+// the real content. Tapping opens a modal explaining what the feature will do.
 import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
-import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { StyleSheet, Text, Pressable } from 'react-native';
+import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
@@ -26,21 +27,14 @@ export default function PremiumGate({ isPremium, featureName, description, child
   return (
     <>
       <Pressable
-        style={styles.container}
+        style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
         onPress={() => setModalVisible(true)}
         accessibilityRole="button"
         accessibilityLabel={`${featureName} — coming soon. Tap for details.`}
       >
-        {/* Dimmed content preview */}
-        <View style={styles.preview} pointerEvents="none">
-          {children}
-        </View>
-
-        {/* Coming soon overlay */}
-        <View style={styles.overlay}>
-          <ComingSoonBadge />
-          <Text style={styles.hint}>Tap for details</Text>
-        </View>
+        <ComingSoonBadge />
+        <Text style={styles.title}>{featureName}</Text>
+        <Text style={styles.description} numberOfLines={2}>{description}</Text>
       </Pressable>
 
       <ComingSoonModal
@@ -53,27 +47,29 @@ export default function PremiumGate({ isPremium, featureName, description, child
   );
 }
 
+// Matches app/(tabs)/relax/index.tsx's premiumCard/premiumCardTitle/
+// premiumCardDuration styling exactly, for a consistent Coming Soon look
+// across tabs.
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
   typography: ReturnType<typeof useTheme>['typography'],
 ) {
   return StyleSheet.create({
-    container: {
+    card: {
+      backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.card,
-      overflow: 'hidden',
-      borderWidth: Border.width * 2,
-      borderColor: Colors.deepTide + '30',
-    },
-    preview: {
-      opacity: 0.35,
-    },
-    overlay: {
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: colors.surface + 'E6',
-      justifyContent: 'center',
-      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.deepTide + '30',
+      padding: Spacing.md,
       gap: Spacing.xs,
     },
-    hint: { ...typography.caption, color: colors.textSecondary },
+    cardPressed: { opacity: 0.8 },
+    title: {
+      ...typography.heading2,
+      fontSize: typography.heading2.fontSize - 2,
+      fontWeight: '600' as const,
+      color: colors.textPrimary,
+    },
+    description: { ...typography.caption, color: colors.textSecondary },
   });
 }
