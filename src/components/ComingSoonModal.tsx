@@ -52,7 +52,7 @@ export default function ComingSoonModal({
             <View style={styles.note}>
               <Text style={styles.noteText}>
                 This feature is currently in development and will be available in a
-                future update — completely free during our launch period.
+                future update.
               </Text>
             </View>
 
