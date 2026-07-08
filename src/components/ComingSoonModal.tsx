@@ -1,6 +1,7 @@
 // Replaces the old paywall UpgradeModal. The app launches fully free — this
 // modal explains what a not-yet-built feature will do, it never sells anything.
 import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
+import { router } from 'expo-router';
 import { Colors, Spacing, Radius } from '@/src/theme';
 
 type Props = {
@@ -8,9 +9,24 @@ type Props = {
   onClose: () => void;
   featureName: string;
   description: string;
+  // Optional route to an already-built session/feature screen. When set, the
+  // modal offers a way to preview that real content ahead of the feature's
+  // official (paid) launch — used only where the underlying screen exists.
+  previewRoute?: string;
 };
 
-export default function ComingSoonModal({ visible, onClose, featureName, description }: Props) {
+export default function ComingSoonModal({
+  visible,
+  onClose,
+  featureName,
+  description,
+  previewRoute,
+}: Props) {
+  function handlePreview() {
+    onClose();
+    if (previewRoute) router.push(previewRoute as any);
+  }
+
   return (
     <Modal
       visible={visible}
@@ -39,6 +55,16 @@ export default function ComingSoonModal({ visible, onClose, featureName, descrip
                 future update — completely free during our launch period.
               </Text>
             </View>
+
+            {previewRoute && (
+              <Pressable
+                onPress={handlePreview}
+                accessibilityRole="button"
+                accessibilityLabel="Preview this feature"
+              >
+                <Text style={styles.previewLink}>Preview this feature →</Text>
+              </Pressable>
+            )}
 
             <Pressable
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
@@ -93,6 +119,12 @@ const styles = StyleSheet.create({
     padding: Spacing.md,
   },
   noteText: { fontSize: 12, fontWeight: '400', lineHeight: 18, color: Colors.midGray },
+  previewLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.calmWave,
+    textAlign: 'center',
+  },
   closeBtn: {
     borderWidth: 1.5,
     borderColor: Colors.deepTide,

@@ -95,7 +95,8 @@
       "Bash(command -v chromium-cli)",
       "Bash(npx --no-install playwright --version)",
       "Bash(timeout 90 npx --yes playwright@1.48 install --with-deps chromium)",
-      "Bash(npx --yes playwright@1.48 install chromium)"
+      "Bash(npx --yes playwright@1.48 install chromium)",
+      "Bash(grep -n \"sectionHeading}>\\\\|</View>\\\\s*$\\\\|<View style={styles.section}>\" /Users/Rachel/HushTinnitus/app/settings.tsx)"
     ]
   }
 }

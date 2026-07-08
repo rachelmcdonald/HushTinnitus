@@ -777,6 +777,19 @@ export default function SettingsScreen() {
             </View>
           )}
         </View>
+
+        {/* ── About ──────────────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Pressable
+            style={({ pressed }) => [styles.navRow, pressed && styles.navRowPressed]}
+            onPress={() => router.push('/premium' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Premium Features"
+          >
+            <Text style={styles.rowTitle}>Premium Features</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.calmWave} />
+          </Pressable>
+        </View>
       </ScrollWithIndicator>
 
       <DisclaimerModal
@@ -838,6 +851,12 @@ function makeStyles(
 
     // Rows
     row:       { gap: Spacing.sm },
+    navRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    navRowPressed: { opacity: 0.6 },
     switchRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',

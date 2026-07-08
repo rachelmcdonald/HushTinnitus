@@ -142,6 +142,7 @@ export default function RelaxScreen() {
         onClose={() => setActiveSession(null)}
         featureName={activeSession?.title ?? ''}
         description={activeSession?.description ?? ''}
+        previewRoute={activeSession ? `/relax/${activeSession.id}` : undefined}
       />
     </SafeAreaView>
   );
