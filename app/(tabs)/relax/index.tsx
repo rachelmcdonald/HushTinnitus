@@ -213,10 +213,16 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       borderWidth: 1,
       borderColor: colors.deepTide + '30',
       padding: Spacing.md,
+      paddingBottom: Spacing.md + 10,
       justifyContent: 'space-between',
     },
     premiumCardPressed: { opacity: 0.8 },
-    premiumCardTitle: { ...typography.heading2, fontWeight: '600' as const, color: colors.textPrimary },
+    premiumCardTitle: {
+      ...typography.heading2,
+      fontSize: typography.heading2.fontSize - 2,
+      fontWeight: '600' as const,
+      color: colors.textPrimary,
+    },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
     moreCaption: {
