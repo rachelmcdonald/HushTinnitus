@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useRef, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -168,6 +168,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const scrollRef = useRef<ScrollView>(null);
 
   const dailyMessage = useMemo(() => getDailyMessage(), []);
 
@@ -198,6 +199,13 @@ export default function HomeScreen() {
     }, [])
   );
 
+  // Reset scroll position every time the Home tab comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
+
   const goToLogEntry = () => {
     if (todayEntry) {
       router.push({ pathname: '/(tabs)/progress/log-entry', params: { existingId: todayEntry.id } });
@@ -208,6 +216,7 @@ export default function HomeScreen() {
 
   return (
     <ScrollWithIndicator
+      ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}

@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -55,10 +55,19 @@ export default function RelaxScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [activeSession, setActiveSession] = useState<PremiumSession | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll position every time the Relax tab comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

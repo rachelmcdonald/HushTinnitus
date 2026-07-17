@@ -1,6 +1,6 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import {
-  StyleSheet, Text, View, Pressable,
+  StyleSheet, Text, View, Pressable, ScrollView,
   Platform, Alert, useWindowDimensions, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -286,6 +286,14 @@ export default function ProgressScreen() {
   const [sessionStats, setSessionStats] = useState<SessionStats>({ totalSessions: 0, totalMinutes: 0 });
   const [todayEntry, setTodayEntry] = useState<SymptomLog | null>(null);
   const [exportLoading, setExportLoading] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll position every time the Progress tab comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -326,6 +334,7 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

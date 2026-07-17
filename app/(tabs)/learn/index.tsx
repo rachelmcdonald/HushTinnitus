@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, useWindowDimensions } from 'react-native';
-import { router } from 'expo-router';
+import { useRef, useCallback, useMemo } from 'react';
+import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing, Radius } from '@/src/theme';
@@ -112,10 +112,19 @@ export default function LearnScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const cardWidth = (width - Spacing.xl * 2 - Spacing.sm) / 2;
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll position every time the Learn tab comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   FlatList, useWindowDimensions, LayoutAnimation,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
   useSharedValue, useAnimatedStyle, withRepeat, withSequence,
@@ -764,6 +764,14 @@ export default function SoundScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const insets = useSafeAreaInsets();
+  const scrollRef = useRef<ScrollView>(null);
+
+  // Reset scroll position every time the Sound tab comes into focus.
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   // Preload all file-based sound assets in the background on first mount so
   // the per-play download step is already complete when the user taps a card.
@@ -817,6 +825,7 @@ export default function SoundScreen() {
     // safe-area inset itself, so double-insetting here would recreate the gap.
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <ScrollWithIndicator
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[
           styles.scrollContent,
