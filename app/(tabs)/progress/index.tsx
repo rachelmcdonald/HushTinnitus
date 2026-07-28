@@ -338,6 +338,21 @@ export default function ProgressScreen() {
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >
+        {/* TEMPORARY — remove after testing the new Continue/Confirm CREST flow */}
+        <Pressable
+          style={({ pressed }) => [styles.devRetestBtn, pressed && styles.devRetestBtnPressed]}
+          onPress={() =>
+            router.push({
+              pathname: '/progress/crest-retest' as any,
+              params: { weekNumber: '4' },
+            })
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Developer test button: retake CREST"
+        >
+          <Text style={styles.devRetestBtnLabel}>DEV: Retake CREST</Text>
+        </Pressable>
+
         <View style={styles.header}>
           <Text style={styles.title}>Progress</Text>
           <Text style={styles.subtitle}>
@@ -633,6 +648,18 @@ function makeStyles(
       paddingBottom: Spacing.xl,
       gap: Spacing.md,
     },
+    // TEMPORARY — dev-only test button, remove after CREST Continue/Confirm testing
+    devRetestBtn: {
+      alignSelf: 'flex-start',
+      borderWidth: 1.5,
+      borderColor: '#D32F2F',
+      borderRadius: Radius.chip,
+      paddingHorizontal: Spacing.md,
+      paddingVertical: Spacing.xs,
+    },
+    devRetestBtnPressed: { opacity: 0.6 },
+    devRetestBtnLabel: { ...typography.micro, color: '#D32F2F', fontWeight: '700' as const },
+
     header: { gap: Spacing.xs, marginBottom: Spacing.sm },
     title:    { ...typography.display, color: colors.textPrimary },
     subtitle: { ...typography.body, color: colors.textSecondary },
