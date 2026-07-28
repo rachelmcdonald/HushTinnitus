@@ -20,8 +20,7 @@ import NowPlayingBar from '@/src/components/NowPlayingBar';
 import { isAudioAvailable } from '@/src/audio/AudioEngine';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
-import ComingSoonModal from '@/src/components/ComingSoonModal';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // Approximate rendered height of NowPlayingBar's content (excluding the safe
@@ -505,9 +504,14 @@ function PremiumTeaser() {
             style={({ pressed }) => [pt.card, pressed && pt.cardPressed]}
             onPress={() => setActiveFeature(f)}
             accessibilityRole="button"
-            accessibilityLabel={`${f.title} — coming soon. Tap for details.`}
+            accessibilityLabel={`${f.title} — premium feature. Tap for details.`}
           >
-            <ComingSoonBadge />
+            <Ionicons
+              name="lock-closed"
+              size={18}
+              color={Colors.softGold}
+              style={pt.lockIcon}
+            />
             <Text style={pt.cardTitle}>{f.title}</Text>
             <Text style={pt.cardSubtitle}>{f.subtitle}</Text>
           </Pressable>
@@ -515,7 +519,7 @@ function PremiumTeaser() {
       </ScrollView>
       <Text style={pt.moreLabel}>...and more coming soon</Text>
 
-      <ComingSoonModal
+      <PremiumFeatureModal
         visible={activeFeature !== null}
         onClose={() => setActiveFeature(null)}
         featureName={activeFeature?.title ?? ''}
@@ -542,6 +546,11 @@ function makePtStyles(
       borderColor: Colors.deepTide + '30',
     },
     cardPressed:  { opacity: 0.8 },
+    lockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+    },
     cardTitle:    { ...typography.heading2, fontWeight: '600' as const, color: colors.textPrimary },
     cardSubtitle: { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
     moreLabel:    { ...typography.caption, color: colors.textSecondary, textAlign: 'center' },

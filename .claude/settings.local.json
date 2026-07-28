@@ -99,7 +99,8 @@
       "Bash(grep -n \"sectionHeading}>\\\\|</View>\\\\s*$\\\\|<View style={styles.section}>\" /Users/Rachel/HushTinnitus/app/settings.tsx)",
       "WebFetch(domain:docs.expo.dev)",
       "WebFetch(domain:reactnavigation.org)",
-      "Bash(echo \"exit code: $?\")"
+      "Bash(echo \"exit code: $?\")",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }
