@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { Colors, Spacing, Radius } from '@/src/theme';
@@ -168,6 +168,13 @@ export default function PMRScreen() {
   const elapsedRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
   const isKeepAwakeActive = useRef(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   function safeDeactivate() {
     if (!isKeepAwakeActive.current) return;
@@ -249,7 +256,7 @@ export default function PMRScreen() {
           featureName="Progressive Muscle Relaxation"
           description="A 15-minute guided session that systematically tenses and releases muscle groups from feet to face, deeply releasing physical tension associated with tinnitus distress."
         />
-        <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
             onPress={() => router.back()}

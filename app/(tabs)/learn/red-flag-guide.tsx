@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Alert, Platform } from 'react-native';
-import { router } from 'expo-router';
+import { useState, useMemo, useRef, useCallback } from 'react';
+import { StyleSheet, Text, View, Pressable, Alert, Platform, ScrollView } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
@@ -152,6 +152,13 @@ export default function RedFlagGuideScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [copied, setCopied] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   async function handleCopyReferral() {
     try {
@@ -166,6 +173,7 @@ export default function RedFlagGuideScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

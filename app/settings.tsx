@@ -2,12 +2,12 @@
 // These are loaded dynamically inside handlers to avoid native-module crashes
 // in environments where they are unavailable (Expo Go SDK 54+).
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import {
   StyleSheet, Text, View, Pressable,
-  Switch, Alert, Platform, ActivityIndicator,
+  Switch, Alert, Platform, ActivityIndicator, ScrollView,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { Ionicons } from '@expo/vector-icons';
@@ -471,6 +471,14 @@ export default function SettingsScreen() {
   const [notifUnavailable, setNotifUnavailable] = useState(false);
   const [exporting, setExporting] = useState(false);
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
+
   const darkMode          = preferences?.darkMode ?? 'system';
   const textSize          = preferences?.textSize ?? 'medium';
   const notificationsOn   = preferences?.notificationsEnabled ?? false;
@@ -559,6 +567,7 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

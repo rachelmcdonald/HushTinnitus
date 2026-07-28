@@ -1,6 +1,6 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Linking, Alert } from 'react-native';
-import { router } from 'expo-router';
+import { useMemo, useRef, useCallback } from 'react';
+import { StyleSheet, Text, View, Pressable, Linking, Alert, ScrollView } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -215,12 +215,20 @@ function GroupSection({ group }: { group: CitationGroup }) {
 export default function EvidenceCitationsScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   const total = CITATION_GROUPS.reduce((n, g) => n + g.citations.length, 0);
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

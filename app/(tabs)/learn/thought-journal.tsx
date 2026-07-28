@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getDb } from '@/src/storage/database';
 import { usePreferences } from '@/src/context/PreferencesContext';
@@ -76,10 +76,17 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
   const { typography } = useTheme();
   const gate = useMemo(() => makeGateStyles(typography), [typography]);
   const [modalVisible, setModalVisible] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
 
   return (
     <SafeAreaView style={gate.safe}>
-      <ScrollView contentContainerStyle={gate.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView ref={scrollRef} contentContainerStyle={gate.scroll} showsVerticalScrollIndicator={false}>
         {/* Back */}
         <Pressable
           style={({ pressed }) => [gate.backBtn, pressed && gate.backBtnPressed]}
@@ -316,6 +323,14 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
   const [step, setStep] = useState(1);
   const [done, setDone] = useState(false);
 
+  const scrollRef = useRef<ScrollView>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      scrollRef.current?.scrollTo({ y: 0, animated: false });
+    }, [])
+  );
+
   // Step state
   const [originalThought, setOriginalThought] = useState('');
   const [emotion, setEmotion] = useState<Emotion | null>(null);
@@ -344,7 +359,7 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
   if (done) {
     return (
       <SafeAreaView style={flow.safe}>
-        <ScrollView contentContainerStyle={flow.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scrollRef} contentContainerStyle={flow.scroll} showsVerticalScrollIndicator={false}>
           <View style={flow.completionHeader}>
             <View style={flow.completionBadge}>
               <Text style={flow.completionBadgeText}>Entry saved</Text>
@@ -540,6 +555,7 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
 
         {/* Step content */}
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={flow.scroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
