@@ -29,6 +29,16 @@ export default function PremiumFeatureModal({
     >
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.card} onPress={() => {}} accessibilityViewIsModal>
+          <Pressable
+            style={styles.closeIcon}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="close" size={22} color={Colors.softGold} />
+          </Pressable>
+
           <View style={styles.headerRow}>
             <Ionicons name="lock-closed" size={16} color={Colors.softGold} />
             <Text style={styles.headerText}>Premium Feature</Text>
@@ -38,13 +48,15 @@ export default function PremiumFeatureModal({
           <Text style={styles.description}>{description}</Text>
 
           <Pressable
-            style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
-            onPress={onClose}
+            disabled={true}
+            style={styles.subscribeBtn}
             accessibilityRole="button"
-            accessibilityLabel="Close"
+            accessibilityLabel="Subscribe — coming soon"
+            accessibilityState={{ disabled: true }}
           >
-            <Text style={styles.closeBtnLabel}>Close</Text>
+            <Text style={styles.subscribeBtnLabel}>Subscribe</Text>
           </Pressable>
+          <Text style={styles.comingSoonCaption}>Coming Soon</Text>
         </Pressable>
       </Pressable>
     </Modal>
@@ -93,17 +105,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-  closeBtn: {
-    backgroundColor: Colors.softGold,
+  closeIcon: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    zIndex: 1,
+  },
+  subscribeBtn: {
+    backgroundColor: 'rgba(196, 154, 106, 0.6)',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 4,
   },
-  closeBtnPressed: { opacity: 0.85 },
-  closeBtnLabel: {
+  subscribeBtnLabel: {
     fontSize: 15,
     fontWeight: '600',
     color: Colors.deepTide,
+  },
+  comingSoonCaption: {
+    marginTop: 8,
+    fontSize: 11,
+    fontStyle: 'italic',
+    color: Colors.calmWave,
+    textAlign: 'center',
   },
 });
