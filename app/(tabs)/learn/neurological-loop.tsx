@@ -1,6 +1,6 @@
-import { useMemo, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, Pressable, Dimensions, ScrollView } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { G, Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
 import { Spacing, Radius, Border } from '@/src/theme';
@@ -242,18 +242,10 @@ function NodeExplanation({
 export default function NeurologicalLoopScreen() {
   const { colors, typography, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
-        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

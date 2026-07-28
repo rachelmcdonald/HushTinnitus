@@ -1,6 +1,6 @@
-import { useMemo, useRef, useCallback } from 'react';
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -139,18 +139,10 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
 export default function NoiseExposureScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
-        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

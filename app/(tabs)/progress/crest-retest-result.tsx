@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView, Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { CRESTAssessment } from '@/src/types';
 import { getAssessmentById, getAllAssessments } from '@/src/storage/crest';
 import { severityLabel, MEANINGFUL_CHANGE_THRESHOLD, isMeaningfulImprovement } from '@/src/utils/crestScoring';
@@ -143,14 +143,6 @@ export default function CRESTRetestResultScreen() {
   const [assessment, setAssessment] = useState<CRESTAssessment | null>(null);
   const [baseline, setBaseline] = useState<CRESTAssessment | null>(null);
 
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
-
   useEffect(() => {
     if (Platform.OS === 'web' || !params.assessmentId) return;
     const current = getAssessmentById(params.assessmentId);
@@ -185,7 +177,7 @@ export default function CRESTRetestResultScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.weekRow}>
           <View style={styles.weekBadge}>
             <Text style={styles.weekBadgeText}>Week {weekNumber} retest complete</Text>

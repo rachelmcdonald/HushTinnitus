@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -99,13 +99,6 @@ export default function BodyScanScreen() {
   const elapsedRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
   const isKeepAwakeActive = useRef(false);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   function safeDeactivate() {
     if (!isKeepAwakeActive.current) return;
@@ -217,7 +210,7 @@ export default function BodyScanScreen() {
           featureName="Body Scan Meditation"
           description="A 10-minute guided awareness practice that gently moves attention through each part of the body, promoting deep relaxation and reducing tinnitus-related hypervigilance."
         />
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
             onPress={() => {

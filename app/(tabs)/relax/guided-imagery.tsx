@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -92,13 +92,6 @@ export default function GuidedImageryScreen() {
   const elapsedRef = useRef(0);
   const sessionStartRef = useRef<number | null>(null);
   const isKeepAwakeActive = useRef(false);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   function safeDeactivate() {
     if (!isKeepAwakeActive.current) return;
@@ -210,7 +203,7 @@ export default function GuidedImageryScreen() {
           featureName="Guided Imagery"
           description="A calming visualisation session that guides you through a peaceful natural scene, giving your mind a restorative break from tinnitus awareness."
         />
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
             onPress={() => {

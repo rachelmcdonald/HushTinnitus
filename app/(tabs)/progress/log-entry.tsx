@@ -1,10 +1,10 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
   TextInput, KeyboardAvoidingView, Platform, Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, useLocalSearchParams, useFocusEffect } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import Slider from '@react-native-community/slider';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { saveSymptomLog, updateSymptomLog, getSymptomLogById } from '@/src/storage/symptomLog';
@@ -121,14 +121,6 @@ export default function LogEntryScreen() {
   const [upgradeVisible, setUpgradeVisible] = useState(false);
   const [saved, setSaved] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
-
   useEffect(() => {
     if (!existingId || Platform.OS === 'web') return;
     const existing = getSymptomLogById(existingId);
@@ -172,7 +164,7 @@ export default function LogEntryScreen() {
   if (saved) {
     return (
       <SafeAreaView style={styles.safe}>
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <View style={styles.savedHeader}>
             <View style={styles.savedBadge}>
               <Text style={styles.savedBadgeText}>{isEditing ? 'Entry updated' : 'Entry saved'}</Text>
@@ -253,7 +245,6 @@ export default function LogEntryScreen() {
         </View>
 
         <ScrollView
-          ref={scrollRef}
           contentContainerStyle={styles.scroll}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"

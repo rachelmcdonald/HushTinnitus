@@ -1,6 +1,6 @@
-import { useMemo, useRef, useCallback } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { useMemo } from 'react';
+import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -84,18 +84,10 @@ function CitationCard() {
 export default function Tinnitus101Screen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
-        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
       >

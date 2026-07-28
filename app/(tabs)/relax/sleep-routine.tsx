@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, Platform } from 'react-native';
-import { router, useFocusEffect } from 'expo-router';
+import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -187,13 +187,6 @@ export default function SleepRoutineScreen() {
   const sessionSavedRef = useRef(false);
   const prevBoxPhaseRef = useRef<string>('');
   const isKeepAwakeActive = useRef(false);
-  const scrollRef = useRef<ScrollView>(null);
-
-  useFocusEffect(
-    useCallback(() => {
-      scrollRef.current?.scrollTo({ y: 0, animated: false });
-    }, [])
-  );
 
   function safeDeactivate() {
     if (!isKeepAwakeActive.current) return;
@@ -408,7 +401,7 @@ export default function SleepRoutineScreen() {
           featureName="Sleep Preparation Routine"
           description="A combined three-stage bedtime routine — breathing exercise, body scan, and gentle background sound — designed to ease the transition to sleep for tinnitus sufferers."
         />
-        <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
             onPress={() => {

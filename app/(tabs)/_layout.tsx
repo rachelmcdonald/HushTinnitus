@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Tabs, router } from 'expo-router';
+import { CommonActions } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme';
@@ -8,6 +9,36 @@ import { useTheme } from '@/src/context/ThemeContext';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 
 const TAB_HEIGHT = 60;
+
+// Every tab whose screen is itself a nested Stack (sound, relax, learn,
+// progress) keeps that stack's navigation state when you switch away and
+// back — so returning to a tab shows whatever sub-screen you last drilled
+// into, not the tab's index. This listener pops that nested stack back to
+// its root every time the tab is pressed, whether it was already active or
+// not. `route.state` is undefined for tabs with no nested stack (Home), so
+// it's a no-op there — safe to attach to every tab uniformly.
+function resetTabOnPress({ navigation, route }: any) {
+  return {
+    tabPress: (e: any) => {
+      e.preventDefault();
+      navigation.navigate(route.name);
+
+      const state = route.state as
+        | { index: number; key: string; routes: { name: string }[] }
+        | undefined;
+
+      if (state && state.index > 0) {
+        navigation.dispatch({
+          ...CommonActions.reset({
+            index: 0,
+            routes: [{ name: state.routes[0].name }],
+          }),
+          target: state.key,
+        });
+      }
+    },
+  };
+}
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -62,6 +93,7 @@ export default function TabLayout() {
       >
         <Tabs.Screen
           name="index"
+          listeners={resetTabOnPress}
           options={{
             title: 'Home',
             ...sharedHeaderOptions,
@@ -86,6 +118,7 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="sound"
+          listeners={resetTabOnPress}
           options={{
             title: 'Sound',
             ...sharedHeaderOptions,
@@ -97,6 +130,7 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="relax"
+          listeners={resetTabOnPress}
           options={{
             title: 'Relax',
             ...sharedHeaderOptions,
@@ -108,6 +142,7 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="learn"
+          listeners={resetTabOnPress}
           options={{
             title: 'Learn',
             ...sharedHeaderOptions,
@@ -119,6 +154,7 @@ export default function TabLayout() {
         />
         <Tabs.Screen
           name="progress"
+          listeners={resetTabOnPress}
           options={{
             title: 'Track',
             ...sharedHeaderOptions,

@@ -96,7 +96,9 @@
       "Bash(npx --no-install playwright --version)",
       "Bash(timeout 90 npx --yes playwright@1.48 install --with-deps chromium)",
       "Bash(npx --yes playwright@1.48 install chromium)",
-      "Bash(grep -n \"sectionHeading}>\\\\|</View>\\\\s*$\\\\|<View style={styles.section}>\" /Users/Rachel/HushTinnitus/app/settings.tsx)"
+      "Bash(grep -n \"sectionHeading}>\\\\|</View>\\\\s*$\\\\|<View style={styles.section}>\" /Users/Rachel/HushTinnitus/app/settings.tsx)",
+      "WebFetch(domain:docs.expo.dev)",
+      "WebFetch(domain:reactnavigation.org)"
     ]
   }
 }
