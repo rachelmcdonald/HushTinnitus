@@ -185,7 +185,14 @@ export default function Breathing478Screen() {
         {/* Back */}
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-          onPress={() => { if (isRunning) handleStop(); router.back(); }}
+          onPress={() => {
+            if (isRunning) handleStop();
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Back to Relax"
         >

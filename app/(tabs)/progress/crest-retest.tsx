@@ -108,7 +108,11 @@ export default function CRESTRetestScreen() {
 
   function handleBack() {
     if (currentIndex === 0) {
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
     } else {
       setCurrentIndex(currentIndex - 1);
     }

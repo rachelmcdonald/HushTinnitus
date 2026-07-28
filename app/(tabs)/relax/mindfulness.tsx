@@ -167,7 +167,11 @@ export default function MindfulnessScreen() {
       saveSession(dur);
       sessionStartRef.current = null;
     }
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
   }
 
   useEffect(() => {
@@ -188,7 +192,13 @@ export default function MindfulnessScreen() {
       <SafeAreaView style={styles.safe}>
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Back to Relax"
         >
@@ -257,7 +267,13 @@ export default function MindfulnessScreen() {
           </Text>
           <Pressable
             style={({ pressed }) => [styles.doneBtn, pressed && styles.btnPressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Done"
           >

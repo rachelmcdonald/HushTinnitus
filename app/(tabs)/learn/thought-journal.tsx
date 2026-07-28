@@ -757,7 +757,13 @@ export default function ThoughtJournalScreen() {
   const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
 
-  const handleBack = () => router.back();
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
 
   if (!isPremium) {
     return <PremiumGate onBack={handleBack} />;

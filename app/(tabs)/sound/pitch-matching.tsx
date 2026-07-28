@@ -29,7 +29,13 @@ function BackButton() {
   return (
     <Pressable
       style={({ pressed }) => [back.button, pressed && back.pressed]}
-      onPress={() => router.back()}
+      onPress={() => {
+        if (router.canGoBack()) {
+          router.back();
+        } else {
+          router.replace('/(tabs)');
+        }
+      }}
       accessibilityRole="button"
       accessibilityLabel="Back to Sound"
     >

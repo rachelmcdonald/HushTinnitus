@@ -365,7 +365,11 @@ export default function SleepRoutineScreen() {
       saveSession(elapsed);
       sessionSavedRef.current = true;
     }
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
   }
 
   // ── Stage 3 actions ────────────────────────────────────────────────────────
@@ -407,7 +411,13 @@ export default function SleepRoutineScreen() {
         <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Back to Relax"
           >
@@ -492,7 +502,13 @@ export default function SleepRoutineScreen() {
           </Text>
           <Pressable
             style={({ pressed }) => [styles.doneBtn, pressed && styles.btnPressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Done"
           >

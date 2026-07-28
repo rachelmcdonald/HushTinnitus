@@ -42,7 +42,13 @@ export default function PremiumScreen() {
         {/* Close */}
         <Pressable
           style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Close"
         >

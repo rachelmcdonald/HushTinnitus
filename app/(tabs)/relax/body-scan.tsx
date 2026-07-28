@@ -188,7 +188,11 @@ export default function BodyScanScreen() {
       saveSession(dur);
       sessionStartRef.current = null;
     }
-    router.back();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
   }
 
   useEffect(() => {
@@ -216,7 +220,13 @@ export default function BodyScanScreen() {
         <ScrollView ref={scrollRef} contentContainerStyle={styles.introScroll} showsVerticalScrollIndicator={false}>
           <Pressable
             style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Back to Relax"
           >
@@ -292,7 +302,13 @@ export default function BodyScanScreen() {
           </Text>
           <Pressable
             style={({ pressed }) => [styles.doneBtn, pressed && styles.btnPressed]}
-            onPress={() => router.back()}
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Done"
           >

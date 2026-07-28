@@ -417,7 +417,13 @@ export default function DiaphragmaticScreen() {
       >
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-          onPress={() => router.back()}
+          onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}
           accessibilityRole="button"
           accessibilityLabel="Back to Relax"
         >
