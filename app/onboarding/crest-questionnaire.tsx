@@ -12,7 +12,7 @@ import { CREST_QUESTIONS } from '@/src/data/crestQuestions';
 import { scoreCREST } from '@/src/utils/crestScoring';
 import { getInitialDraftState, saveDraft, clearDraft, buildAndSaveAssessment } from '@/src/storage/crest';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Spacing, Radius, Border } from '@/src/theme';
+import { Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ResponseScale from '@/src/components/ResponseScale';
 
@@ -101,7 +101,7 @@ export default function CRESTQuestionnaireScreen() {
     []
   );
 
-  function handleSelect(value: number) {
+  function handleConfirm(value: number) {
     const updated = [...responses];
     updated[currentIndex] = value;
     setResponses(updated);
@@ -175,16 +175,10 @@ export default function CRESTQuestionnaireScreen() {
 
         <ResponseScale
           value={responses[currentIndex]}
-          onChange={handleSelect}
+          onConfirm={handleConfirm}
           questionText={question.text}
+          isLast={isLast}
         />
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerHint}>
-          {isLast ? 'Selecting an option submits your assessment' : 'Select an option to continue'}
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -239,20 +233,6 @@ function makeStyles(
       ...typography.heading1,
       color: colors.textPrimary,
       lineHeight: 30,
-    },
-
-    // Footer
-    footer: {
-      paddingHorizontal: Spacing.xl,
-      paddingBottom: Spacing.xl,
-      paddingTop: Spacing.md,
-      borderTopWidth: Border.width,
-      borderTopColor: colors.textSecondary + '20',
-    },
-    footerHint: {
-      ...typography.caption,
-      color: colors.textSecondary,
-      textAlign: 'center',
     },
   });
 }

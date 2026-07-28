@@ -8,7 +8,7 @@ import { CREST_QUESTIONS } from '@/src/data/crestQuestions';
 import { scoreCREST } from '@/src/utils/crestScoring';
 import { buildAndSaveAssessment } from '@/src/storage/crest';
 import { usePreferences } from '@/src/context/PreferencesContext';
-import { Colors, Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ResponseScale from '@/src/components/ResponseScale';
 
@@ -83,7 +83,7 @@ export default function CRESTRetestScreen() {
   const [responses, setResponses] = useState<(number | null)[]>(() => Array(TOTAL).fill(null));
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  function handleSelect(value: number) {
+  function handleConfirm(value: number) {
     const updated = [...responses];
     updated[currentIndex] = value;
     setResponses(updated);
@@ -151,15 +151,10 @@ export default function CRESTRetestScreen() {
 
         <ResponseScale
           value={responses[currentIndex]}
-          onChange={handleSelect}
+          onConfirm={handleConfirm}
           questionText={question.text}
+          isLast={isLast}
         />
-      </View>
-
-      <View style={styles.footer}>
-        <Text style={styles.footerHint}>
-          {isLast ? 'Selecting an option submits your retest' : 'Select an option to continue'}
-        </Text>
       </View>
     </SafeAreaView>
   );
@@ -200,17 +195,5 @@ function makeStyles(
       gap: Spacing.xl,
     },
     questionText: { ...typography.heading1, color: colors.textPrimary, lineHeight: 30 },
-    footer: {
-      paddingHorizontal: Spacing.xl,
-      paddingBottom: Spacing.xl,
-      paddingTop: Spacing.md,
-      borderTopWidth: Border.width,
-      borderTopColor: colors.textSecondary + '20',
-    },
-    footerHint: {
-      ...typography.caption,
-      color: colors.textSecondary,
-      textAlign: 'center',
-    },
   });
 }
