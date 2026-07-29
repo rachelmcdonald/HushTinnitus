@@ -49,6 +49,18 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
   },
 ];
 
+// Card display only — forces a clean line break for the two titles that were
+// overlapping the padlock icon, without touching the underlying title used
+// for the modal and accessibility label.
+const CARD_TITLE_BREAKS: Record<string, string> = {
+  'guided-imagery': 'Guided\nImagery',
+  'sleep-routine': 'Sleep\nPreparation',
+};
+
+function cardTitleDisplay(item: PremiumSession): string {
+  return CARD_TITLE_BREAKS[item.id] ?? item.title;
+}
+
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function RelaxScreen() {
@@ -141,7 +153,7 @@ export default function RelaxScreen() {
                   color={Colors.softGold}
                   style={styles.lockIcon}
                 />
-                <Text style={styles.premiumCardTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.premiumCardTitle} numberOfLines={2}>{cardTitleDisplay(item)}</Text>
                 <Text style={styles.premiumCardDuration}>{item.duration}</Text>
               </Pressable>
             ))}
@@ -240,7 +252,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       fontSize: typography.heading2.fontSize - 2,
       fontWeight: '600' as const,
       color: colors.textPrimary,
-      paddingRight: 32,
     },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
