@@ -55,19 +55,19 @@ const NORM = {
   letterSpacing: -3.5,
 };
 
-// ── Icon SVG (scalable) ───────────────────────────────────────────────────────
+// ── Icon content (wordmark + drops + ripple), shared by icon.png and the ────
+// ── Android adaptive-icon foreground ─────────────────────────────────────────
 
-function iconSvg(size) {
+// `scale` shrinks the whole group around the canvas centre — used to fit the
+// design inside the Android adaptive-icon "safe zone" (see adaptiveIconSvg).
+function iconContent(size, scale = 1) {
   const s  = size / 1024;
   const cx = size / 2;
-  const r  = NORM.cornerR * s;
+  const cy = size / 2;
 
   const n = v => +(v * s).toFixed(2);
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
-  ${fontDefs()}
-  <rect width="${size}" height="${size}" rx="${r}" ry="${r}" fill="${DEEP_TIDE}"/>
-
+  const group = `
   <!-- Wordmark: "hush" in teal, "." in cream -->
   <text x="${cx}" y="${n(NORM.textBaseline)}"
     font-family="${FONT_FAMILY}" font-size="${n(NORM.fontSize)}" font-weight="400"
@@ -82,8 +82,58 @@ function iconSvg(size) {
   <!-- Ripple ellipses: outer → middle → inner -->
   <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(400)}" ry="${n(120)}" fill="none" stroke="${CALM_WAVE}" stroke-width="${n(7)}"  opacity="0.28"/>
   <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(280)}" ry="${n(84)}"  fill="none" stroke="${CALM_WAVE}" stroke-width="${n(8)}"  opacity="0.55"/>
-  <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(148)}" ry="${n(44)}"  fill="none" stroke="${CALM_WAVE}" stroke-width="${n(10)}" opacity="0.90"/>
+  <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(148)}" ry="${n(44)}"  fill="none" stroke="${CALM_WAVE}" stroke-width="${n(10)}" opacity="0.90"/>`;
+
+  if (scale === 1) return group;
+  return `<g transform="translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})">${group}</g>`;
+}
+
+// ── Icon SVG (scalable, full-bleed — used for icon.png / iOS) ────────────────
+
+function iconSvg(size) {
+  const r = NORM.cornerR * (size / 1024);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+  ${fontDefs()}
+  <rect width="${size}" height="${size}" rx="${r}" ry="${r}" fill="${DEEP_TIDE}"/>
+  ${iconContent(size)}
 </svg>`;
+}
+
+// ── Adaptive icon SVG (transparent background, content scaled to fit the ───
+// ── Android safe zone) ────────────────────────────────────────────────────────
+//
+// Android's adaptive-icon system only guarantees the central ~66% of the
+// canvas (a 72dp safe zone inside a 108dp viewport) survives every launcher
+// mask shape (circle, squircle, rounded square, teardrop, ...). The design's
+// natural bounding box — from the top of the wordmark to the bottom of the
+// outer ripple — spans close to the full 1024px canvas, so more aggressive
+// masks were cropping it. `scale` is computed at generation time (see
+// `run()`) from the *actual* rendered bounding box, so this always fits a
+// 680×680 (66.4%) safe zone regardless of future design tweaks. The
+// background stays transparent — app.json's adaptiveIcon.backgroundColor
+// (#0D4F5C) is composited underneath by the OS.
+const SAFE_ZONE = 680;
+
+function adaptiveIconSvg(size, scale) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+  ${fontDefs()}
+  ${iconContent(size, scale)}
+</svg>`;
+}
+
+// Renders the unscaled content on a transparent canvas and measures its
+// trimmed bounding box, so the safe-zone scale factor is exact rather than
+// hand-estimated.
+async function measureContentExtent(size) {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+  ${fontDefs()}
+  ${iconContent(size)}
+</svg>`;
+  const { info } = await sharp(Buffer.from(svg))
+    .trim()
+    .png()
+    .toBuffer({ resolveWithObject: true });
+  return Math.max(info.width, info.height);
 }
 
 // ── Favicon SVG (48×48, no text) ─────────────────────────────────────────────
@@ -169,7 +219,11 @@ async function run() {
   await sharp(Buffer.from(iconSvg(1024))).png().toFile(path.join(ASSETS, 'icon.png'));
   console.log('✓  assets/icon.png');
 
-  await sharp(Buffer.from(iconSvg(1024))).png().toFile(path.join(ASSETS, 'adaptive-icon.png'));
+  const contentExtent = await measureContentExtent(1024);
+  const safeZoneScale = SAFE_ZONE / contentExtent;
+  console.log(`   adaptive-icon content extent: ${contentExtent}px → scale ${safeZoneScale.toFixed(3)} to fit ${SAFE_ZONE}px safe zone`);
+
+  await sharp(Buffer.from(adaptiveIconSvg(1024, safeZoneScale))).png().toFile(path.join(ASSETS, 'adaptive-icon.png'));
   console.log('✓  assets/adaptive-icon.png');
 
   await sharp(Buffer.from(faviconSvg())).png().toFile(path.join(ASSETS, 'favicon.png'));

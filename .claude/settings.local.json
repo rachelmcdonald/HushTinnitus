@@ -100,7 +100,11 @@
       "WebFetch(domain:docs.expo.dev)",
       "WebFetch(domain:reactnavigation.org)",
       "Bash(echo \"exit code: $?\")",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Read(//System/Library/Fonts/Supplemental/**)",
+      "Read(//System/Library/Fonts/**)",
+      "Read(//Library/Fonts/**)",
+      "Bash(git checkout *)"
     ]
   }
 }
