@@ -1,11 +1,13 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Dimensions } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { StyleSheet, Text, View, Pressable, Dimensions, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { G, Rect, Text as SvgText, Line, Polygon, Path } from 'react-native-svg';
 import { Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
+import BackToTopButton from '@/src/components/BackToTopButton';
+import { useBackToTop } from '@/src/hooks/useBackToTop';
 
 // ─── Loop diagram ─────────────────────────────────────────────────────────────
 //
@@ -242,12 +244,18 @@ function NodeExplanation({
 export default function NeurologicalLoopScreen() {
   const { colors, typography, isDark } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography, isDark), [colors, typography, isDark]);
+  const scrollRef = useRef<ScrollView>(null);
+  const backToTop = useBackToTop(scrollRef);
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onScroll={backToTop.onScroll}
+        onContentSizeChange={backToTop.onContentSizeChange}
+        scrollEventThrottle={16}
       >
         <BackButton />
 
@@ -348,6 +356,12 @@ export default function NeurologicalLoopScreen() {
           </Text>
         </View>
       </ScrollWithIndicator>
+
+      <BackToTopButton
+        visible={backToTop.visible}
+        opacity={backToTop.opacity}
+        onPress={backToTop.scrollToTop}
+      />
     </SafeAreaView>
   );
 }

@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import BackToTopButton from '@/src/components/BackToTopButton';
+import { useBackToTop } from '@/src/hooks/useBackToTop';
 
 // ─── dB reference data ────────────────────────────────────────────────────────
 
@@ -139,12 +141,18 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
 export default function NoiseExposureScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const scrollRef = useRef<ScrollView>(null);
+  const backToTop = useBackToTop(scrollRef);
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onScroll={backToTop.onScroll}
+        onContentSizeChange={backToTop.onContentSizeChange}
+        scrollEventThrottle={16}
       >
         <BackButton />
 
@@ -284,6 +292,12 @@ export default function NoiseExposureScreen() {
           qualified audiologist.
         </Text>
       </ScrollView>
+
+      <BackToTopButton
+        visible={backToTop.visible}
+        opacity={backToTop.opacity}
+        onPress={backToTop.scrollToTop}
+      />
     </SafeAreaView>
   );
 }

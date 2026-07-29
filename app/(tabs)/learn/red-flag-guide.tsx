@@ -1,11 +1,13 @@
-import { useState, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Alert, Platform } from 'react-native';
+import { useState, useMemo, useRef } from 'react';
+import { StyleSheet, Text, View, Pressable, Alert, Platform, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
+import BackToTopButton from '@/src/components/BackToTopButton';
+import { useBackToTop } from '@/src/hooks/useBackToTop';
 
 // ─── Referral text ────────────────────────────────────────────────────────────
 //
@@ -158,6 +160,8 @@ export default function RedFlagGuideScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [copied, setCopied] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const backToTop = useBackToTop(scrollRef);
 
   async function handleCopyReferral() {
     try {
@@ -172,8 +176,12 @@ export default function RedFlagGuideScreen() {
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onScroll={backToTop.onScroll}
+        onContentSizeChange={backToTop.onContentSizeChange}
+        scrollEventThrottle={16}
       >
         <BackButton />
 
@@ -255,6 +263,12 @@ export default function RedFlagGuideScreen() {
           guidelines. It is not a substitute for professional medical advice.
         </Text>
       </ScrollWithIndicator>
+
+      <BackToTopButton
+        visible={backToTop.visible}
+        opacity={backToTop.opacity}
+        onPress={backToTop.scrollToTop}
+      />
     </SafeAreaView>
   );
 }

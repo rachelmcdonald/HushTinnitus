@@ -1,10 +1,12 @@
-import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { useMemo, useRef } from 'react';
+import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
+import BackToTopButton from '@/src/components/BackToTopButton';
+import { useBackToTop } from '@/src/hooks/useBackToTop';
 
 // ─── Reusable content components ─────────────────────────────────────────────
 
@@ -84,12 +86,18 @@ function CitationCard() {
 export default function Tinnitus101Screen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const scrollRef = useRef<ScrollView>(null);
+  const backToTop = useBackToTop(scrollRef);
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollWithIndicator
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
+        onScroll={backToTop.onScroll}
+        onContentSizeChange={backToTop.onContentSizeChange}
+        scrollEventThrottle={16}
       >
         <BackButton />
 
@@ -219,6 +227,12 @@ export default function Tinnitus101Screen() {
           </Text>
         </View>
       </ScrollWithIndicator>
+
+      <BackToTopButton
+        visible={backToTop.visible}
+        opacity={backToTop.opacity}
+        onPress={backToTop.scrollToTop}
+      />
     </SafeAreaView>
   );
 }
