@@ -2,10 +2,10 @@ import { useState, useRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Spacing, Radius } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
-import ComingSoonModal from '@/src/components/ComingSoonModal';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 // ─── Coming soon session catalogue ────────────────────────────────────────────
 
@@ -133,9 +133,14 @@ export default function RelaxScreen() {
                 style={({ pressed }) => [styles.premiumCard, pressed && styles.premiumCardPressed]}
                 onPress={() => setActiveSession(item)}
                 accessibilityRole="button"
-                accessibilityLabel={`${item.title} — coming soon. Tap for details.`}
+                accessibilityLabel={`${item.title} — premium feature. Tap for details.`}
               >
-                <ComingSoonBadge />
+                <Ionicons
+                  name="lock-closed"
+                  size={18}
+                  color={Colors.softGold}
+                  style={styles.lockIcon}
+                />
                 <Text style={styles.premiumCardTitle} numberOfLines={2}>{item.title}</Text>
                 <Text style={styles.premiumCardDuration}>{item.duration}</Text>
               </Pressable>
@@ -146,12 +151,11 @@ export default function RelaxScreen() {
         </View>
       </ScrollWithIndicator>
 
-      <ComingSoonModal
+      <PremiumFeatureModal
         visible={activeSession !== null}
         onClose={() => setActiveSession(null)}
         featureName={activeSession?.title ?? ''}
         description={activeSession?.description ?? ''}
-        previewRoute={activeSession ? `/relax/${activeSession.id}` : undefined}
       />
     </SafeAreaView>
   );
@@ -226,6 +230,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       justifyContent: 'space-between',
     },
     premiumCardPressed: { opacity: 0.8 },
+    lockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+    },
     premiumCardTitle: {
       ...typography.heading2,
       fontSize: typography.heading2.fontSize - 2,
