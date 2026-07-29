@@ -460,7 +460,7 @@ export default function ProgressScreen() {
         <PremiumGate
           isPremium={isPremium}
           featureName="Progress Dashboard"
-          description="A longitudinal chart showing your loudness and distress scores over time, helping you see your progress at a glance."
+          description="A longitudinal chart showing your tinnitus loudness and distress scores over time, helping you visualise your progress and identify patterns across days and weeks."
         >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>Loudness &amp; distress</Text>
@@ -497,8 +497,8 @@ export default function ProgressScreen() {
         <SectionLabel label="CREST PROGRESS" />
         <PremiumGate
           isPremium={isPremium}
-          featureName="TFI Trend Chart"
-          description="A visual timeline of your CREST scores at baseline, week 4, and week 8 — showing whether your tinnitus impact is improving over time."
+          featureName="CREST Trend Chart"
+          description="A visual timeline of your CREST scores at baseline, week 4, and week 8 — showing at a glance whether your tinnitus impact is improving over time."
         >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>CREST score over time</Text>
@@ -544,7 +544,7 @@ export default function ProgressScreen() {
         <PremiumGate
           isPremium={isPremium}
           featureName="Trigger Pattern Analysis"
-          description="Analyses your logged triggers to show which ones correlate most strongly with higher distress scores on your personal data."
+          description="Analyses your logged trigger tags to identify which factors — such as stress, caffeine, or poor sleep — correlate most strongly with higher distress scores in your personal data."
         >
           <View style={styles.chartCard}>
             <Text style={styles.chartCardTitle}>Average distress by trigger</Text>
@@ -582,7 +582,7 @@ export default function ProgressScreen() {
         <PremiumGate
           isPremium={isPremium}
           featureName="Clinician PDF Export"
-          description="Generate a formatted report of your symptom history, CREST scores, and session data — ready to share with your audiologist or GP."
+          description="Generate a structured report of your symptom history, CREST scores, and session data — formatted and ready to share with your audiologist or GP at your next appointment."
         >
           <View style={styles.exportCard}>
             <Text style={styles.exportTitle}>Clinician report</Text>

@@ -1,12 +1,13 @@
-// Wraps any feature that isn't built yet. Renders as a small "Coming Soon"
-// card — same visual style as the Relax tab's coming-soon cards — instead of
-// the real content. Tapping opens a modal explaining what the feature will do.
+// Wraps any feature that isn't built yet. Renders as a small locked-feature
+// card — matches the padlock-card treatment used across Sound, Relax, and
+// Learn tabs — instead of the real content. Tapping opens the shared centred
+// premium modal explaining what the feature will do.
 import { useState, useMemo } from 'react';
 import { StyleSheet, Text, Pressable } from 'react-native';
-import { Spacing, Radius } from '@/src/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
-import ComingSoonModal from '@/src/components/ComingSoonModal';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 
 type Props = {
   isPremium: boolean;
@@ -30,14 +31,19 @@ export default function PremiumGate({ isPremium, featureName, description, child
         style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
         onPress={() => setModalVisible(true)}
         accessibilityRole="button"
-        accessibilityLabel={`${featureName} — coming soon. Tap for details.`}
+        accessibilityLabel={`${featureName} — premium feature. Tap for details.`}
       >
-        <ComingSoonBadge />
+        <Ionicons
+          name="lock-closed"
+          size={18}
+          color={Colors.softGold}
+          style={styles.lockIcon}
+        />
         <Text style={styles.title}>{featureName}</Text>
         <Text style={styles.description} numberOfLines={2}>{description}</Text>
       </Pressable>
 
-      <ComingSoonModal
+      <PremiumFeatureModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         featureName={featureName}
@@ -48,7 +54,7 @@ export default function PremiumGate({ isPremium, featureName, description, child
 }
 
 // Matches app/(tabs)/relax/index.tsx's premiumCard/premiumCardTitle/
-// premiumCardDuration styling exactly, for a consistent Coming Soon look
+// premiumCardDuration styling exactly, for a consistent locked-feature look
 // across tabs.
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
@@ -64,6 +70,11 @@ function makeStyles(
       gap: Spacing.xs,
     },
     cardPressed: { opacity: 0.8 },
+    lockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+    },
     title: {
       ...typography.heading2,
       fontSize: typography.heading2.fontSize - 2,
