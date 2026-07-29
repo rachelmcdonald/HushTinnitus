@@ -240,6 +240,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       fontSize: typography.heading2.fontSize - 2,
       fontWeight: '600' as const,
       color: colors.textPrimary,
+      paddingRight: 32,
     },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },
 
