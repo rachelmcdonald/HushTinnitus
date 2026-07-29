@@ -1,11 +1,11 @@
-import { useRef, useCallback, useMemo } from 'react';
+import { useState, useRef, useCallback, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, useWindowDimensions } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { Spacing, Radius } from '@/src/theme';
+import { Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 
 // ─── Content catalogue ────────────────────────────────────────────────────────
@@ -16,6 +16,8 @@ type GridItem = {
   route: string;
   icon: keyof typeof Ionicons.glyphMap;
   premium?: boolean;
+  // Longer description shown in the premium modal — only needed for premium items.
+  modalDescription?: string;
 };
 
 const GRID_ITEMS: GridItem[] = [
@@ -37,6 +39,8 @@ const GRID_ITEMS: GridItem[] = [
     route: '/learn/thought-journal',
     icon: 'journal-outline',
     premium: true,
+    modalDescription:
+      'A structured CBT-based journaling tool that guides you through identifying a distressing thought about your tinnitus and reframing it using evidence-based cognitive techniques.',
   },
   {
     title: 'Sleep Hygiene',
@@ -66,20 +70,37 @@ const GRID_ITEMS: GridItem[] = [
 
 // ─── Grid card ────────────────────────────────────────────────────────────────
 
-function GridCard({ item, width }: { item: GridItem; width: number }) {
+function GridCard({
+  item,
+  width,
+  onPremiumPress,
+}: {
+  item: GridItem;
+  width: number;
+  onPremiumPress: (item: GridItem) => void;
+}) {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   return (
     <Pressable
       style={({ pressed }) => [styles.gridCard, { width }, pressed && styles.cardPressed]}
-      onPress={() => router.push(item.route as any)}
+      onPress={() => (item.premium ? onPremiumPress(item) : router.push(item.route as any))}
       accessibilityRole="button"
-      accessibilityLabel={`Open ${item.title}`}
+      accessibilityLabel={
+        item.premium ? `${item.title} — premium feature. Tap for details.` : `Open ${item.title}`
+      }
     >
+      {item.premium && (
+        <Ionicons
+          name="lock-closed"
+          size={18}
+          color={Colors.softGold}
+          style={styles.lockIcon}
+        />
+      )}
       <View style={styles.gridCardTop}>
         <Ionicons name={item.icon} size={22} color={colors.headingAccent} />
-        {item.premium && <ComingSoonBadge />}
       </View>
       <Text style={styles.gridCardTitle}>{item.title}</Text>
       <Text style={styles.gridCardDesc} numberOfLines={2}>{item.desc}</Text>
@@ -113,6 +134,7 @@ export default function LearnScreen() {
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const cardWidth = (width - Spacing.xl * 2 - Spacing.sm) / 2;
   const scrollRef = useRef<ScrollView>(null);
+  const [activePremiumItem, setActivePremiumItem] = useState<GridItem | null>(null);
 
   // Reset scroll position every time the Learn tab comes into focus.
   useFocusEffect(
@@ -137,7 +159,12 @@ export default function LearnScreen() {
 
         <View style={styles.grid}>
           {GRID_ITEMS.map((item) => (
-            <GridCard key={item.title} item={item} width={cardWidth} />
+            <GridCard
+              key={item.title}
+              item={item}
+              width={cardWidth}
+              onPremiumPress={setActivePremiumItem}
+            />
           ))}
         </View>
 
@@ -148,6 +175,13 @@ export default function LearnScreen() {
           from a qualified healthcare professional.
         </Text>
       </ScrollWithIndicator>
+
+      <PremiumFeatureModal
+        visible={activePremiumItem !== null}
+        onClose={() => setActivePremiumItem(null)}
+        featureName={activePremiumItem?.title ?? ''}
+        description={activePremiumItem?.modalDescription ?? ''}
+      />
     </SafeAreaView>
   );
 }
@@ -184,6 +218,11 @@ function makeStyles(
       minHeight: 110,
     },
     cardPressed: { opacity: 0.8 },
+    lockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
+    },
     gridCardTop: {
       flexDirection: 'row',
       alignItems: 'center',
