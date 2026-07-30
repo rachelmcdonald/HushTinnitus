@@ -15,7 +15,7 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
-import { updatePreferences as persistPreferencesUpdate } from '@/src/storage/preferences';
+import { getPreferences, updatePreferences as persistPreferencesUpdate } from '@/src/storage/preferences';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
@@ -566,12 +566,20 @@ export default function SettingsScreen() {
   // Dev-only: reset onboarding so the first-launch flow can be retested
   // without reinstalling the app.
   const handleDevReset = useCallback(() => {
+    console.log('[DEV RESET] Button tapped');
+
     if (Platform.OS !== 'web') {
       persistPreferencesUpdate({ onboardingComplete: false });
     }
+    const result = getPreferences().onboardingComplete;
+    console.log('[DEV RESET] onboardingComplete set to:', result);
+
     refreshPreferences();
+    console.log('[DEV RESET] preferences after refresh:', preferences);
+
+    console.log('[DEV RESET] Navigating to launch...');
     router.replace('/launch');
-  }, [refreshPreferences]);
+  }, [refreshPreferences, preferences]);
 
   const showDevNote = notifUnavailable || isExpoGo;
 
