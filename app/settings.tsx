@@ -16,8 +16,7 @@ import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
-import ComingSoonModal from '@/src/components/ComingSoonModal';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
 import type { UserPreferences } from '@/src/types';
 
@@ -771,10 +770,15 @@ export default function SettingsScreen() {
             </View>
           ) : (
             <View style={styles.exportGate}>
+              <Ionicons
+                name="lock-closed"
+                size={18}
+                color={Colors.softGold}
+                style={styles.lockIcon}
+              />
               <View style={styles.exportGateTop}>
                 <View style={styles.exportGateLabel}>
                   <Text style={styles.exportGateTitle}>Export my data</Text>
-                  <ComingSoonBadge />
                 </View>
               </View>
               <Text style={styles.exportGateDesc}>
@@ -812,11 +816,11 @@ export default function SettingsScreen() {
         onClose={() => setDisclaimerVisible(false)}
       />
 
-      <ComingSoonModal
+      <PremiumFeatureModal
         visible={exportComingSoonVisible}
         onClose={() => setExportComingSoonVisible(false)}
         featureName="Export My Data"
-        description="Export all your personal app data as a structured text file — your symptom logs, CREST scores, and session history — for your own records or to share with a healthcare professional."
+        description="Export all your personal app data as a structured report — your symptom logs, CREST scores, and session history — formatted and ready to share with your audiologist or GP."
       />
     </SafeAreaView>
   );
@@ -934,6 +938,11 @@ function makeStyles(
       gap: Spacing.sm,
       borderWidth: Border.width,
       borderColor: Colors.deepTide + '30',
+    },
+    lockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
     },
     exportGateTop:      { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
     exportGateLabel:    { flex: 1, gap: 4 },
