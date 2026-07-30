@@ -9,7 +9,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import { Spacing, Radius, Border } from '@/src/theme';
+import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 type Params = {
@@ -210,18 +210,22 @@ function makeStyles(
       padding: Spacing.base,
       gap: Spacing.xs,
     },
+    // This card's background (colors.coralLight) is always light, regardless
+    // of theme — so its text must stay hardcoded to dark colours rather than
+    // following colors.textPrimary/textSecondary, which flip light in dark
+    // mode and become invisible here.
     alertLabel: {
       ...typography.micro,
-      color: colors.warmCoral,
+      color: Colors.warmCoral,
       marginBottom: Spacing.xs,
     },
     alertItem: {
       ...typography.body,
-      color: colors.textPrimary,
+      color: Colors.darkText,
     },
     alertFootnote: {
       ...typography.caption,
-      color: colors.textSecondary,
+      color: Colors.midGray,
       marginTop: Spacing.sm,
     },
 

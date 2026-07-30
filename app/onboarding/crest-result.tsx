@@ -150,13 +150,17 @@ function SevereReferralCard({ totalScore }: { totalScore: number }) {
       backgroundColor: colors.warmCoral,
       borderRadius: 2,
     },
+    // This card's background (colors.coralLight) is always light, regardless
+    // of theme — so its text must stay hardcoded to dark colours rather than
+    // following colors.textPrimary/textSecondary, which flip light in dark
+    // mode and become invisible here.
     heading: {
       ...typography.heading2,
-      color: colors.textPrimary,
+      color: Colors.darkText,
     },
     body: {
       ...typography.caption,
-      color: colors.textSecondary,
+      color: Colors.midGray,
     },
     noteBox: {
       backgroundColor: colors.surface,
