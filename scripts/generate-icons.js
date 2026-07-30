@@ -102,17 +102,16 @@ function iconSvg(size) {
 // ── Adaptive icon SVG (transparent background, content scaled to fit the ───
 // ── Android safe zone) ────────────────────────────────────────────────────────
 //
-// Android's adaptive-icon system only guarantees the central ~66% of the
-// canvas (a 72dp safe zone inside a 108dp viewport) survives every launcher
-// mask shape (circle, squircle, rounded square, teardrop, ...). The design's
-// natural bounding box — from the top of the wordmark to the bottom of the
-// outer ripple — spans close to the full 1024px canvas, so more aggressive
-// masks were cropping it. `scale` is computed at generation time (see
-// `run()`) from the *actual* rendered bounding box, so this always fits a
-// 680×680 (66.4%) safe zone regardless of future design tweaks. The
-// background stays transparent — app.json's adaptiveIcon.backgroundColor
-// (#0D4F5C) is composited underneath by the OS.
-const SAFE_ZONE = 680;
+// Android's nominal adaptive-icon safe zone is the central ~66% of the
+// canvas (a 72dp zone inside a 108dp viewport), but real-world circular
+// masks (Samsung, Pixel, and others) crop more aggressively than that in
+// practice. 580px (56.6%) gives extra breathing room so the top of the
+// "hush." wordmark and the outermost ripple ellipse both stay clear of the
+// mask. `scale` is computed at generation time (see `run()`) from the
+// *actual* rendered bounding box, so this always fits regardless of future
+// design tweaks. The background stays transparent — app.json's
+// adaptiveIcon.backgroundColor (#0D4F5C) is composited underneath by the OS.
+const SAFE_ZONE = 580;
 
 function adaptiveIconSvg(size, scale) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
