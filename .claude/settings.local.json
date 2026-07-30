@@ -104,7 +104,25 @@
       "Read(//System/Library/Fonts/Supplemental/**)",
       "Read(//System/Library/Fonts/**)",
       "Read(//Library/Fonts/**)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(command -v sqlite3)",
+      "Bash(sqlite3 --version)",
+      "Bash(rm -f test_fresh.db test_legacy.db)",
+      "Bash(sqlite3 test_fresh.db \"PRAGMA user_version;\")",
+      "Bash(sqlite3 test_fresh.db)",
+      "Bash(sqlite3 test_fresh.db \"ALTER TABLE preferences ADD COLUMN matchedPitchHz REAL;\")",
+      "Bash(sqlite3 test_fresh.db \"DROP TABLE IF EXISTS tfi_assessments; DROP TABLE IF EXISTS tfi_draft;\")",
+      "Bash(sqlite3 test_fresh.db \"PRAGMA user_version = 1;\")",
+      "Bash(rm -f test_legacy.db)",
+      "Bash(sqlite3 test_legacy.db)",
+      "Bash(sqlite3 test_legacy.db \"ALTER TABLE preferences ADD COLUMN matchedPitchHz REAL;\")",
+      "Bash(sqlite3 test_legacy.db \"ALTER TABLE preferences ADD COLUMN lastCRESTDate TEXT;\")",
+      "Bash(sqlite3 test_legacy.db \"DROP TABLE IF EXISTS tfi_assessments; DROP TABLE IF EXISTS tfi_draft;\")",
+      "Bash(sqlite3 test_legacy.db \"PRAGMA user_version = 1;\")",
+      "Bash(sqlite3 test_legacy.db \"PRAGMA user_version;\")",
+      "Bash(awk -F'|' '{print $2, $3}')",
+      "Bash(sqlite3 test_legacy.db \"SELECT name FROM sqlite_master WHERE type='table' AND name='tfi_assessments';\")",
+      "Bash(sqlite3 test_legacy.db \"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;\")"
     ]
   }
 }
