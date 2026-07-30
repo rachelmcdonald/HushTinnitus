@@ -15,7 +15,6 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
-import { getPreferences, updatePreferences as persistPreferencesUpdate } from '@/src/storage/preferences';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
@@ -463,7 +462,7 @@ const TEXT_SIZE_OPTIONS: { label: string; value: UserPreferences['textSize'] }[]
 
 export default function SettingsScreen() {
   const { colors, typography } = useTheme();
-  const { preferences, updatePreferences, refreshPreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
@@ -562,24 +561,6 @@ export default function SettingsScreen() {
       setExporting(false);
     }
   }, []);
-
-  // Dev-only: reset onboarding so the first-launch flow can be retested
-  // without reinstalling the app.
-  const handleDevReset = useCallback(() => {
-    console.log('[DEV RESET] Button tapped');
-
-    if (Platform.OS !== 'web') {
-      persistPreferencesUpdate({ onboardingComplete: false });
-    }
-    const result = getPreferences().onboardingComplete;
-    console.log('[DEV RESET] onboardingComplete set to:', result);
-
-    refreshPreferences();
-    console.log('[DEV RESET] preferences after refresh:', preferences);
-
-    console.log('[DEV RESET] Navigating to launch...');
-    router.replace('/launch');
-  }, [refreshPreferences, preferences]);
 
   const showDevNote = notifUnavailable || isExpoGo;
 
@@ -824,25 +805,6 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={18} color={Colors.calmWave} />
           </Pressable>
         </View>
-
-        {/* ── Developer Tools (dev builds only) ─────────────────────────── */}
-        {__DEV__ && (
-          <View style={[styles.section, styles.devSection]}>
-            <Text style={styles.sectionHeading}>Developer Tools</Text>
-            <Text style={styles.rowDesc}>
-              Visible only in development builds — never shown in production.
-            </Text>
-
-            <Pressable
-              style={({ pressed }) => [styles.devResetBtn, pressed && styles.devResetBtnPressed]}
-              onPress={handleDevReset}
-              accessibilityRole="button"
-              accessibilityLabel="Reset to first launch"
-            >
-              <Text style={styles.devResetBtnLabel}>Reset to First Launch</Text>
-            </Pressable>
-          </View>
-        )}
       </ScrollWithIndicator>
 
       <DisclaimerModal
@@ -986,20 +948,6 @@ function makeStyles(
     },
     exportGateBtnPressed: { opacity: 0.85 },
     exportGateBtnLabel:   { fontSize: 13, fontWeight: '500', color: Colors.deepTide },
-
-    // Developer Tools
-    devSection: {
-      borderWidth: Border.width * 2,
-      borderColor: '#D32F2F' + '50',
-    },
-    devResetBtn: {
-      backgroundColor: '#D32F2F',
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.base,
-      alignItems: 'center',
-    },
-    devResetBtnPressed: { opacity: 0.85 },
-    devResetBtnLabel: { fontSize: 14, fontWeight: '600', color: Colors.white },
 
     // Preview card
     previewCard: {
