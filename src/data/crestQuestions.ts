@@ -1,6 +1,6 @@
 // CREST scale — Compact Rating and Experience of Symptoms in Tinnitus
 // All 12 questions, grouped into 6 domains of 2 questions each.
-// Developed in-house by Michael McDonald BSc (Hons), AAudA.
+// Developed in-house by Michael McDonald BSc (Hons), MAudA.
 
 export type CRESTDomain =
   | 'intrusion'
@@ -18,11 +18,11 @@ export type CRESTQuestion = {
 
 // 5-point response scale used for every question
 export const RESPONSE_OPTIONS: readonly { value: number; label: string }[] = [
-  { value: 0, label: 'Not at all' },
-  { value: 1, label: 'Occasionally' },
+  { value: 0, label: 'Never' },
+  { value: 1, label: 'Rarely' },
   { value: 2, label: 'Sometimes' },
-  { value: 3, label: 'Often' },
-  { value: 4, label: 'Almost always' },
+  { value: 3, label: 'Most of the time' },
+  { value: 4, label: 'Always' },
 ];
 
 export const CREST_QUESTIONS: readonly CRESTQuestion[] = [

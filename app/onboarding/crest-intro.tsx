@@ -75,7 +75,7 @@ export default function CRESTIntroScreen() {
         <View style={styles.aboutCard}>
           <Text style={styles.aboutHeading}>About the CREST assessment</Text>
           <Text style={styles.aboutBody}>
-            The CREST assessment was developed by Michael McDonald BSc (Hons), AAudA,
+            The CREST assessment was developed by Michael McDonald BSc (Hons), MAudA,
             an audiologist with over 11 years of clinical experience across the NHS
             in Scotland and private and specialist audiology services in Perth,
             Western Australia. It is a compact 12-question scale designed to measure
