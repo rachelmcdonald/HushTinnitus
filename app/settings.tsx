@@ -15,7 +15,7 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
-import { clearAllAssessments } from '@/src/storage/crest';
+import { updatePreferences as persistPreferencesUpdate } from '@/src/storage/preferences';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
@@ -463,7 +463,7 @@ const TEXT_SIZE_OPTIONS: { label: string; value: UserPreferences['textSize'] }[]
 
 export default function SettingsScreen() {
   const { colors, typography } = useTheme();
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences, updatePreferences, refreshPreferences } = usePreferences();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
@@ -563,28 +563,15 @@ export default function SettingsScreen() {
     }
   }, []);
 
-  // Dev-only: wipe onboarding + CREST state and relaunch, for repeatedly
-  // testing the first-launch flow without reinstalling the app.
+  // Dev-only: reset onboarding so the first-launch flow can be retested
+  // without reinstalling the app.
   const handleDevReset = useCallback(() => {
-    Alert.alert(
-      'Reset to first launch?',
-      'This clears onboarding status and all CREST assessment data on this device. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            if (Platform.OS !== 'web') {
-              clearAllAssessments();
-            }
-            updatePreferences({ onboardingComplete: false });
-            router.replace('/launch');
-          },
-        },
-      ]
-    );
-  }, [updatePreferences]);
+    if (Platform.OS !== 'web') {
+      persistPreferencesUpdate({ onboardingComplete: false });
+    }
+    refreshPreferences();
+    router.replace('/launch');
+  }, [refreshPreferences]);
 
   const showDevNote = notifUnavailable || isExpoGo;
 

@@ -21,6 +21,10 @@ type PreferencesContextValue = {
   preferences: UserPreferences | null;
   isLoading: boolean;
   updatePreferences: (patch: Partial<UserPreferences>) => void;
+  // Re-reads preferences from storage and syncs them into memory — for
+  // callers that write to the DB directly (bypassing updatePreferences'
+  // patch-merge) and need the context to reflect that immediately.
+  refreshPreferences: () => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextValue | null>(null);
@@ -58,8 +62,15 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     });
   }, []);
 
+  const refreshPreferences = useCallback(() => {
+    if (Platform.OS === 'web') return;
+    setPreferences(getPreferences());
+  }, []);
+
   return (
-    <PreferencesContext.Provider value={{ preferences, isLoading, updatePreferences }}>
+    <PreferencesContext.Provider
+      value={{ preferences, isLoading, updatePreferences, refreshPreferences }}
+    >
       {children}
     </PreferencesContext.Provider>
   );
