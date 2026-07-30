@@ -1,5 +1,5 @@
-// Generates app icon assets from the "hush." design specification.
-// Run: node scripts/generate-icons.js
+// Roboto loaded from @fontsource/roboto — consistent rendering on all machines
+// To regenerate icons: node scripts/generate-icons.js
 
 const sharp = require('sharp');
 const path  = require('path');
@@ -10,34 +10,20 @@ const DEEP_TIDE = '#0D4F5C';
 const CALM_WAVE = '#5DCAA5';
 const CREAM     = '#F5F1EB';
 
-// ── Roboto Regular — embedded as base64 @font-face for reliable SVG rendering ─
+// ── Roboto Regular — loaded explicitly from @fontsource/roboto (a devDependency
+// ── of this project) and embedded as a base64 @font-face, so rendering is
+// ── identical on every machine and CI runner — never dependent on whatever
+// ── fonts happen to be installed on the system.
 
 function loadRoboto() {
-  const candidates = [
-    ['@fontsource/roboto/files/roboto-latin-400-normal.woff2', 'woff2'],
-    ['@fontsource/roboto/files/roboto-latin-400-normal.woff',  'woff'],
-    ['@fontsource/roboto/files/roboto-all-400-normal.woff2',   'woff2'],
-  ];
-  for (const [mod, fmt] of candidates) {
-    try {
-      const p = require.resolve(mod);
-      if (fs.existsSync(p)) return { b64: fs.readFileSync(p).toString('base64'), fmt };
-    } catch {}
-  }
-  for (const [p, fmt] of [
-    ['/usr/share/fonts/truetype/roboto/Roboto-Regular.ttf', 'truetype'],
-    ['/System/Library/Fonts/Supplemental/Roboto.ttf',       'truetype'],
-  ]) {
-    if (fs.existsSync(p)) return { b64: fs.readFileSync(p).toString('base64'), fmt };
-  }
-  return null;
+  const fontPath = require.resolve('@fontsource/roboto/files/roboto-latin-400-normal.woff2');
+  return { b64: fs.readFileSync(fontPath).toString('base64'), fmt: 'woff2' };
 }
 
 const roboto      = loadRoboto();
-const FONT_FAMILY = roboto ? 'Roboto' : 'Helvetica Neue, Helvetica, Arial, sans-serif';
+const FONT_FAMILY = 'Roboto';
 
 function fontDefs() {
-  if (!roboto) return '';
   return `<defs><style>@font-face{font-family:'Roboto';font-weight:400;font-style:normal;src:url('data:font/${roboto.fmt};base64,${roboto.b64}')format('${roboto.fmt}');}</style></defs>`;
 }
 
@@ -212,7 +198,7 @@ async function makeSplash() {
 // ── Run ───────────────────────────────────────────────────────────────────────
 
 async function run() {
-  console.log('Roboto font:', roboto ? `loaded (${roboto.fmt})` : 'not found — using system sans-serif');
+  console.log(`Roboto font: loaded from @fontsource/roboto (${roboto.fmt})`);
   console.log('Generating icon assets…\n');
 
   await sharp(Buffer.from(iconSvg(1024))).png().toFile(path.join(ASSETS, 'icon.png'));
