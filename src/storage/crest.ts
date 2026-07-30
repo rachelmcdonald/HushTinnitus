@@ -151,6 +151,15 @@ export function getAllAssessments(): CRESTAssessment[] {
   }));
 }
 
+// Dev-only reset helper — wipes all completed assessments and any
+// in-progress draft, so onboarding's CREST step starts fresh.
+export function clearAllAssessments(): void {
+  if (!isNativePlatform()) return;
+  const db = getDb();
+  db.runSync('DELETE FROM crest_assessments');
+  db.runSync('DELETE FROM crest_draft WHERE id = 1');
+}
+
 export function getLatestAssessment(): CRESTAssessment | null {
   if (!isNativePlatform()) return null;
   const db = getDb();

@@ -15,6 +15,7 @@ import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { getDb } from '@/src/storage/database';
+import { clearAllAssessments } from '@/src/storage/crest';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import ComingSoonModal from '@/src/components/ComingSoonModal';
 import ComingSoonBadge from '@/src/components/ComingSoonBadge';
@@ -562,6 +563,29 @@ export default function SettingsScreen() {
     }
   }, []);
 
+  // Dev-only: wipe onboarding + CREST state and relaunch, for repeatedly
+  // testing the first-launch flow without reinstalling the app.
+  const handleDevReset = useCallback(() => {
+    Alert.alert(
+      'Reset to first launch?',
+      'This clears onboarding status and all CREST assessment data on this device. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: () => {
+            if (Platform.OS !== 'web') {
+              clearAllAssessments();
+            }
+            updatePreferences({ onboardingComplete: false });
+            router.replace('/launch');
+          },
+        },
+      ]
+    );
+  }, [updatePreferences]);
+
   const showDevNote = notifUnavailable || isExpoGo;
 
   return (
@@ -805,6 +829,25 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={18} color={Colors.calmWave} />
           </Pressable>
         </View>
+
+        {/* ── Developer Tools (dev builds only) ─────────────────────────── */}
+        {__DEV__ && (
+          <View style={[styles.section, styles.devSection]}>
+            <Text style={styles.sectionHeading}>Developer Tools</Text>
+            <Text style={styles.rowDesc}>
+              Visible only in development builds — never shown in production.
+            </Text>
+
+            <Pressable
+              style={({ pressed }) => [styles.devResetBtn, pressed && styles.devResetBtnPressed]}
+              onPress={handleDevReset}
+              accessibilityRole="button"
+              accessibilityLabel="Reset to first launch"
+            >
+              <Text style={styles.devResetBtnLabel}>Reset to First Launch</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollWithIndicator>
 
       <DisclaimerModal
@@ -948,6 +991,20 @@ function makeStyles(
     },
     exportGateBtnPressed: { opacity: 0.85 },
     exportGateBtnLabel:   { fontSize: 13, fontWeight: '500', color: Colors.deepTide },
+
+    // Developer Tools
+    devSection: {
+      borderWidth: Border.width * 2,
+      borderColor: '#D32F2F' + '50',
+    },
+    devResetBtn: {
+      backgroundColor: '#D32F2F',
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.base,
+      alignItems: 'center',
+    },
+    devResetBtnPressed: { opacity: 0.85 },
+    devResetBtnLabel: { fontSize: 14, fontWeight: '600', color: Colors.white },
 
     // Preview card
     previewCard: {
