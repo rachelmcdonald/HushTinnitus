@@ -3,14 +3,15 @@
 // RAW SCORE: sum of all 12 responses (each 0–4)            →  0–48
 // TOTAL SCORE: rawScore × 2.083, rounded to nearest whole  →  0–100
 // DOMAIN SUBSCORES: each domain = sum of its 2 questions × 12.5  →  0–100
-// MEANINGFUL CHANGE THRESHOLD: a drop of 8+ points between assessments
-// is flagged as a clinically meaningful improvement (MCID equivalent).
+// NOTABLE CHANGE THRESHOLD: a drop of 8+ points between assessments is
+// highlighted as a notable change worth discussing with your audiologist.
+// This is not a clinically validated threshold.
 
 import { CRESTAssessment } from '@/src/types';
 
 export type CRESTSeverity = CRESTAssessment['severity'];
 
-export const MEANINGFUL_CHANGE_THRESHOLD = 8;
+export const NOTABLE_CHANGE_THRESHOLD = 8;
 
 const SEVERITY_LABELS: Record<CRESTSeverity, string> = {
   minimal: 'Minimal impact',
@@ -61,6 +62,6 @@ export function scoreCREST(responses: number[]): {
   return { totalScore, severity: severityFromScore(totalScore), domains };
 }
 
-export function isMeaningfulImprovement(delta: number): boolean {
-  return delta >= MEANINGFUL_CHANGE_THRESHOLD;
+export function isNotableChange(delta: number): boolean {
+  return delta >= NOTABLE_CHANGE_THRESHOLD;
 }

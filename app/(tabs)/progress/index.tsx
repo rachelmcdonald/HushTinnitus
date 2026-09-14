@@ -12,7 +12,7 @@ import {
   getTodayLogs, groupLogsByDay, TriggerStat, SessionStats,
 } from '@/src/storage/symptomLog';
 import { getAllAssessments } from '@/src/storage/crest';
-import { severityLabel, MEANINGFUL_CHANGE_THRESHOLD } from '@/src/utils/crestScoring';
+import { severityLabel, NOTABLE_CHANGE_THRESHOLD } from '@/src/utils/crestScoring';
 import { CRESTAssessment, SymptomLog } from '@/src/types';
 import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import PremiumGate from '@/src/components/PremiumGate';
@@ -120,13 +120,13 @@ function CRESTTrendChart({
 
   const polyline = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
-  const meaningfulTarget = Math.max(0, assessments[0].totalScore - MEANINGFUL_CHANGE_THRESHOLD);
-  const meaningfulY = padY + h - (meaningfulTarget / 100) * h;
+  const notableTarget = Math.max(0, assessments[0].totalScore - NOTABLE_CHANGE_THRESHOLD);
+  const notableY = padY + h - (notableTarget / 100) * h;
 
   return (
     <Svg width={chartWidth} height={height}>
       <SvgLine
-        x1={padX} y1={meaningfulY} x2={padX + w} y2={meaningfulY}
+        x1={padX} y1={notableY} x2={padX + w} y2={notableY}
         stroke={Colors.calmWave}
         strokeWidth={1.5}
         strokeDasharray="5,4"
@@ -517,14 +517,14 @@ export default function ProgressScreen() {
                 <View style={styles.meaningfulNote}>
                   <View style={[styles.legendDot, { backgroundColor: Colors.calmWave }]} />
                   <Text style={styles.meaningfulNoteText}>
-                    Dotted line = meaningful change target (a {MEANINGFUL_CHANGE_THRESHOLD}-point reduction is considered a meaningful improvement)
+                    Dotted line = notable change target (a change of {NOTABLE_CHANGE_THRESHOLD} or more points between assessments is highlighted as a notable change worth discussing with your audiologist)
                   </Text>
                 </View>
                 {assessments.length >= 2 &&
-                  assessments[0].totalScore - assessments[assessments.length - 1].totalScore >= MEANINGFUL_CHANGE_THRESHOLD && (
+                  assessments[0].totalScore - assessments[assessments.length - 1].totalScore >= NOTABLE_CHANGE_THRESHOLD && (
                     <View style={styles.meaningfulAchieved}>
                       <Text style={styles.meaningfulAchievedText}>
-                        You've achieved a meaningful improvement — a reduction of{' '}
+                        This is a notable change — a reduction of{' '}
                         {Math.round(assessments[0].totalScore - assessments[assessments.length - 1].totalScore)}{' '}
                         points.
                       </Text>

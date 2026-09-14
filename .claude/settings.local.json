@@ -122,7 +122,8 @@
       "Bash(sqlite3 test_legacy.db \"PRAGMA user_version;\")",
       "Bash(awk -F'|' '{print $2, $3}')",
       "Bash(sqlite3 test_legacy.db \"SELECT name FROM sqlite_master WHERE type='table' AND name='tfi_assessments';\")",
-      "Bash(sqlite3 test_legacy.db \"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;\")"
+      "Bash(sqlite3 test_legacy.db \"SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;\")",
+      "Bash(which textutil *)"
     ]
   }
 }

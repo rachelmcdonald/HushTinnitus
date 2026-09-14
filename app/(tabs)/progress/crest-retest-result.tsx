@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CRESTAssessment } from '@/src/types';
 import { getAssessmentById, getAllAssessments } from '@/src/storage/crest';
-import { severityLabel, MEANINGFUL_CHANGE_THRESHOLD, isMeaningfulImprovement } from '@/src/utils/crestScoring';
+import { severityLabel, NOTABLE_CHANGE_THRESHOLD, isNotableChange } from '@/src/utils/crestScoring';
 import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -169,7 +169,7 @@ export default function CRESTRetestResultScreen() {
   const { totalScore, severity, domains, weekNumber } = assessment;
   const gc = severityColors(severity);
   const delta = baseline ? Math.round(baseline.totalScore - totalScore) : null;
-  const meaningfulImprovement = delta !== null && isMeaningfulImprovement(delta);
+  const notableChange = delta !== null && isNotableChange(delta);
   const domainKeys = Object.keys(domains) as DomainKey[];
   const sortedKeys = [...domainKeys].sort(
     (a, b) => domains[b] - domains[a]
@@ -200,13 +200,13 @@ export default function CRESTRetestResultScreen() {
           )}
         </View>
 
-        {meaningfulImprovement && (
+        {notableChange && (
           <View style={styles.meaningfulCard}>
-            <Text style={styles.meaningfulTitle}>Clinically meaningful improvement</Text>
+            <Text style={styles.meaningfulTitle}>Notable change</Text>
             <Text style={styles.meaningfulBody}>
-              A reduction of {delta} points meets the {MEANINGFUL_CHANGE_THRESHOLD}-point
-              meaningful change threshold for the CREST scale — this is a meaningful
-              change that goes beyond normal week-to-week variation.
+              A change of {NOTABLE_CHANGE_THRESHOLD} or more points between assessments
+              is highlighted as a notable change worth discussing with your audiologist.
+              Your score changed by {delta} points.
             </Text>
           </View>
         )}
@@ -231,10 +231,13 @@ export default function CRESTRetestResultScreen() {
         <View style={styles.citation}>
           <Text style={styles.citationLabel}>About the CREST assessment</Text>
           <Text style={styles.citationText}>
-            CREST (Compact Rating and Experience of Symptoms in Tinnitus) is a
-            12-question scale measuring the impact of tinnitus across 6 domains.
-            A drop of {MEANINGFUL_CHANGE_THRESHOLD} or more points is considered a
-            meaningful improvement.
+            The CREST (Compact Rating and Experience of Symptoms in Tinnitus) is an
+            in-app symptom tracking tool developed by Michael McDonald BSc (Hons), MAudA,
+            to help you monitor the impact of tinnitus across six areas of daily life over
+            time. It is not a validated clinical instrument and is intended for personal
+            self-monitoring only. A change of {NOTABLE_CHANGE_THRESHOLD} or more points
+            between assessments is highlighted as a notable change worth discussing with
+            your audiologist.
           </Text>
         </View>
 

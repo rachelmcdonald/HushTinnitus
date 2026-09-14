@@ -40,7 +40,7 @@ Synthesised white, pink, and brown noise generators; six nature soundscapes (rai
 Tinnitus 101, the neurological loop (attention and threat-response model), a guided thought journal with CBT reframe flow, a personalised sleep hygiene checklist, a noise exposure guide with dB reference chart, a red flag symptom guide, and an evidence citations screen linking to primary literature.
 
 **CREST Assessment**
-A proprietary 12-question tinnitus impact scale developed exclusively for the app by Michael McDonald BSc (Hons), AAudA. The CREST (Compact Rating and Experience of Symptoms in Tinnitus) scale measures six clinical domains — intrusion, emotional wellbeing, cognitive function, sleep, social life, and sense of control — on a plain-language 5-point scale, producing a 0–100 score with severity banding and domain breakdown. Retesting is prompted at week 4 and week 8 with delta tracking and clinically meaningful change indicators.
+A proprietary 12-question tinnitus impact scale developed exclusively for the app by Michael McDonald BSc (Hons), MAudA. The CREST (Compact Rating and Experience of Symptoms in Tinnitus) scale measures six areas of daily life — intrusion, emotional wellbeing, cognitive function, sleep, social life, and sense of control — on a plain-language 5-point scale, producing a 0–100 score with severity banding and domain breakdown. It is not a validated clinical instrument. Retesting is prompted at week 4 and week 8 with delta tracking and notable change indicators.
 
 **Progress Tracking**
 Daily symptom logging (loudness, distress, time of day, notes), trigger tagging, longitudinal SVG charts, CREST score trend lines, a session counter, and a one-tap clinician PDF export formatted as a plain-text report suitable for sharing with an audiologist.
@@ -69,7 +69,7 @@ Core features are permanently free — no account required.
 Tinnitus is a sensitive health condition. Storing all data in expo-sqlite on the user's device means nothing leaves the phone without explicit user action. No account is required to use the app and no data is transmitted to any server, which builds trust with a health-conscious audience and avoids GDPR/Privacy Act complexity at launch.
 
 **Why a proprietary assessment scale?**
-The two most widely used tinnitus questionnaires (TFI and THI) both require commercial licensing from their respective copyright holders. Rather than navigate that complexity, we developed the CREST scale in-house with a registered audiologist — covering the same six clinical domains as existing validated instruments, using a more accessible plain-language response format designed for older users.
+Existing tinnitus assessment tools are designed for clinical administration and use technical language and numerical scales that can be difficult for everyday users to interpret. The CREST scale was developed by Michael McDonald BSc (Hons), MAudA, specifically for self-monitoring within a mobile app context — using plain-language response options and a condensed 12-question format that covers the same key domains of tinnitus impact (intrusion, emotional wellbeing, cognitive function, sleep, social life, and sense of control) in a more accessible format. It is described transparently in-app as a personal self-monitoring tool, not a validated clinical instrument.
 
 **Why file-based audio for high-frequency pitch matching?**
 The Web Audio API oscillator in react-native-audio-api has a confirmed Android limitation above ~12kHz. For pitch matching above that threshold, pre-generated sine wave MP3 files are used instead of live oscillator synthesis, bypassing the library bug entirely while maintaining accuracy across the full 100Hz–16kHz range.
@@ -137,4 +137,4 @@ We built Hush Tinnitus because we believed people deserved something better than
 
 ---
 
-*Built by Rachel McDonald (Developer) and Michael McDonald BSc (Hons), AAudA (Audiologist) — Perth, Western Australia.*
+*Built by Rachel McDonald (Developer) and Michael McDonald BSc (Hons), MAudA (Audiologist) — Perth, Western Australia.*

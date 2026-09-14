@@ -62,7 +62,7 @@ export default function CRESTIntroScreen() {
           <InfoRow
             emoji="📈"
             heading="Measure change over time"
-            body="You'll be prompted to retake it at 4 and 8 weeks. A drop of 8 or more points is considered a meaningful improvement."
+            body="You'll be prompted to retake it at 4 and 8 weeks. A change of 8 or more points between assessments is highlighted as a notable change worth discussing with your audiologist."
           />
           <View style={styles.divider} />
           <InfoRow
@@ -75,12 +75,11 @@ export default function CRESTIntroScreen() {
         <View style={styles.aboutCard}>
           <Text style={styles.aboutHeading}>About the CREST assessment</Text>
           <Text style={styles.aboutBody}>
-            The CREST assessment was developed by Michael McDonald BSc (Hons), MAudA,
-            an audiologist with over 11 years of clinical experience across the NHS
-            in Scotland and private and specialist audiology services in Perth,
-            Western Australia. It is a compact 12-question scale designed to measure
-            the impact of tinnitus across six key areas: intrusion, emotional
-            wellbeing, cognitive function, sleep, social life, and sense of control.
+            The CREST (Compact Rating and Experience of Symptoms in Tinnitus) is an
+            in-app symptom tracking tool developed by Michael McDonald BSc (Hons), MAudA,
+            to help you monitor the impact of tinnitus across six areas of daily life
+            over time. It is not a validated clinical instrument and is intended for
+            personal self-monitoring only.
           </Text>
         </View>
 
