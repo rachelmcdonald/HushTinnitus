@@ -16,6 +16,7 @@ import { getTodayLogs } from '@/src/storage/symptomLog';
 import { getRecentSessions } from '@/src/storage/soundSessions';
 import { getPreferences } from '@/src/storage/preferences';
 import { getDb } from '@/src/storage/database';
+import { computeStreakFromDates } from '@/src/utils/streakCalculator';
 import type { SoundSession, SymptomLog } from '@/src/types';
 
 // ─── daily support messages ───────────────────────────────────────────────────
@@ -113,27 +114,8 @@ function computeStreak(): number {
     "SELECT DISTINCT substr(date, 1, 10) as d FROM sound_sessions"
   );
 
-  const active = new Set<string>();
-  for (const r of logRows) active.add(r.d);
-  for (const r of sessionRows) active.add(r.d);
-  if (active.size === 0) return 0;
-
-  const today = isoDateKey(0);
-  const yesterday = isoDateKey(86400000);
-
-  // Don't penalise users who haven't logged yet today — carry streak from yesterday
-  const startOffset = active.has(today) ? 0 : active.has(yesterday) ? 1 : -1;
-  if (startOffset === -1) return 0;
-
-  let count = 0;
-  for (let i = startOffset; i < 366; i++) {
-    if (active.has(isoDateKey(i * 86400000))) {
-      count++;
-    } else {
-      break;
-    }
-  }
-  return count;
+  const activeDates = [...logRows.map((r) => r.d), ...sessionRows.map((r) => r.d)];
+  return computeStreakFromDates(activeDates);
 }
 
 function formatSessionDate(isoDate: string): string {

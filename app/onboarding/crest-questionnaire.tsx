@@ -38,7 +38,13 @@ function ProgressBar({ current, total }: { current: number; total: number }) {
   }), [colors]);
 
   return (
-    <View style={progressStyles.track}>
+    <View
+      style={progressStyles.track}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityValue={{ min: 1, max: total, now: current + 1 }}
+      accessibilityLabel={`Question ${current + 1} of ${total}`}
+    >
       <View style={[progressStyles.fill, { width: `${pct}%` }]} />
     </View>
   );
