@@ -172,14 +172,25 @@ function LoopDiagram() {
           fill={ARROW_COL}
         />
 
-        {/* ── "cycle" label on the return arrow (right side, rotated) ── */}
+        {/* ── "cycle" label on the return arrow (right side, rotated) ──
+            Rotated 90° around its own centre, so the un-rotated text's
+            vertical extent (ascent/descent) becomes its horizontal footprint
+            after rotation. The default alphabetic baseline puts most of that
+            extent above the baseline (ascent) and very little below
+            (descent) — with the pivot only 4px from the viewBox's right
+            edge (D_W), the ascent-side was landing past x=D_W and getting
+            clipped there (visible as the tops of the letters being cut off).
+            alignmentBaseline="middle" centres the glyph box on the pivot
+            instead, splitting that extent evenly on both sides, and the
+            pivot is nudged 3px left to give ≥4px of clearance to the edge. */}
         <SvgText
-          x={bendX + 4}
+          x={bendX + 1}
           y={(n3MidY + n1MidY) / 2}
           textAnchor="middle"
+          alignmentBaseline="middle"
           fill={colors.textSecondary}
           fontSize={9}
-          transform={`rotate(90, ${bendX + 4}, ${(n3MidY + n1MidY) / 2})`}
+          transform={`rotate(90, ${bendX + 1}, ${(n3MidY + n1MidY) / 2})`}
         >
           cycle repeats
         </SvgText>
