@@ -18,14 +18,14 @@ const NOISE_LEVELS: NoiseEntry[] = [
   { label: 'Whisper', db: 30 },
   { label: 'Quiet library', db: 40 },
   { label: 'Normal conversation', db: 60 },
-  { label: 'City traffic (inside vehicle)', db: 70 },
+  { label: 'City traffic (in car)', db: 70 },
   { label: 'Busy restaurant', db: 75 },
   { label: 'Vacuum cleaner', db: 80 },
-  { label: 'Heavy traffic / busy street', db: 85 },
+  { label: 'Heavy traffic', db: 85 },
   { label: 'Motorcycle engine', db: 90 },
   { label: 'Power tools', db: 95 },
   { label: 'Chainsaw', db: 100 },
-  { label: 'Live concert / club music', db: 110 },
+  { label: 'Live concert / club', db: 110 },
   { label: 'Emergency siren (nearby)', db: 115 },
 ];
 
@@ -101,7 +101,10 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
 
   return (
     <View style={styles.chartRow}>
-      <Text style={styles.chartLabel} numberOfLines={1}>
+      {/* numberOfLines=2 is a fallback so a future/longer label wraps
+          instead of truncating with "..." — the three labels shortened to
+          fit at all text sizes on one line should not normally need it. */}
+      <Text style={styles.chartLabel} numberOfLines={2}>
         {entry.label}
       </Text>
 
