@@ -9,8 +9,8 @@ import Slider from '@react-native-community/slider';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { saveSymptomLog, updateSymptomLog, getSymptomLogById } from '@/src/storage/symptomLog';
 import { SymptomLog, TriggerTag } from '@/src/types';
-import ComingSoonModal from '@/src/components/ComingSoonModal';
-import ComingSoonBadge from '@/src/components/ComingSoonBadge';
+import { Ionicons } from '@expo/vector-icons';
+import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -323,15 +323,6 @@ export default function LogEntryScreen() {
           <View style={styles.fieldGroup}>
             <View style={styles.triggerHeader}>
               <Text style={styles.fieldLabel}>Triggers</Text>
-              {!isPremium && (
-                <Pressable
-                  onPress={() => setUpgradeVisible(true)}
-                  accessibilityRole="button"
-                  accessibilityLabel="Trigger tagging — coming soon. Tap for details."
-                >
-                  <ComingSoonBadge />
-                </Pressable>
-              )}
             </View>
             {isPremium ? (
               <>
@@ -368,8 +359,14 @@ export default function LogEntryScreen() {
                 style={styles.triggerLocked}
                 onPress={() => setUpgradeVisible(true)}
                 accessibilityRole="button"
-                accessibilityLabel="Trigger tagging — coming soon. Tap for details."
+                accessibilityLabel="Trigger tagging — premium feature. Tap for details."
               >
+                <Ionicons
+                  name="lock-closed"
+                  size={18}
+                  color={Colors.softGold}
+                  style={styles.triggerLockIcon}
+                />
                 <Text style={styles.triggerLockedText}>
                   Tag triggers like noise, stress, and sleep quality — coming in a future update.
                 </Text>
@@ -407,11 +404,11 @@ export default function LogEntryScreen() {
         </View>
       </KeyboardAvoidingView>
 
-      <ComingSoonModal
+      <PremiumFeatureModal
         visible={upgradeVisible}
         onClose={() => setUpgradeVisible(false)}
         featureName="Trigger Tagging"
-        description="Tag potential triggers (noise, stress, caffeine, alcohol, poor sleep, illness) alongside your daily log entries to identify patterns in what makes your tinnitus worse."
+        description="Tag potential triggers alongside your daily log — noise exposure, stress, caffeine, alcohol, poor sleep, or illness — to identify patterns in what makes your tinnitus worse over time."
       />
     </SafeAreaView>
   );
@@ -507,6 +504,11 @@ function makeStyles(
       gap: Spacing.xs,
       borderWidth: 1,
       borderColor: Colors.deepTide + '30',
+    },
+    triggerLockIcon: {
+      position: 'absolute',
+      top: 10,
+      right: 10,
     },
     triggerLockedText: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
     triggerLockedCTA:  { ...typography.caption, color: Colors.deepTide, fontWeight: '500' as const },
