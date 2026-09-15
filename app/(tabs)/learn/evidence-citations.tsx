@@ -41,7 +41,7 @@ const CITATION_GROUPS: CitationGroup[] = [
         details: '8(4), 221–254',
         relevance:
           'Established the neurophysiological model of tinnitus underpinning habituation-based approaches and tinnitus retraining therapy (TRT).',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/2175622/',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/2175858/',
         urlLabel: 'PubMed',
       },
       {
@@ -71,8 +71,8 @@ const CITATION_GROUPS: CitationGroup[] = [
         details: 'Book publication',
         relevance:
           'A foundational text describing cognitive behavioural therapy approaches to tinnitus management.',
-        url: 'https://scholar.google.com/scholar?q=Henry+Wilson+Psychological+Management+Chronic+Tinnitus+2001',
-        urlLabel: 'Google Scholar',
+        url: 'https://books.google.com/books?id=R-ELAQAAMAAJ',
+        urlLabel: 'Google Books',
       },
       {
         id: 'jasper-2014',
@@ -97,7 +97,7 @@ const CITATION_GROUPS: CitationGroup[] = [
         details: '30(4), 203–216',
         relevance:
           'Examined psychological factors — including progressive muscle relaxation responses — in tinnitus severity, supporting relaxation-based interventions.',
-        url: 'https://pubmed.ncbi.nlm.nih.gov/1910818/',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/1642568/',
         urlLabel: 'PubMed',
       },
     ],
@@ -106,16 +106,17 @@ const CITATION_GROUPS: CitationGroup[] = [
     groupTitle: 'Sleep & clinical guidelines',
     citations: [
       {
-        id: 'lasisi-2018',
+        id: 'lasisi-2011',
         authors: 'Lasisi AO, Gureje O',
-        year: 2018,
-        title: 'Sleep disorder in patients with tinnitus',
-        journal: 'Journal of Laryngology and Otology',
-        details: '132(6), 490–494',
+        year: 2011,
+        title:
+          'Prevalence of insomnia and impact on quality of life among community elderly subjects with tinnitus',
+        journal: 'Annals of Otology, Rhinology & Laryngology',
+        details: '120(4), 226–230',
         relevance:
-          'Quantified the bidirectional relationship between tinnitus and sleep disturbance, supporting targeted sleep hygiene in tinnitus self-management.',
-        url: 'https://doi.org/10.1017/S0022215118000671',
-        urlLabel: 'doi.org',
+          'Found insomnia in ~52% of elderly tinnitus patients vs. ~34% of those without tinnitus, with measurably worse quality of life when both were present — supporting targeted sleep hygiene in tinnitus self-management.',
+        url: 'https://pubmed.ncbi.nlm.nih.gov/21585151/',
+        urlLabel: 'PubMed',
       },
       {
         id: 'nice-2020',
