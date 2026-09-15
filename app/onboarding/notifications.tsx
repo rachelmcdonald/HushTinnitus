@@ -18,6 +18,7 @@ import Constants from 'expo-constants';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import { applyNotifications } from '@/src/notifications/scheduleNotifications';
 
 const isExpoGo = Constants.appOwnership === 'expo';
 
@@ -56,7 +57,7 @@ function NotificationRow({ emoji, heading, body }: NotificationItem) {
 }
 
 export default function NotificationsScreen() {
-  const { updatePreferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [requesting, setRequesting] = useState(false);
@@ -71,7 +72,19 @@ export default function NotificationsScreen() {
         // Dynamic import — only runs on button press, never at module load time
         const ExpoNotifications = await import('expo-notifications');
         const { status } = await ExpoNotifications.requestPermissionsAsync();
-        updatePreferences({ notificationsEnabled: status === 'granted' });
+        const granted = status === 'granted';
+        updatePreferences({ notificationsEnabled: granted });
+
+        // Actually schedule the daily reminder (and CREST week 4/8 reminders)
+        // now that permission is granted — setting the preference flag alone
+        // does not schedule anything.
+        if (granted) {
+          await applyNotifications(
+            true,
+            preferences?.notificationTime ?? '09:00',
+            preferences?.firstLaunchDate
+          );
+        }
       } catch {
         // expo-notifications not available (Expo Go SDK 53+)
         setUnavailableNote(true);

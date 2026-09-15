@@ -18,6 +18,7 @@ import { getDb } from '@/src/storage/database';
 import DisclaimerModal from '@/src/components/DisclaimerModal';
 import PremiumFeatureModal from '@/src/components/PremiumFeatureModal';
 import ScrollWithIndicator from '@/src/components/ScrollWithIndicator';
+import { applyNotifications } from '@/src/notifications/scheduleNotifications';
 import type { UserPreferences } from '@/src/types';
 
 // ─── Utilities ────────────────────────────────────────────────────────────────
@@ -170,88 +171,6 @@ function buildPersonalReport(
   lines.push(REPORT_DISCLAIMER);
 
   return lines.join('\n');
-}
-
-// ─── Notification scheduling ──────────────────────────────────────────────────
-
-async function applyNotifications(
-  enabled: boolean,
-  time: string,
-  firstLaunchDate: string | null | undefined,
-): Promise<{ unavailable?: boolean }> {
-  if (Platform.OS === 'web') return {};
-  try {
-    const Notifs = await import('expo-notifications');
-
-    // Cancel all existing Hush notifications first
-    for (const id of ['hush-daily', 'hush-crest-week4', 'hush-crest-week8']) {
-      Notifs.cancelScheduledNotificationAsync(id).catch(() => {});
-    }
-
-    if (!enabled) return {};
-
-    // Ensure permission is granted
-    const { status } = await Notifs.getPermissionsAsync();
-    let finalStatus = status;
-    if (status !== 'granted') {
-      const req = await Notifs.requestPermissionsAsync();
-      finalStatus = req.status;
-    }
-    if (finalStatus !== 'granted') return {};
-
-    // Daily check-in
-    const [hour, minute] = time.split(':').map(Number);
-    await Notifs.scheduleNotificationAsync({
-      identifier: 'hush-daily',
-      content: {
-        title: 'Daily check-in',
-        body: 'How is your tinnitus today? Take a moment to log your symptoms.',
-        sound: true,
-      },
-      trigger: {
-        type: Notifs.SchedulableTriggerInputTypes.DAILY,
-        hour,
-        minute,
-      },
-    });
-
-    // CREST retest reminders — auto-scheduled based on firstLaunchDate
-    if (firstLaunchDate) {
-      const launch = new Date(firstLaunchDate);
-      const now = Date.now();
-
-      const w4 = new Date(launch.getTime() + 28 * 86_400_000);
-      const w8 = new Date(launch.getTime() + 56 * 86_400_000);
-
-      if (w4.getTime() > now) {
-        await Notifs.scheduleNotificationAsync({
-          identifier: 'hush-crest-week4',
-          content: {
-            title: 'Week 4 CREST check-in',
-            body: "It's been 4 weeks — time to retake the CREST assessment and track your progress.",
-            sound: true,
-          },
-          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w4 },
-        });
-      }
-
-      if (w8.getTime() > now) {
-        await Notifs.scheduleNotificationAsync({
-          identifier: 'hush-crest-week8',
-          content: {
-            title: 'Week 8 CREST check-in',
-            body: "It's been 8 weeks — time to retake the CREST assessment and see how far you've come.",
-            sound: true,
-          },
-          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w8 },
-        });
-      }
-    }
-
-    return {};
-  } catch {
-    return { unavailable: true };
-  }
 }
 
 // ─── Time picker sub-component ────────────────────────────────────────────────
@@ -517,6 +436,45 @@ export default function SettingsScreen() {
     setNotifApplying(false);
   }, [firstLaunchDate, updatePreferences]);
 
+  // DEV-only: schedule a one-off notification 10s from now, to verify local
+  // notifications actually arrive on a real device without waiting for the
+  // next scheduled daily reminder. Never shown in a production build.
+  const [testingNotif, setTestingNotif] = useState(false);
+  const handleTestNotification = useCallback(async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not available', 'Notifications are not supported on web.');
+      return;
+    }
+    setTestingNotif(true);
+    try {
+      const Notifs = await import('expo-notifications');
+      const { status } = await Notifs.getPermissionsAsync();
+      let finalStatus = status;
+      if (status !== 'granted') {
+        const req = await Notifs.requestPermissionsAsync();
+        finalStatus = req.status;
+      }
+      if (finalStatus !== 'granted') {
+        Alert.alert('Permission needed', 'Notification permission was not granted.');
+        return;
+      }
+      await Notifs.scheduleNotificationAsync({
+        identifier: 'hush-test',
+        content: {
+          title: 'Test notification',
+          body: 'If you can see this, local notifications are working on this device.',
+          sound: true,
+        },
+        trigger: { type: Notifs.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10, repeats: false },
+      });
+      Alert.alert('Scheduled', 'A test notification will arrive in about 10 seconds — you can leave this screen.');
+    } catch {
+      Alert.alert('Unavailable', 'Notification setup requires a development build (not Expo Go).');
+    } finally {
+      setTestingNotif(false);
+    }
+  }, []);
+
   // Export a readable personal report
   const handleExport = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -726,6 +684,26 @@ export default function SettingsScreen() {
               </Text>
             </View>
           )}
+
+          {/* DEV-only: verify local notifications on-device without waiting a full day */}
+          {__DEV__ && (
+            <>
+              <View style={styles.divider} />
+              <Pressable
+                style={({ pressed }) => [styles.devTestBtn, pressed && styles.devTestBtnPressed]}
+                onPress={handleTestNotification}
+                disabled={testingNotif}
+                accessibilityRole="button"
+                accessibilityLabel="Test notification in 10 seconds"
+              >
+                {testingNotif ? (
+                  <ActivityIndicator size="small" color={Colors.white} />
+                ) : (
+                  <Text style={styles.devTestBtnLabel}>Test notification in 10s</Text>
+                )}
+              </Pressable>
+            </>
+          )}
         </View>
 
         {/* ── Data & Privacy ─────────────────────────────────────────────── */}
@@ -905,6 +883,19 @@ function makeStyles(
       ...typography.caption,
       color: colors.deepTide,
       fontStyle: 'italic',
+    },
+    devTestBtn: {
+      backgroundColor: colors.deepTide,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.sm,
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: 40,
+    },
+    devTestBtnPressed: { opacity: 0.85 },
+    devTestBtnLabel: {
+      ...typography.heading2,
+      color: Colors.white,
     },
 
     // Privacy text

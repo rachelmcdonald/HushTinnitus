@@ -137,6 +137,27 @@ function faviconSvg() {
 </svg>`;
 }
 
+// ── Android notification icon (96×96, white silhouette, transparent bg) ─────
+//
+// Android requires status-bar/notification icons to be a plain white shape
+// on a transparent background — it renders only the alpha channel, tinted
+// with whatever colour is configured (see app.json's expo-notifications
+// plugin "color" field). A full-colour icon (e.g. the app icon) would just
+// render as a solid tinted block, not the intended drop/ripple mark.
+// 96×96 matches the xxxhdpi bucket; the config plugin generates the other
+// mdpi/hdpi/xhdpi/xxhdpi sizes from this source automatically.
+function notificationIconSvg() {
+  const cx = 48;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
+  <!-- Largest drop only -->
+  <circle cx="${cx}" cy="54" r="9" fill="#ffffff"/>
+  <!-- Ripple ellipses -->
+  <ellipse cx="${cx}" cy="74" rx="42" ry="12" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.28"/>
+  <ellipse cx="${cx}" cy="74" rx="28" ry="9"  fill="none" stroke="#ffffff" stroke-width="4" opacity="0.55"/>
+  <ellipse cx="${cx}" cy="74" rx="15" ry="5"  fill="none" stroke="#ffffff" stroke-width="5" opacity="0.90"/>
+</svg>`;
+}
+
 // ── Splash (2048×2048) ────────────────────────────────────────────────────────
 
 async function makeSplash() {
@@ -214,11 +235,14 @@ async function run() {
   await sharp(Buffer.from(faviconSvg())).png().toFile(path.join(ASSETS, 'favicon.png'));
   console.log('✓  assets/favicon.png');
 
+  await sharp(Buffer.from(notificationIconSvg())).png().toFile(path.join(ASSETS, 'notification-icon.png'));
+  console.log('✓  assets/notification-icon.png');
+
   await makeSplash();
   console.log('✓  assets/splash.png');
 
   console.log('\nFile sizes:');
-  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'splash.png']) {
+  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'notification-icon.png', 'splash.png']) {
     const { size } = fs.statSync(path.join(ASSETS, f));
     console.log(`   ${f.padEnd(24)} ${(size / 1024).toFixed(1)} KB`);
   }
