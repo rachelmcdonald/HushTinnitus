@@ -17,6 +17,7 @@ import { getRecentSessions } from '@/src/storage/soundSessions';
 import { getPreferences } from '@/src/storage/preferences';
 import { getDb } from '@/src/storage/database';
 import { computeStreakFromDates } from '@/src/utils/streakCalculator';
+import { formatSessionName } from '@/src/utils/formatSessionName';
 import type { SoundSession, SymptomLog } from '@/src/types';
 
 // ─── daily support messages ───────────────────────────────────────────────────
@@ -130,10 +131,6 @@ function formatDuration(seconds: number): string {
   const m = Math.floor(seconds / 60);
   if (m < 1) return '<1 min';
   return `${m} min`;
-}
-
-function formatSoundName(raw: string): string {
-  return raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function shouldShowCRESTCheckIn(prefs: ReturnType<typeof getPreferences>): { show: boolean; weekNumber: number } {
@@ -301,7 +298,7 @@ export default function HomeScreen() {
               <Text style={styles.sessionDuration}>{formatDuration(session.durationSeconds)}</Text>
               {session.sounds.length > 0 && (
                 <Text style={styles.sessionSounds} numberOfLines={2}>
-                  {session.sounds.map(formatSoundName).join(', ')}
+                  {session.sounds.map(formatSessionName).join(', ')}
                 </Text>
               )}
             </View>

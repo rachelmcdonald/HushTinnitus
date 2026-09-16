@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import { SoundSource, SoundSession } from '@/src/types';
 import { audioEngine } from '@/src/audio/AudioEngine';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import { formatSessionName } from '@/src/utils/formatSessionName';
 import {
   showPlaybackNotification,
   hidePlaybackNotification,
@@ -11,23 +12,11 @@ import {
 
 const FADE_OUT_SECONDS = 10;
 
-// Human-readable names for the notification / Now Playing bar.
-const SOUND_NAMES: Record<SoundSource, string> = {
-  'white-noise':    'White noise',
-  'pink-noise':     'Pink noise',
-  'brown-noise':    'Brown noise',
-  'rain':           'Rain',
-  'ocean':          'Ocean waves',
-  'stream':         'Stream',
-  'forest':         'Forest',
-  'fire':           'Fire',
-  'cafe':           'Cafe ambience',
-  'binaural-alpha': 'Alpha waves',
-  'binaural-theta': 'Theta waves',
-};
-
+// Human-readable name for the notification / Now Playing bar — backed by the
+// same lookup table used for the Home tab's recent sessions list, so a sound
+// is named identically everywhere it appears.
 export function soundDisplayName(id: SoundSource): string {
-  return SOUND_NAMES[id] ?? id;
+  return formatSessionName(id);
 }
 
 export type AudioPlaybackState = {
