@@ -85,9 +85,10 @@ export async function applyNotifications(
     await Notifs.scheduleNotificationAsync({
       identifier: 'hush-daily',
       content: {
-        title: 'Daily check-in',
-        body: 'How is your tinnitus today? Take a moment to log your symptoms.',
+        title: 'Hush Tinnitus',
+        body: "Time for your daily check-in — a moment to log how you're feeling today 🌊",
         sound: true,
+        color: '#0D4F5C',
       },
       trigger: {
         type: Notifs.SchedulableTriggerInputTypes.DAILY,
@@ -109,9 +110,10 @@ export async function applyNotifications(
         await Notifs.scheduleNotificationAsync({
           identifier: 'hush-crest-week4',
           content: {
-            title: 'Week 4 CREST check-in',
-            body: "It's been 4 weeks — time to retake the CREST assessment and track your progress.",
+            title: 'Hush Tinnitus — 4 Week Check-in',
+            body: 'It has been 4 weeks since your first CREST assessment. Head to the Track tab to see how you are progressing 📊',
             sound: true,
+            color: '#0D4F5C',
           },
           trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w4, channelId: 'default' },
         });
@@ -121,9 +123,10 @@ export async function applyNotifications(
         await Notifs.scheduleNotificationAsync({
           identifier: 'hush-crest-week8',
           content: {
-            title: 'Week 8 CREST check-in',
-            body: "It's been 8 weeks — time to retake the CREST assessment and see how far you've come.",
+            title: 'Hush Tinnitus — 8 Week Check-in',
+            body: 'It has been 8 weeks since your first CREST assessment. Time for your final check-in to track your progress 📊',
             sound: true,
+            color: '#0D4F5C',
           },
           trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w8, channelId: 'default' },
         });

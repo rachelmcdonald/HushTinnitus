@@ -461,9 +461,10 @@ export default function SettingsScreen() {
       const notificationId = await Notifs.scheduleNotificationAsync({
         identifier: 'hush-test',
         content: {
-          title: 'Test notification',
-          body: 'If you can see this, local notifications are working on this device.',
+          title: 'Hush Tinnitus',
+          body: "Time for your daily check-in — a moment to log how you're feeling today 🌊",
           sound: true,
+          color: '#0D4F5C',
         },
         trigger: {
           type: Notifs.SchedulableTriggerInputTypes.TIME_INTERVAL,

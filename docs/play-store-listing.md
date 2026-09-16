@@ -85,3 +85,12 @@ before making changes to how you manage your tinnitus.
 - "Tinnitus" used 6 times naturally; includes ringing ears, sound therapy,
   sound enrichment, CBT, habituation, tinnitus masking (notched therapy) per
   the spec's keyword guidance. No TFI reference (app uses CREST, not TFI).
+
+---
+
+## Setup recommendations for users
+
+For best notification reliability on Android, we recommend setting Hush
+Tinnitus to unrestricted battery usage: Settings → Apps → Hush Tinnitus →
+Battery → select Unrestricted. This prevents Android's battery optimisation
+from delaying or blocking daily reminder notifications.
