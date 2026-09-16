@@ -53,6 +53,7 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
 // overlapping the padlock icon, without touching the underlying title used
 // for the modal and accessibility label.
 const CARD_TITLE_BREAKS: Record<string, string> = {
+  'diaphragmatic': 'Diaphragmatic\nBreathing',
   'guided-imagery': 'Guided\nImagery',
   'sleep-routine': 'Sleep\nPreparation',
 };
