@@ -436,52 +436,6 @@ export default function SettingsScreen() {
     setNotifApplying(false);
   }, [firstLaunchDate, updatePreferences]);
 
-  // DEV-only: schedule a one-off notification 10s from now, to verify local
-  // notifications actually arrive on a real device without waiting for the
-  // next scheduled daily reminder. Never shown in a production build.
-  const [testingNotif, setTestingNotif] = useState(false);
-  const handleTestNotification = useCallback(async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert('Not available', 'Notifications are not supported on web.');
-      return;
-    }
-    setTestingNotif(true);
-    try {
-      const Notifs = await import('expo-notifications');
-      const { status } = await Notifs.getPermissionsAsync();
-      let finalStatus = status;
-      if (status !== 'granted') {
-        const req = await Notifs.requestPermissionsAsync();
-        finalStatus = req.status;
-      }
-      if (finalStatus !== 'granted') {
-        Alert.alert('Permission needed', 'Notification permission was not granted.');
-        return;
-      }
-      const notificationId = await Notifs.scheduleNotificationAsync({
-        identifier: 'hush-test',
-        content: {
-          title: 'Hush Tinnitus',
-          body: "Time for your daily check-in — a moment to log how you're feeling today 🌊",
-          sound: true,
-          color: '#0D4F5C',
-        },
-        trigger: {
-          type: Notifs.SchedulableTriggerInputTypes.TIME_INTERVAL,
-          seconds: 10,
-          repeats: false,
-          channelId: 'default',
-        },
-      });
-      console.log('[Test notification scheduled] ID:', notificationId);
-      Alert.alert('Scheduled', 'A test notification will arrive in about 10 seconds — you can leave this screen.');
-    } catch {
-      Alert.alert('Unavailable', 'Notification setup requires a development build (not Expo Go).');
-    } finally {
-      setTestingNotif(false);
-    }
-  }, []);
-
   // Export a readable personal report
   const handleExport = useCallback(async () => {
     if (Platform.OS === 'web') {
@@ -691,26 +645,6 @@ export default function SettingsScreen() {
               </Text>
             </View>
           )}
-
-          {/* DEV-only: verify local notifications on-device without waiting a full day */}
-          {__DEV__ && (
-            <>
-              <View style={styles.divider} />
-              <Pressable
-                style={({ pressed }) => [styles.devTestBtn, pressed && styles.devTestBtnPressed]}
-                onPress={handleTestNotification}
-                disabled={testingNotif}
-                accessibilityRole="button"
-                accessibilityLabel="Test notification in 10 seconds"
-              >
-                {testingNotif ? (
-                  <ActivityIndicator size="small" color={Colors.white} />
-                ) : (
-                  <Text style={styles.devTestBtnLabel}>Test notification in 10s</Text>
-                )}
-              </Pressable>
-            </>
-          )}
         </View>
 
         {/* ── Data & Privacy ─────────────────────────────────────────────── */}
@@ -891,20 +825,6 @@ function makeStyles(
       color: colors.deepTide,
       fontStyle: 'italic',
     },
-    devTestBtn: {
-      backgroundColor: colors.deepTide,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.sm,
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 40,
-    },
-    devTestBtnPressed: { opacity: 0.85 },
-    devTestBtnLabel: {
-      ...typography.heading2,
-      color: Colors.white,
-    },
-
     // Privacy text
     privacyNote: {
       ...typography.caption,
