@@ -94,10 +94,13 @@ function getDailyMessage(): string {
 
 function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour >= 5 && hour < 12) return 'Good morning';
-  if (hour >= 12 && hour < 17) return 'Good afternoon';
-  if (hour >= 17 && hour < 22) return 'Good evening';
-  return 'Hello';
+  // 0-23 fully covered, no gap that could fall through:
+  //   Good morning   12:00am–11:59am (0-11)
+  //   Good afternoon 12:00pm–5:59pm  (12-17)
+  //   Good evening   6:00pm–11:59pm  (18-23)
+  if (hour < 12) return 'Good morning';
+  if (hour < 18) return 'Good afternoon';
+  return 'Good evening';
 }
 
 function isoDateKey(offsetMs = 0): string {

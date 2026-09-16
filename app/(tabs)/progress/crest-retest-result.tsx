@@ -54,7 +54,7 @@ function DeltaBadge({ delta }: { delta: number }) {
   const improved = delta > 0;
   const label = improved ? `↓ ${delta} points` : delta < 0 ? `↑ ${Math.abs(delta)} points` : 'No change';
   const bg = improved ? Colors.tealLight : delta < 0 ? Colors.coralLight : colors.textSecondary + '20';
-  const color = improved ? Colors.deepTide : delta < 0 ? Colors.warmCoral : colors.textSecondary;
+  const color = improved ? Colors.calmWave : delta < 0 ? Colors.warmCoral : colors.textSecondary;
   return (
     <View style={[deltaBadge.pill, { backgroundColor: bg }]}>
       <Text style={[deltaBadge.text, { color }]}>{label}</Text>
