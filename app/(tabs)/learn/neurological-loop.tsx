@@ -175,22 +175,24 @@ function LoopDiagram() {
         {/* ── "cycle" label on the return arrow (right side, rotated) ──
             Rotated 90° around its own centre, so the un-rotated text's
             vertical extent (ascent/descent) becomes its horizontal footprint
-            after rotation. The default alphabetic baseline puts most of that
-            extent above the baseline (ascent) and very little below
-            (descent) — with the pivot only 4px from the viewBox's right
-            edge (D_W), the ascent-side was landing past x=D_W and getting
-            clipped there (visible as the tops of the letters being cut off).
-            alignmentBaseline="middle" centres the glyph box on the pivot
-            instead, splitting that extent evenly on both sides, and the
-            pivot is nudged 3px left to give ≥4px of clearance to the edge. */}
+            after rotation. alignmentBaseline="middle" centres the glyph box
+            on the pivot, splitting that extent evenly on both sides rather
+            than dumping most of it toward the viewBox edge (the original
+            bug). The pivot itself (bendX + 6) sits clearly to the right of
+            the dashed line at bendX — bendX + 1 (a previous attempt) put it
+            only 1px clear of the line, reading as sitting on top of it. Only
+            8px of viewBox space exists between the line and the right edge,
+            so this is a deliberate compromise favouring clearance from the
+            line; keep alignmentBaseline="middle" if this needs nudging
+            further; a value beyond bendX + 8 will clip at the edge again. */}
         <SvgText
-          x={bendX + 1}
+          x={bendX + 6}
           y={(n3MidY + n1MidY) / 2}
           textAnchor="middle"
           alignmentBaseline="middle"
           fill={colors.textSecondary}
           fontSize={9}
-          transform={`rotate(90, ${bendX + 1}, ${(n3MidY + n1MidY) / 2})`}
+          transform={`rotate(90, ${bendX + 6}, ${(n3MidY + n1MidY) / 2})`}
         >
           cycle repeats
         </SvgText>
