@@ -9,6 +9,52 @@
 
 import { Platform } from 'react-native';
 
+// Sets up everything Android/foreground notification DISPLAY depends on —
+// called once from the root layout, before anything is ever scheduled:
+//
+// 1. setNotificationHandler — per expo-notifications' own docs, "the default
+//    behavior when the handler is not set... is not to show the notification"
+//    while the app is in the foreground. Without this, a notification firing
+//    while the app is still open (e.g. the dev test button, 10s later) is
+//    silently swallowed — this was likely the actual cause of the test
+//    notification never appearing.
+// 2. The 'default' Android notification channel — without a channelId wired
+//    into a trigger, expo-notifications silently falls back to its own
+//    auto-created channel instead (see BaseNotificationBuilder.kt), so this
+//    is paired with `channelId: 'default'` on every scheduleNotificationAsync
+//    call below; creating the channel alone would do nothing.
+// 3. A received-listener that logs to the terminal, to confirm delivery.
+export async function setupNotificationHandling(): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const Notifs = await import('expo-notifications');
+
+    Notifs.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowBanner: true,
+        shouldShowList: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+
+    if (Platform.OS === 'android') {
+      await Notifs.setNotificationChannelAsync('default', {
+        name: 'Default',
+        importance: Notifs.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#5DCAA5',
+      });
+    }
+
+    Notifs.addNotificationReceivedListener((notification) => {
+      console.log('[Notification received]', notification);
+    });
+  } catch {
+    // expo-notifications not available (Expo Go) — nothing to set up.
+  }
+}
+
 export async function applyNotifications(
   enabled: boolean,
   time: string,
@@ -47,6 +93,7 @@ export async function applyNotifications(
         type: Notifs.SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
+        channelId: 'default',
       },
     });
 
@@ -66,7 +113,7 @@ export async function applyNotifications(
             body: "It's been 4 weeks — time to retake the CREST assessment and track your progress.",
             sound: true,
           },
-          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w4 },
+          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w4, channelId: 'default' },
         });
       }
 
@@ -78,7 +125,7 @@ export async function applyNotifications(
             body: "It's been 8 weeks — time to retake the CREST assessment and see how far you've come.",
             sound: true,
           },
-          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w8 },
+          trigger: { type: Notifs.SchedulableTriggerInputTypes.DATE, date: w8, channelId: 'default' },
         });
       }
     }

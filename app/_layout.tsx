@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { PreferencesProvider } from '@/src/context/PreferencesContext';
 import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 import { initAudioSession } from '@/src/audio/AudioSession';
+import { setupNotificationHandling } from '@/src/notifications/scheduleNotifications';
 
 // Keep the native splash visible. launch.tsx calls hideAsync() after its first
 // animation frame renders, so there is no white gap between splash and launch screen.
@@ -30,6 +31,7 @@ function AppStack() {
 export default function RootLayout() {
   useEffect(() => {
     try { initAudioSession(); } catch {}
+    setupNotificationHandling();
     // SplashScreen.hideAsync() is NOT called here — launch.tsx owns that call
     // so the native splash stays visible until launch content is ready to show.
   }, []);

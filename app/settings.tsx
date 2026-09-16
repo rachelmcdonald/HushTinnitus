@@ -458,15 +458,21 @@ export default function SettingsScreen() {
         Alert.alert('Permission needed', 'Notification permission was not granted.');
         return;
       }
-      await Notifs.scheduleNotificationAsync({
+      const notificationId = await Notifs.scheduleNotificationAsync({
         identifier: 'hush-test',
         content: {
           title: 'Test notification',
           body: 'If you can see this, local notifications are working on this device.',
           sound: true,
         },
-        trigger: { type: Notifs.SchedulableTriggerInputTypes.TIME_INTERVAL, seconds: 10, repeats: false },
+        trigger: {
+          type: Notifs.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 10,
+          repeats: false,
+          channelId: 'default',
+        },
       });
+      console.log('[Test notification scheduled] ID:', notificationId);
       Alert.alert('Scheduled', 'A test notification will arrive in about 10 seconds — you can leave this screen.');
     } catch {
       Alert.alert('Unavailable', 'Notification setup requires a development build (not Expo Go).');
