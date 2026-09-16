@@ -26,7 +26,7 @@ function RoleBadge({ label }: { label: string }) {
       paddingVertical: 4,
       marginTop: 2,
     }}>
-      <Text style={{ fontSize: 12, color: '#085041' }}>{label}</Text>
+      <Text style={{ fontSize: 12, color: '#5DCAA5' }}>{label}</Text>
     </View>
   );
 }
