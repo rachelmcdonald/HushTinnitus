@@ -18,14 +18,22 @@ import { useTheme } from '@/src/context/ThemeContext';
 const SQUARE = 200;    // side length of the box, px
 const DOT = 18;        // dot diameter, px
 const HALF_DOT = DOT / 2;
+const BORDER_WIDTH = 2; // must match styles.box.borderWidth below
+const HALF_BORDER = BORDER_WIDTH / 2;
 
-// Dot top-left positions at each corner (dot centered at corner):
-// Using left/top in animated style; dot is absolute inside the square view
+// Dot top-left positions at each corner (dot centred at corner):
+// Using left/top in animated style; dot is absolute inside the square view.
+// React Native (like CSS) positions absolutely-positioned children relative
+// to the parent's padding edge — i.e. INSIDE the border — so without the
+// +/- HALF_BORDER correction below, the dot's centre lands on the border's
+// inner edge instead of the middle of the drawn stroke. Each edge is
+// therefore nudged outward by half the border width: top shifts up, right
+// shifts right, bottom shifts down, left shifts left.
 const CORNER = {
-  bottomLeft: { left: -HALF_DOT, top: SQUARE - HALF_DOT },
-  bottomRight: { left: SQUARE - HALF_DOT, top: SQUARE - HALF_DOT },
-  topRight:    { left: SQUARE - HALF_DOT, top: -HALF_DOT },
-  topLeft:     { left: -HALF_DOT, top: -HALF_DOT },
+  bottomLeft:  { left: -HALF_DOT - HALF_BORDER,        top: SQUARE - HALF_DOT + HALF_BORDER },
+  bottomRight: { left: SQUARE - HALF_DOT + HALF_BORDER, top: SQUARE - HALF_DOT + HALF_BORDER },
+  topRight:    { left: SQUARE - HALF_DOT + HALF_BORDER, top: -HALF_DOT - HALF_BORDER },
+  topLeft:     { left: -HALF_DOT - HALF_BORDER,        top: -HALF_DOT - HALF_BORDER },
 };
 
 type BoxPhase = 'idle' | 'inhale' | 'hold1' | 'exhale' | 'hold2';
@@ -372,7 +380,7 @@ function makeStyles(
     box: {
       width: SQUARE,
       height: SQUARE,
-      borderWidth: 2,
+      borderWidth: BORDER_WIDTH,
       borderColor: Colors.deepTide,
       borderRadius: 4,
       overflow: 'visible',
