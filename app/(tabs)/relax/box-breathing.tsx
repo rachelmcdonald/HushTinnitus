@@ -20,6 +20,11 @@ const DOT = 18;        // dot diameter, px
 const HALF_DOT = DOT / 2;
 const BORDER_WIDTH = 2; // must match styles.box.borderWidth below
 const HALF_BORDER = BORDER_WIDTH / 2;
+// Empirical correction from on-device screenshots: the border-centring fix
+// (+/- HALF_BORDER) left top-left sitting perfectly on the line, but the
+// right and bottom edges still read ~2px outside the stroke. Only those
+// three corners get this extra nudge — top-left is untouched.
+const VISUAL_NUDGE = 2;
 
 // Dot top-left positions at each corner (dot centred at corner):
 // Using left/top in animated style; dot is absolute inside the square view.
@@ -28,12 +33,13 @@ const HALF_BORDER = BORDER_WIDTH / 2;
 // +/- HALF_BORDER correction below, the dot's centre lands on the border's
 // inner edge instead of the middle of the drawn stroke. Each edge is
 // therefore nudged outward by half the border width: top shifts up, right
-// shifts right, bottom shifts down, left shifts left.
+// shifts right, bottom shifts down, left shifts left. VISUAL_NUDGE then
+// pulls the right/bottom edges back in by 2px per the screenshot above.
 const CORNER = {
-  bottomLeft:  { left: -HALF_DOT - HALF_BORDER,        top: SQUARE - HALF_DOT + HALF_BORDER },
-  bottomRight: { left: SQUARE - HALF_DOT + HALF_BORDER, top: SQUARE - HALF_DOT + HALF_BORDER },
-  topRight:    { left: SQUARE - HALF_DOT + HALF_BORDER, top: -HALF_DOT - HALF_BORDER },
-  topLeft:     { left: -HALF_DOT - HALF_BORDER,        top: -HALF_DOT - HALF_BORDER },
+  bottomLeft:  { left: -HALF_DOT - HALF_BORDER,                       top: SQUARE - HALF_DOT + HALF_BORDER - VISUAL_NUDGE },
+  bottomRight: { left: SQUARE - HALF_DOT + HALF_BORDER - VISUAL_NUDGE, top: SQUARE - HALF_DOT + HALF_BORDER - VISUAL_NUDGE },
+  topRight:    { left: SQUARE - HALF_DOT + HALF_BORDER - VISUAL_NUDGE, top: -HALF_DOT - HALF_BORDER },
+  topLeft:     { left: -HALF_DOT - HALF_BORDER,                       top: -HALF_DOT - HALF_BORDER },
 };
 
 type BoxPhase = 'idle' | 'inhale' | 'hold1' | 'exhale' | 'hold2';
