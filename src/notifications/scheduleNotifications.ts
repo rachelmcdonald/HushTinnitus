@@ -86,7 +86,7 @@ export async function applyNotifications(
       identifier: 'hush-daily',
       content: {
         title: 'Hush Tinnitus',
-        body: "Time for your daily check-in — a moment to log how you're feeling today 🌊",
+        body: "Time for your daily check-in — a moment to log how you're feeling today",
         sound: true,
         color: '#0D4F5C',
       },
