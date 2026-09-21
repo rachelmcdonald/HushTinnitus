@@ -132,11 +132,64 @@ async function measureContentExtent(size) {
 const PLAY_STORE_ICON_SIZE = 512;
 const PLAY_STORE_SAFE_ZONE = 340; // 66% of 512
 
+// Play-Store-icon-only wordmark: the shared iconContent()'s "." tspan
+// renders as a square rather than a circular dot with this embedded Roboto
+// subset — confirmed by rendering "hush." standalone at both 280px (the
+// icon.png scale) and ~118px (this icon's effective scale) and visually
+// inspecting the glyph at each size; it was square both times, so this is a
+// property of the glyph itself, not a small-size rendering artifact that a
+// bigger font-size would fix. Replaced with an explicit <circle> instead.
+//
+// icon.png / adaptive-icon.png / splash.png still call the original,
+// unmodified iconContent() below and are unaffected by this.
+//
+// "hush" is repositioned start-anchored so it lands in the exact same pixel
+// position it already occupies in iconContent()'s middle-anchored "hush."
+// string — measured empirically (colour-separated pixel bounding boxes,
+// since "hush" and "." are different colours) at the 1024 reference scale
+// rather than estimated from font metrics:
+//   "hush" (calm wave) renders at x 193–752, y 108–315 -> left edge 193
+//   "."    (cream)     renders at x 795–823, y 280–309 -> centre (809, 294.5)
+function playStoreWordmarkAndMark(size, scale) {
+  const s  = size / 1024;
+  const cx = size / 2;
+  const cy = size / 2;
+  const n = v => +(v * s).toFixed(2);
+
+  const HUSH_LEFT_1024 = 193;
+  const PERIOD_CENTER_1024 = { x: 809, y: 294.5 };
+  const PERIOD_RADIUS = 4; // literal 4px in the final PNG, per spec — not scaled
+
+  const group = `
+  <text x="${n(HUSH_LEFT_1024)}" y="${n(NORM.textBaseline)}"
+    font-family="${FONT_FAMILY}" font-size="${n(NORM.fontSize)}" font-weight="400"
+    text-anchor="start" letter-spacing="${n(NORM.letterSpacing)}"
+    fill="${CALM_WAVE}">hush</text>
+  ${logoMarkContent(size)}`;
+
+  const scaledGroup = scale === 1
+    ? group
+    : `<g transform="translate(${cx} ${cy}) scale(${scale}) translate(${-cx} ${-cy})">${group}</g>`;
+
+  // The circle's centre must track the same safe-zone scale/translate as
+  // the rest of the wordmark (so it stays attached to "hush."), but its
+  // radius stays a literal 4px regardless of that scale — so the centre is
+  // transformed manually here rather than via the <g> wrapper above, which
+  // would also (incorrectly) shrink the radius.
+  const rawCx = n(PERIOD_CENTER_1024.x);
+  const rawCy = n(PERIOD_CENTER_1024.y);
+  const periodCx = scale === 1 ? rawCx : cx + (rawCx - cx) * scale;
+  const periodCy = scale === 1 ? rawCy : cy + (rawCy - cy) * scale;
+
+  return `${scaledGroup}
+  <circle cx="${periodCx.toFixed(2)}" cy="${periodCy.toFixed(2)}" r="${PERIOD_RADIUS}" fill="${CREAM}"/>`;
+}
+
 function playStoreIconSvg(scale) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${PLAY_STORE_ICON_SIZE}" height="${PLAY_STORE_ICON_SIZE}">
   ${fontDefs()}
   <rect width="${PLAY_STORE_ICON_SIZE}" height="${PLAY_STORE_ICON_SIZE}" fill="${DEEP_TIDE}"/>
-  ${iconContent(PLAY_STORE_ICON_SIZE, scale)}
+  ${playStoreWordmarkAndMark(PLAY_STORE_ICON_SIZE, scale)}
 </svg>`;
 }
 
