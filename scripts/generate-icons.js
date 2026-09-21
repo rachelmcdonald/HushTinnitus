@@ -203,46 +203,47 @@ const HUSH_BBOX = { ascentAboveBaseline: 52, width: 166, height: 54 };   // font
 const TINN_BBOX = { ascentAboveBaseline: 21, width: 130, height: 22 };   // fontSize 28, letter-spacing 6
 const TAG_BBOX  = { ascentAboveBaseline: 15, width: 289, height: 20 };   // fontSize 20 tagline
 
-const MARK_TARGET_W = 120;                    // "approximately 120px wide"
 const MARK_GAP = 40;                          // gap between mark and text
 const HUSH_TO_TINNITUS_GAP = 41;              // baseline-to-baseline
 const TINNITUS_TO_TAGLINE_GAP = 38;           // baseline-to-baseline
 
 function featureGraphicSvg() {
-  // Mark: scale so its measured content width hits MARK_TARGET_W, then
-  // derive the `size` to pass to logoMarkContent() and where its content
-  // sits within that size×size box.
-  const markScale = MARK_TARGET_W / MARK_BBOX_REF.width;
+  // Text block vertical layout first — the mark is now sized off of it
+  // (full height, top of "hush." to bottom of the tagline), rather than the
+  // other way around.
+  const hushBaselineLocalY = HUSH_BBOX.ascentAboveBaseline; // -> hush content top = 0
+  const tinnBaselineLocalY = hushBaselineLocalY + HUSH_TO_TINNITUS_GAP;
+  const tagBaselineLocalY  = tinnBaselineLocalY + TINNITUS_TO_TAGLINE_GAP;
+
+  const hushContentTop = hushBaselineLocalY - HUSH_BBOX.ascentAboveBaseline; // 0
+  const tagContentBottom = (tagBaselineLocalY - TAG_BBOX.ascentAboveBaseline) + TAG_BBOX.height;
+  const textBlockHeight = tagContentBottom - hushContentTop;
+
+  // Mark: scale UNIFORMLY so its measured content height matches the full
+  // text block height (top of "hush." to bottom of the tagline) — width
+  // follows proportionally, same aspect ratio as the source mark.
+  const markScale = textBlockHeight / MARK_BBOX_REF.height;
   const markSize = 1024 * markScale;
-  const markContentW = MARK_TARGET_W;
-  const markContentH = MARK_BBOX_REF.height * markScale;
+  const markContentW = MARK_BBOX_REF.width * markScale;
+  const markContentH = textBlockHeight; // by construction, matches MARK_BBOX_REF.height * markScale
   const markContentLeftInBox = MARK_BBOX_REF.left * markScale;
   const markContentTopInBox  = MARK_BBOX_REF.top * markScale;
 
   // Local group layout (own coordinate space, then translated to centre on
   // the canvas below) — text block left edge at local x = 0, mark's right
   // edge MARK_GAP to the left of it.
-  const textLocalX = MARK_TARGET_W + MARK_GAP;
-  const hushBaselineLocalY = HUSH_BBOX.ascentAboveBaseline; // -> hush content top = 0
-  const tinnBaselineLocalY = hushBaselineLocalY + HUSH_TO_TINNITUS_GAP;
-  const tagBaselineLocalY  = tinnBaselineLocalY + TINNITUS_TO_TAGLINE_GAP;
+  const textLocalX = markContentW + MARK_GAP;
 
-  const hushContentTop = hushBaselineLocalY - HUSH_BBOX.ascentAboveBaseline; // 0
-  const hushContentBottom = hushContentTop + HUSH_BBOX.height;
-  const hushContentCenterY = (hushContentTop + hushContentBottom) / 2;
-
-  const tagContentBottom = (tagBaselineLocalY - TAG_BBOX.ascentAboveBaseline) + TAG_BBOX.height;
-
-  // Mark vertically centred on "hush.", positioned MARK_GAP to the left of
-  // the text block.
+  // Mark top-aligned with the top of "hush." — since its height now equals
+  // the full text block height, this also bottom-aligns it with the
+  // tagline's bottom, spanning the whole block edge-to-edge.
   const markContentLeftLocal = 0;
-  const markContentTopLocal  = hushContentCenterY - markContentH / 2;
+  const markContentTopLocal  = hushContentTop;
   const markContentBottomLocal = markContentTopLocal + markContentH;
 
   const widestTextLine = Math.max(HUSH_BBOX.width, TINN_BBOX.width, TAG_BBOX.width);
 
-  // Overall group bounding box, in local coordinates (mark can extend above
-  // the text block's own top since it's taller than the "hush." line alone).
+  // Overall group bounding box, in local coordinates.
   const groupLeft   = markContentLeftLocal;
   const groupRight  = textLocalX + widestTextLine;
   const groupTop    = Math.min(markContentTopLocal, hushContentTop);
