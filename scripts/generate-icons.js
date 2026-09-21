@@ -39,6 +39,15 @@ const NORM = {
   cornerR:      180,   // rounded-rect radius
   fontSize:     280,
   letterSpacing: -3.5,
+  // "hush" left edge and "." centre, at this same 1024 reference scale —
+  // measured empirically (colour-separated pixel bounding boxes of the
+  // previous middle-anchored "hush."<tspan> string, since "hush" and "."
+  // render in different colours) rather than estimated from font metrics.
+  // See the "." fix comment on iconContent() below for why this exists.
+  hushLeftX:     193,
+  periodCenterX: 809,
+  periodCenterY: 294.5,
+  periodRadius:  14.5, // ~half the old square glyph's measured 29x30 bbox — same visual weight, now round
 };
 
 // ── Icon content (wordmark + drops + ripple), shared by icon.png and the ────
@@ -46,6 +55,16 @@ const NORM = {
 
 // `scale` shrinks the whole group around the canvas centre — used to fit the
 // design inside the Android adaptive-icon "safe zone" (see adaptiveIconSvg).
+//
+// The "." was originally a <tspan> alongside "hush" in one middle-anchored
+// <text> element, but this Roboto woff2 subset renders its period glyph as
+// a square rather than a circular dot in this pipeline, at every size
+// tested (confirmed by rendering "hush." standalone at 280px and ~118px and
+// visually inspecting each — square both times, so a bigger font size alone
+// doesn't fix it; see the Play Store icon fix for the original diagnosis).
+// Replaced with an explicit <circle>. "hush" is now its own start-anchored
+// <text> at NORM.hushLeftX so it lands in the exact same position it
+// occupied within the old middle-anchored "hush." string.
 function iconContent(size, scale = 1) {
   const s  = size / 1024;
   const cx = size / 2;
@@ -54,11 +73,12 @@ function iconContent(size, scale = 1) {
   const n = v => +(v * s).toFixed(2);
 
   const group = `
-  <!-- Wordmark: "hush" in teal, "." in cream -->
-  <text x="${cx}" y="${n(NORM.textBaseline)}"
+  <!-- Wordmark: "hush" in teal, "." as an explicit circle in cream -->
+  <text x="${n(NORM.hushLeftX)}" y="${n(NORM.textBaseline)}"
     font-family="${FONT_FAMILY}" font-size="${n(NORM.fontSize)}" font-weight="400"
-    text-anchor="middle" letter-spacing="${n(NORM.letterSpacing)}"
-  ><tspan fill="${CALM_WAVE}">hush</tspan><tspan fill="${CREAM}">.</tspan></text>
+    text-anchor="start" letter-spacing="${n(NORM.letterSpacing)}"
+    fill="${CALM_WAVE}">hush</text>
+  <circle cx="${n(NORM.periodCenterX)}" cy="${n(NORM.periodCenterY)}" r="${n(NORM.periodRadius)}" fill="${CREAM}"/>
 
   <!-- Drops: small/far (top) → large/near (bottom) -->
   <circle cx="${cx}" cy="${n(NORM.dropSmallY)}" r="${n(22)}" fill="${CALM_WAVE}" opacity="0.50"/>
