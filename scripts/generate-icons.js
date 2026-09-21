@@ -121,6 +121,41 @@ async function measureContentExtent(size) {
   return Math.max(info.width, info.height);
 }
 
+// ── Google Play Store listing icon (512×512, separate from assets/icon.png) ──
+//
+// Same wordmark + drops + ripple composition as iconSvg()/iconContent() —
+// identical design and layout, just a different canvas size, safe-zone
+// scale, and no rounded corners (Google Play applies its own shape mask, so
+// baked-in rounding like icon.png's would double up or look wrong under it).
+// Background is solid and opaque — Play Store rejects a transparent/alpha
+// icon — flatten() guarantees no alpha channel makes it into the PNG.
+const PLAY_STORE_ICON_SIZE = 512;
+const PLAY_STORE_SAFE_ZONE = 340; // 66% of 512
+
+function playStoreIconSvg(scale) {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${PLAY_STORE_ICON_SIZE}" height="${PLAY_STORE_ICON_SIZE}">
+  ${fontDefs()}
+  <rect width="${PLAY_STORE_ICON_SIZE}" height="${PLAY_STORE_ICON_SIZE}" fill="${DEEP_TIDE}"/>
+  ${iconContent(PLAY_STORE_ICON_SIZE, scale)}
+</svg>`;
+}
+
+// `contentExtentAt1024` is the same measurement already taken for the
+// adaptive icon (measureContentExtent(1024)) — reused rather than
+// re-measured, since it's the same content at the same reference scale.
+async function makePlayStoreIcon(contentExtentAt1024) {
+  const storeDir = path.join(ASSETS, 'store');
+  fs.mkdirSync(storeDir, { recursive: true });
+
+  const naturalExtentAtSize = contentExtentAt1024 * (PLAY_STORE_ICON_SIZE / 1024);
+  const scale = PLAY_STORE_SAFE_ZONE / naturalExtentAtSize;
+
+  await sharp(Buffer.from(playStoreIconSvg(scale)))
+    .flatten({ background: DEEP_TIDE })
+    .png()
+    .toFile(path.join(storeDir, 'play-store-icon.png'));
+}
+
 // ── Favicon SVG (48×48, no text) ─────────────────────────────────────────────
 
 function faviconSvg() {
@@ -390,8 +425,11 @@ async function run() {
   await makeFeatureGraphic();
   console.log('✓  assets/store/feature-graphic.png');
 
+  await makePlayStoreIcon(contentExtent);
+  console.log('✓  assets/store/play-store-icon.png');
+
   console.log('\nFile sizes:');
-  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'notification-icon.png', 'splash.png', 'store/feature-graphic.png']) {
+  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'notification-icon.png', 'splash.png', 'store/feature-graphic.png', 'store/play-store-icon.png']) {
     const { size } = fs.statSync(path.join(ASSETS, f));
     console.log(`   ${f.padEnd(24)} ${(size / 1024).toFixed(1)} KB`);
   }
