@@ -168,10 +168,9 @@ function notificationIconSvg() {
 //
 // Just the drop/ripple mark (no wordmark) — same geometry as iconContent(),
 // scaled by `size` the same way. Natural proportions are wider than tall
-// (the outer ripple ellipse is much wider than the drops are tall), so
-// "approximately 180x180px" is treated as a max-dimension target rather
-// than a forced square — stretching the mark to a literal 180x180 box would
-// distort the brand mark.
+// (the outer ripple ellipse is much wider than the drops are tall), so a
+// target width is used to size it rather than a forced square box, which
+// would distort the brand mark.
 function logoMarkContent(size) {
   const s  = size / 1024;
   const cx = size / 2;
@@ -191,16 +190,76 @@ const FEATURE_W = 1024;
 const FEATURE_H = 500;
 const MIDNIGHT  = '#0D2B33';
 
-function featureGraphicSvg() {
-  // Logo mark: scaled so the outer ripple ellipse's diameter (rx*2 at full
-  // 1024 scale = 800) reads as ~180px wide in this canvas.
-  const markSize = 230; // -> outer ellipse ~180px wide, drops+ripple ~102px tall
-  const markCx = FEATURE_W * 0.20;  // centred in the left ~40% panel
-  const markCy = FEATURE_H / 2;
-  const markOffsetX = markCx - markSize / 2;
-  const markOffsetY = markCy - markSize / 2;
+// Empirically-measured bounding boxes (same render-then-sharp-.trim()
+// technique as measureContentExtent() above) — used to centre the logo mark
+// and the three text lines as one precisely balanced group, rather than
+// guessing text widths. Re-measure these if the copy, font sizes, or the
+// Roboto weight ever change.
+//
+// Mark content box at the reference size=1024 (logoMarkContent's own scale):
+const MARK_BBOX_REF = { left: 108, top: 454, width: 808, height: 460 };
+// Text lines, each measured with x=0 as the SVG text anchor:
+const HUSH_BBOX = { ascentAboveBaseline: 52, width: 166, height: 54 };   // fontSize 72
+const TINN_BBOX = { ascentAboveBaseline: 21, width: 130, height: 22 };   // fontSize 28, letter-spacing 6
+const TAG_BBOX  = { ascentAboveBaseline: 15, width: 289, height: 20 };   // fontSize 20 tagline
 
-  const textX = FEATURE_W * 0.44; // just right of the 40% mark panel
+const MARK_TARGET_W = 120;                    // "approximately 120px wide"
+const MARK_GAP = 40;                          // gap between mark and text
+const HUSH_TO_TINNITUS_GAP = 41;              // baseline-to-baseline
+const TINNITUS_TO_TAGLINE_GAP = 38;           // baseline-to-baseline
+
+function featureGraphicSvg() {
+  // Mark: scale so its measured content width hits MARK_TARGET_W, then
+  // derive the `size` to pass to logoMarkContent() and where its content
+  // sits within that size×size box.
+  const markScale = MARK_TARGET_W / MARK_BBOX_REF.width;
+  const markSize = 1024 * markScale;
+  const markContentW = MARK_TARGET_W;
+  const markContentH = MARK_BBOX_REF.height * markScale;
+  const markContentLeftInBox = MARK_BBOX_REF.left * markScale;
+  const markContentTopInBox  = MARK_BBOX_REF.top * markScale;
+
+  // Local group layout (own coordinate space, then translated to centre on
+  // the canvas below) — text block left edge at local x = 0, mark's right
+  // edge MARK_GAP to the left of it.
+  const textLocalX = MARK_TARGET_W + MARK_GAP;
+  const hushBaselineLocalY = HUSH_BBOX.ascentAboveBaseline; // -> hush content top = 0
+  const tinnBaselineLocalY = hushBaselineLocalY + HUSH_TO_TINNITUS_GAP;
+  const tagBaselineLocalY  = tinnBaselineLocalY + TINNITUS_TO_TAGLINE_GAP;
+
+  const hushContentTop = hushBaselineLocalY - HUSH_BBOX.ascentAboveBaseline; // 0
+  const hushContentBottom = hushContentTop + HUSH_BBOX.height;
+  const hushContentCenterY = (hushContentTop + hushContentBottom) / 2;
+
+  const tagContentBottom = (tagBaselineLocalY - TAG_BBOX.ascentAboveBaseline) + TAG_BBOX.height;
+
+  // Mark vertically centred on "hush.", positioned MARK_GAP to the left of
+  // the text block.
+  const markContentLeftLocal = 0;
+  const markContentTopLocal  = hushContentCenterY - markContentH / 2;
+  const markContentBottomLocal = markContentTopLocal + markContentH;
+
+  const widestTextLine = Math.max(HUSH_BBOX.width, TINN_BBOX.width, TAG_BBOX.width);
+
+  // Overall group bounding box, in local coordinates (mark can extend above
+  // the text block's own top since it's taller than the "hush." line alone).
+  const groupLeft   = markContentLeftLocal;
+  const groupRight  = textLocalX + widestTextLine;
+  const groupTop    = Math.min(markContentTopLocal, hushContentTop);
+  const groupBottom = Math.max(markContentBottomLocal, tagContentBottom);
+  const groupW = groupRight - groupLeft;
+  const groupH = groupBottom - groupTop;
+
+  // Translate so the group's bounding box is centred on the 1024x500 canvas.
+  const tx = (FEATURE_W - groupW) / 2 - groupLeft;
+  const ty = (FEATURE_H - groupH) / 2 - groupTop;
+
+  const markBoxX = tx + markContentLeftLocal - markContentLeftInBox;
+  const markBoxY = ty + markContentTopLocal - markContentTopInBox;
+  const textX = tx + textLocalX;
+  const hushY = ty + hushBaselineLocalY;
+  const tinnY = ty + tinnBaselineLocalY;
+  const tagY  = ty + tagBaselineLocalY;
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${FEATURE_W}" height="${FEATURE_H}">
   ${fontDefs()}
@@ -212,17 +271,17 @@ function featureGraphicSvg() {
   </defs>
   <rect width="${FEATURE_W}" height="${FEATURE_H}" fill="url(#bg)"/>
 
-  <g transform="translate(${markOffsetX} ${markOffsetY})">
+  <g transform="translate(${markBoxX.toFixed(2)} ${markBoxY.toFixed(2)})">
     ${logoMarkContent(markSize)}
   </g>
 
-  <text x="${textX}" y="225" font-family="${FONT_FAMILY}" font-size="72" font-weight="400"
+  <text x="${textX.toFixed(2)}" y="${hushY.toFixed(2)}" font-family="${FONT_FAMILY}" font-size="72" font-weight="400"
   ><tspan fill="${CALM_WAVE}">hush</tspan><tspan fill="${CREAM}">.</tspan></text>
 
-  <text x="${textX}" y="266" font-family="${FONT_FAMILY}" font-size="28" font-weight="400"
+  <text x="${textX.toFixed(2)}" y="${tinnY.toFixed(2)}" font-family="${FONT_FAMILY}" font-size="28" font-weight="400"
     fill="${CALM_WAVE}" letter-spacing="6">tinnitus</text>
 
-  <text x="${textX}" y="304" font-family="${FONT_FAMILY}" font-size="20" font-weight="400"
+  <text x="${textX.toFixed(2)}" y="${tagY.toFixed(2)}" font-family="${FONT_FAMILY}" font-size="20" font-weight="400"
     fill="${CALM_WAVE}" opacity="0.6">Sound therapy &amp; tinnitus support</text>
 
   <text x="${FEATURE_W - 24}" y="${FEATURE_H - 24}" text-anchor="end"
