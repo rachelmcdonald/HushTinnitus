@@ -254,16 +254,51 @@ function faviconSvg() {
 // render as a solid tinted block, not the intended drop/ripple mark.
 // 96×96 matches the xxxhdpi bucket; the config plugin generates the other
 // mdpi/hdpi/xhdpi/xxhdpi sizes from this source automatically.
+// Strict Android notification icon: every visible pixel must be pure white
+// with no anti-aliased/semi-transparent edge pixels, so unlike every other
+// mark in this file, NO opacity variation (that's exactly the "colour
+// shading" — actually alpha shading — this spec forbids) — differentiation
+// between the ripple rings comes from stroke-width alone, all fully opaque
+// white. The renderer itself still anti-aliases curved edges when rasterised
+// (there's no way to avoid that in vector rendering), so this is paired with
+// a hard alpha threshold in makeNotificationIcon() below that snaps every
+// pixel to fully opaque white or fully transparent — nothing in between.
 function notificationIconSvg() {
   const cx = 48;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96">
   <!-- Largest drop only -->
   <circle cx="${cx}" cy="54" r="9" fill="#ffffff"/>
-  <!-- Ripple ellipses -->
-  <ellipse cx="${cx}" cy="74" rx="42" ry="12" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.28"/>
-  <ellipse cx="${cx}" cy="74" rx="28" ry="9"  fill="none" stroke="#ffffff" stroke-width="4" opacity="0.55"/>
-  <ellipse cx="${cx}" cy="74" rx="15" ry="5"  fill="none" stroke="#ffffff" stroke-width="5" opacity="0.90"/>
+  <!-- Ripple ellipses — differentiated by stroke-width only, all fully opaque -->
+  <ellipse cx="${cx}" cy="74" rx="42" ry="12" fill="none" stroke="#ffffff" stroke-width="3"/>
+  <ellipse cx="${cx}" cy="74" rx="28" ry="9"  fill="none" stroke="#ffffff" stroke-width="4"/>
+  <ellipse cx="${cx}" cy="74" rx="15" ry="5"  fill="none" stroke="#ffffff" stroke-width="5"/>
 </svg>`;
+}
+
+// Renders notificationIconSvg() then hard-thresholds every pixel's alpha —
+// no partial/anti-aliased alpha is allowed to survive. Pixels are forced to
+// (255,255,255,255) or (0,0,0,0) only; RGB is set explicitly rather than
+// trusting the rasteriser's own (already-white) output, so there is no way
+// for a stray non-white value to slip through.
+async function makeNotificationIcon() {
+  const ALPHA_THRESHOLD = 128;
+  const { data, info } = await sharp(Buffer.from(notificationIconSvg()))
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  const { width, height, channels } = info;
+  for (let i = 0; i < data.length; i += channels) {
+    const opaque = data[i + 3] >= ALPHA_THRESHOLD;
+    data[i]     = opaque ? 255 : 0;
+    data[i + 1] = opaque ? 255 : 0;
+    data[i + 2] = opaque ? 255 : 0;
+    data[i + 3] = opaque ? 255 : 0;
+  }
+
+  await sharp(data, { raw: { width, height, channels } })
+    .png()
+    .toFile(path.join(ASSETS, 'notification-icon.png'));
 }
 
 // ── Feature graphic (1024×500, Google Play Store listing) ───────────────────
@@ -489,7 +524,7 @@ async function run() {
   await sharp(Buffer.from(faviconSvg())).png().toFile(path.join(ASSETS, 'favicon.png'));
   console.log('✓  assets/favicon.png');
 
-  await sharp(Buffer.from(notificationIconSvg())).png().toFile(path.join(ASSETS, 'notification-icon.png'));
+  await makeNotificationIcon();
   console.log('✓  assets/notification-icon.png');
 
   await makeSplash();
