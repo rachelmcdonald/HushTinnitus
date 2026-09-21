@@ -158,6 +158,92 @@ function notificationIconSvg() {
 </svg>`;
 }
 
+// ── Feature graphic (1024×500, Google Play Store listing) ───────────────────
+//
+// Standalone from iconContent() deliberately — this composition needs its
+// own text sizes/positions (72px "hush.", 28px "tinnitus", tagline,
+// attribution) that have nothing to do with the app icon's proportions, and
+// keeping it separate means it can never accidentally change icon.png /
+// adaptive-icon.png / splash.png, which are already shipped/building.
+//
+// Just the drop/ripple mark (no wordmark) — same geometry as iconContent(),
+// scaled by `size` the same way. Natural proportions are wider than tall
+// (the outer ripple ellipse is much wider than the drops are tall), so
+// "approximately 180x180px" is treated as a max-dimension target rather
+// than a forced square — stretching the mark to a literal 180x180 box would
+// distort the brand mark.
+function logoMarkContent(size) {
+  const s  = size / 1024;
+  const cx = size / 2;
+  const cy = size / 2;
+  const n = v => +(v * s).toFixed(2);
+
+  return `
+  <circle cx="${cx}" cy="${n(NORM.dropSmallY)}" r="${n(22)}" fill="${CALM_WAVE}" opacity="0.50"/>
+  <circle cx="${cx}" cy="${n(NORM.dropMidY)}"   r="${n(32)}" fill="${CALM_WAVE}" opacity="0.75"/>
+  <circle cx="${cx}" cy="${n(NORM.dropLargeY)}" r="${n(42)}" fill="${CALM_WAVE}" opacity="1.0"/>
+  <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(400)}" ry="${n(120)}" fill="none" stroke="${CALM_WAVE}" stroke-width="${n(7)}"  opacity="0.28"/>
+  <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(280)}" ry="${n(84)}"  fill="none" stroke="${CALM_WAVE}" stroke-width="${n(8)}"  opacity="0.55"/>
+  <ellipse cx="${cx}" cy="${n(NORM.rippleCY)}" rx="${n(148)}" ry="${n(44)}"  fill="none" stroke="${CALM_WAVE}" stroke-width="${n(10)}" opacity="0.90"/>`;
+}
+
+const FEATURE_W = 1024;
+const FEATURE_H = 500;
+const MIDNIGHT  = '#0D2B33';
+
+function featureGraphicSvg() {
+  // Logo mark: scaled so the outer ripple ellipse's diameter (rx*2 at full
+  // 1024 scale = 800) reads as ~180px wide in this canvas.
+  const markSize = 230; // -> outer ellipse ~180px wide, drops+ripple ~102px tall
+  const markCx = FEATURE_W * 0.20;  // centred in the left ~40% panel
+  const markCy = FEATURE_H / 2;
+  const markOffsetX = markCx - markSize / 2;
+  const markOffsetY = markCy - markSize / 2;
+
+  const textX = FEATURE_W * 0.44; // just right of the 40% mark panel
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${FEATURE_W}" height="${FEATURE_H}">
+  ${fontDefs()}
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="${DEEP_TIDE}"/>
+      <stop offset="1" stop-color="${MIDNIGHT}"/>
+    </linearGradient>
+  </defs>
+  <rect width="${FEATURE_W}" height="${FEATURE_H}" fill="url(#bg)"/>
+
+  <g transform="translate(${markOffsetX} ${markOffsetY})">
+    ${logoMarkContent(markSize)}
+  </g>
+
+  <text x="${textX}" y="225" font-family="${FONT_FAMILY}" font-size="72" font-weight="400"
+  ><tspan fill="${CALM_WAVE}">hush</tspan><tspan fill="${CREAM}">.</tspan></text>
+
+  <text x="${textX}" y="266" font-family="${FONT_FAMILY}" font-size="28" font-weight="400"
+    fill="${CALM_WAVE}" letter-spacing="6">tinnitus</text>
+
+  <text x="${textX}" y="304" font-family="${FONT_FAMILY}" font-size="20" font-weight="400"
+    fill="${CALM_WAVE}" opacity="0.6">Sound therapy &amp; tinnitus support</text>
+
+  <text x="${FEATURE_W - 24}" y="${FEATURE_H - 24}" text-anchor="end"
+    font-family="${FONT_FAMILY}" font-size="14" font-weight="400"
+    fill="${CALM_WAVE}" opacity="0.4">by RESONEAR</text>
+</svg>`;
+}
+
+async function makeFeatureGraphic() {
+  const storeDir = path.join(ASSETS, 'store');
+  fs.mkdirSync(storeDir, { recursive: true });
+  await sharp(Buffer.from(featureGraphicSvg()))
+    // Play Store's feature graphic spec wants no alpha channel — flatten
+    // against the rightmost gradient colour as a safe background in case of
+    // any edge anti-aliasing (the design is full-bleed, so this shouldn't
+    // actually show anywhere).
+    .flatten({ background: MIDNIGHT })
+    .png()
+    .toFile(path.join(storeDir, 'feature-graphic.png'));
+}
+
 // ── Splash (2048×2048) ────────────────────────────────────────────────────────
 
 async function makeSplash() {
@@ -241,8 +327,11 @@ async function run() {
   await makeSplash();
   console.log('✓  assets/splash.png');
 
+  await makeFeatureGraphic();
+  console.log('✓  assets/store/feature-graphic.png');
+
   console.log('\nFile sizes:');
-  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'notification-icon.png', 'splash.png']) {
+  for (const f of ['icon.png', 'adaptive-icon.png', 'favicon.png', 'notification-icon.png', 'splash.png', 'store/feature-graphic.png']) {
     const { size } = fs.statSync(path.join(ASSETS, f));
     console.log(`   ${f.padEnd(24)} ${(size / 1024).toFixed(1)} KB`);
   }
