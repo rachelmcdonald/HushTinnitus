@@ -832,7 +832,7 @@ export default function SoundScreen() {
     // 'bottom' edge intentionally excluded — NowPlayingBar is absolutely
     // positioned at the true bottom of this container and accounts for the
     // safe-area inset itself, so double-insetting here would recreate the gap.
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollWithIndicator
         ref={scrollRef}
         style={styles.scroll}
