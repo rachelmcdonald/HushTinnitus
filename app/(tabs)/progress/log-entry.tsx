@@ -431,7 +431,7 @@ function makeStyles(
     },
     backBtn: { alignSelf: 'flex-start' },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: Colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
     scroll: {
       flexGrow: 1,
       paddingHorizontal: Spacing.xl,

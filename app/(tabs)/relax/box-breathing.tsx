@@ -348,7 +348,7 @@ function makeStyles(
     },
     backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { ...typography.body, color: colors.deepTide },
+    backLabel: { ...typography.body, color: colors.headingAccent },
     header: { gap: Spacing.sm },
     title: { ...typography.display, color: colors.textPrimary },
     lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },

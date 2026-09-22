@@ -23,8 +23,8 @@ const MAX_HZ = 16000;
 // ─── Back button ──────────────────────────────────────────────────────────────
 
 function BackButton() {
-  const { typography } = useTheme();
-  const back = useMemo(() => makeBackStyles(typography), [typography]);
+  const { colors, typography } = useTheme();
+  const back = useMemo(() => makeBackStyles(colors, typography), [colors, typography]);
 
   return (
     <Pressable
@@ -44,11 +44,14 @@ function BackButton() {
   );
 }
 
-function makeBackStyles(typography: ReturnType<typeof useTheme>['typography']) {
+function makeBackStyles(
+  colors: ReturnType<typeof useTheme>['colors'],
+  typography: ReturnType<typeof useTheme>['typography'],
+) {
   return StyleSheet.create({
     button: { paddingVertical: Spacing.sm, paddingRight: Spacing.md, alignSelf: 'flex-start' },
     pressed: { opacity: 0.6 },
-    label: { ...typography.body, color: Colors.deepTide },
+    label: { ...typography.body, color: colors.headingAccent },
   });
 }
 

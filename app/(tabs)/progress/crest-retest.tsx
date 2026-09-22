@@ -178,7 +178,7 @@ function makeStyles(
       justifyContent: 'space-between',
     },
     backButton: { paddingVertical: Spacing.xs, paddingRight: Spacing.sm },
-    backLabel:  { ...typography.body, color: Colors.deepTide },
+    backLabel:  { ...typography.body, color: colors.headingAccent },
     headerRight: { flexDirection: 'row', alignItems: 'center', gap: Spacing.sm },
     weekBadge: {
       backgroundColor: colors.surfaceVariant,
