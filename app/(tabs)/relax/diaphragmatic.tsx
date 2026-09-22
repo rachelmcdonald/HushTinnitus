@@ -354,7 +354,7 @@ export default function DiaphragmaticScreen() {
   // ── Practice mode ──────────────────────────────────────────────────────────
   if (mode === 'practice') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.practiceScreen}>
           {/* Back / stop */}
           <Pressable
@@ -402,7 +402,7 @@ export default function DiaphragmaticScreen() {
 
   // ── Instructions mode ──────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}

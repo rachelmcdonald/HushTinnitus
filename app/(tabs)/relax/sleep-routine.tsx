@@ -394,7 +394,7 @@ export default function SleepRoutineScreen() {
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (stage === 'intro') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <ComingSoonModal
           visible={upgradeVisible}
           onClose={() => setUpgradeVisible(false)}
@@ -482,7 +482,7 @@ export default function SleepRoutineScreen() {
   // ── Done ───────────────────────────────────────────────────────────────────
   if (stage === 'done') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.doneContent}>
           <View style={styles.doneCheck}>
             <Text style={styles.doneCheckMark}>✓</Text>
@@ -514,7 +514,7 @@ export default function SleepRoutineScreen() {
 
   // ── Active session ─────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <View style={styles.session}>
         {/* Stage indicator */}
         <StageIndicator active={activeStageNum as 1 | 2 | 3} />

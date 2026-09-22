@@ -123,7 +123,7 @@ export default function CRESTRetestScreen() {
   const isLast = currentIndex === TOTAL - 1;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Pressable

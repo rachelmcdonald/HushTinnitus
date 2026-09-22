@@ -332,7 +332,7 @@ export default function ProgressScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollWithIndicator
         ref={scrollRef}
         contentContainerStyle={styles.scroll}

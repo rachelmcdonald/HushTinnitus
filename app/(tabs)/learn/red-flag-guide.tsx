@@ -174,7 +174,7 @@ export default function RedFlagGuideScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollWithIndicator
         ref={scrollRef}
         contentContainerStyle={styles.scroll}

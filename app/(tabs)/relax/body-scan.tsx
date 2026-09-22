@@ -203,7 +203,7 @@ export default function BodyScanScreen() {
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (stage === 'intro') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <ComingSoonModal
           visible={upgradeVisible}
           onClose={() => setUpgradeVisible(false)}
@@ -282,7 +282,7 @@ export default function BodyScanScreen() {
   // ── Done ───────────────────────────────────────────────────────────────────
   if (stage === 'done') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.doneContent}>
           <View style={styles.doneCheck}>
             <Text style={styles.doneCheckMark}>✓</Text>
@@ -314,7 +314,7 @@ export default function BodyScanScreen() {
 
   // ── Session ────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <View style={styles.session}>
         {/* Breathing orb background */}
         <Animated.View style={[styles.breathOrb, breathStyle]} />

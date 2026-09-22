@@ -148,7 +148,7 @@ export default function NoiseExposureScreen() {
   const backToTop = useBackToTop(scrollRef);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={styles.scroll}

@@ -78,7 +78,7 @@ function PremiumGate({ onBack }: { onBack: () => void }) {
   const [modalVisible, setModalVisible] = useState(false);
 
   return (
-    <SafeAreaView style={gate.safe}>
+    <SafeAreaView style={gate.safe} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={gate.scroll} showsVerticalScrollIndicator={false}>
         {/* Back */}
         <Pressable
@@ -343,7 +343,7 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
   // Completion view
   if (done) {
     return (
-      <SafeAreaView style={flow.safe}>
+      <SafeAreaView style={flow.safe} edges={['left', 'right']}>
         <ScrollView contentContainerStyle={flow.scroll} showsVerticalScrollIndicator={false}>
           <View style={flow.completionHeader}>
             <View style={flow.completionBadge}>
@@ -520,7 +520,7 @@ function JournalFlow({ onBack }: { onBack: () => void }) {
   }
 
   return (
-    <SafeAreaView style={flow.safe}>
+    <SafeAreaView style={flow.safe} edges={['left', 'right']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}

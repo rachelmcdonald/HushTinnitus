@@ -158,7 +158,7 @@ export default function CRESTRetestResultScreen() {
 
   if (!assessment) {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.loading}>
           <Text style={styles.loadingText}>Loading results…</Text>
         </View>
@@ -176,7 +176,7 @@ export default function CRESTRetestResultScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.weekRow}>
           <View style={styles.weekBadge}>

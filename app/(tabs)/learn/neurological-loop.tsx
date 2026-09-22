@@ -261,7 +261,7 @@ export default function NeurologicalLoopScreen() {
   const backToTop = useBackToTop(scrollRef);
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollWithIndicator
         ref={scrollRef}
         contentContainerStyle={styles.scroll}

@@ -196,7 +196,7 @@ export default function GuidedImageryScreen() {
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (stage === 'intro') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <ComingSoonModal
           visible={upgradeVisible}
           onClose={() => setUpgradeVisible(false)}
@@ -280,7 +280,7 @@ export default function GuidedImageryScreen() {
   // ── Done ───────────────────────────────────────────────────────────────────
   if (stage === 'done') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.doneContent}>
           <View style={styles.doneCheck}>
             <Text style={styles.doneCheckMark}>✓</Text>
@@ -312,7 +312,7 @@ export default function GuidedImageryScreen() {
 
   // ── Session ────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <View style={styles.session}>
         {/* Breathing orb */}
         <Animated.View style={[styles.breathOrb, breathStyle]} />

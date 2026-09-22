@@ -189,7 +189,7 @@ export default function MindfulnessScreen() {
   // ── Intro ──────────────────────────────────────────────────────────────────
   if (stage === 'intro') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
           onPress={() => {
@@ -255,7 +255,7 @@ export default function MindfulnessScreen() {
   // ── Done ───────────────────────────────────────────────────────────────────
   if (stage === 'done') {
     return (
-      <SafeAreaView style={styles.safe}>
+      <SafeAreaView style={styles.safe} edges={['left', 'right']}>
         <View style={styles.doneContent}>
           <View style={styles.doneCheck}>
             <Text style={styles.doneCheckMark}>✓</Text>
@@ -286,7 +286,7 @@ export default function MindfulnessScreen() {
 
   // ── Session ────────────────────────────────────────────────────────────────
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <View style={styles.sessionOuter}>
         {/* Background breathing orb */}
         <Animated.View style={[styles.breathOrb, breathStyle]} />

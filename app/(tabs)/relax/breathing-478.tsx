@@ -168,7 +168,7 @@ export default function Breathing478Screen() {
   const activePhase = phase !== 'idle' ? PHASES[phase] : null;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
