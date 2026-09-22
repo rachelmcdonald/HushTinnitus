@@ -349,7 +349,7 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: Colors.deepTide },
 
-    backBtn: { margin: Spacing.xl, marginBottom: 0, alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtn: { marginHorizontal: Spacing.xl, alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: Colors.calmWave },
 

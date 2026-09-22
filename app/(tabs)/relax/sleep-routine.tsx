@@ -639,7 +639,7 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: Colors.deepTide },
 
-    backBtn: { alignSelf: 'flex-start', paddingVertical: Spacing.sm },
+    backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: Colors.calmWave },
 
@@ -647,7 +647,7 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
     introScroll: {
       flexGrow: 1,
       paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
+      paddingTop: 0,
       paddingBottom: Spacing.xl,
       gap: Spacing.lg,
     },
