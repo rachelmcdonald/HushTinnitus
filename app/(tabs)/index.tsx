@@ -346,7 +346,7 @@ function makeStyles(
     },
     content: {
       paddingHorizontal: Spacing.base,
-      paddingTop: Spacing.xl,
+      paddingTop: Spacing.base,
     },
 
     // Greeting

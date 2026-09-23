@@ -291,12 +291,12 @@ function makeStyles(
     scroll: {
       flexGrow: 1,
       paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
+      paddingTop: 0,
       paddingBottom: Spacing.xl,
       gap: Spacing.xl,
     },
 
-    backBtn:        { alignSelf: 'flex-start', paddingVertical: Spacing.sm, paddingRight: Spacing.sm },
+    backBtn:        { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm, paddingRight: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
     backLabel:      { ...typography.body, color: colors.headingAccent },
 

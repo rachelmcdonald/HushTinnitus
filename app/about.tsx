@@ -192,12 +192,12 @@ function makeStyles(
     scroll: {
       flexGrow: 1,
       paddingHorizontal: 20,
-      paddingTop: 12,
+      paddingTop: 0,
       paddingBottom: 32,
       gap: 24,
     },
 
-    backBtn: { alignSelf: 'flex-start', paddingVertical: 8, paddingRight: 8 },
+    backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: 8, paddingRight: 8 },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { fontSize: 14, color: colors.deepTide },
 
