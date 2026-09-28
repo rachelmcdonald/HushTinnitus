@@ -17,7 +17,7 @@ function Divider() {
 }
 
 function RoleBadge({ label }: { label: string }) {
-  const { colors } = useTheme();
+  const { colors, typography } = useTheme();
   return (
     <View style={{
       backgroundColor: colors.surfaceVariant,
@@ -26,7 +26,7 @@ function RoleBadge({ label }: { label: string }) {
       paddingVertical: 4,
       marginTop: 2,
     }}>
-      <Text style={{ fontSize: 12, color: '#5DCAA5' }}>{label}</Text>
+      <Text style={{ ...typography.caption, color: '#5DCAA5' }}>{label}</Text>
     </View>
   );
 }
@@ -34,8 +34,8 @@ function RoleBadge({ label }: { label: string }) {
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 export default function AboutScreen() {
-  const { colors, typography } = useTheme();
-  const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
+  const { colors, typography, fontScale } = useTheme();
+  const styles = useMemo(() => makeStyles(colors, typography, fontScale), [colors, typography, fontScale]);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -186,6 +186,7 @@ export default function AboutScreen() {
 function makeStyles(
   colors: ReturnType<typeof useTheme>['colors'],
   typography: ReturnType<typeof useTheme>['typography'],
+  fontScale: number,
 ) {
   return StyleSheet.create({
     safe: { flex: 1, backgroundColor: colors.background },
@@ -199,29 +200,27 @@ function makeStyles(
 
     backBtn: { alignSelf: 'flex-start', paddingTop: 8, paddingBottom: 8, paddingRight: 8 },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { fontSize: 14, color: '#5DCAA5' },
+    backLabel: { ...typography.body, color: '#5DCAA5' },
 
     header: { alignItems: 'center', gap: 6 },
     pageTitle: {
-      fontSize: 20,
-      fontWeight: '500' as const,
+      ...typography.heading1,
       color: colors.deepTide,
       textAlign: 'center',
     },
     pageSubtitle: {
-      fontSize: 14,
+      ...typography.body,
       color: colors.textSecondary,
       textAlign: 'center',
     },
 
     section: { gap: 12 },
     sectionHeading: {
-      fontSize: 16,
-      fontWeight: '500' as const,
+      ...typography.heading2,
       color: colors.deepTide,
     },
     body: {
-      fontSize: 14,
+      ...typography.body,
       color: colors.textPrimary,
       lineHeight: 22,
     },
@@ -241,19 +240,18 @@ function makeStyles(
       borderColor: colors.calmWave,
     },
     personName: {
-      fontSize: 16,
-      fontWeight: '500' as const,
+      ...typography.heading2,
       color: colors.deepTide,
       textAlign: 'center',
     },
     credentials1: {
-      fontSize: 12,
+      ...typography.caption,
       color: colors.calmWave,
       textAlign: 'center',
       fontStyle: 'italic',
     },
     credentials2: {
-      fontSize: 12,
+      ...typography.caption,
       color: colors.textSecondary,
       textAlign: 'center',
     },
@@ -268,12 +266,12 @@ function makeStyles(
       borderColor: colors.calmWave + '33',
     },
     disclaimerTitle: {
-      fontSize: 11,
+      fontSize: 11 * fontScale,
       fontWeight: '600' as const,
       color: colors.textSecondary,
     },
     disclaimerText: {
-      fontSize: 11,
+      fontSize: 11 * fontScale,
       color: colors.textSecondary,
       lineHeight: 17,
     },
