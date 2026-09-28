@@ -45,7 +45,7 @@ export default function AboutScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={['left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <ScrollWithIndicator
         ref={scrollRef}
         contentContainerStyle={styles.scroll}
