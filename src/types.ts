@@ -21,7 +21,7 @@ export interface CRESTAssessment {
 export interface SymptomLog {
   id: string;
   date: string;
-  timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
+  timeOfDay: 'morning' | 'afternoon' | 'evening';
   loudness: number;
   distress: number;
   notes: string;

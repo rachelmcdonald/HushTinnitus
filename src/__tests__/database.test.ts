@@ -163,11 +163,11 @@ describe('symptom log storage', () => {
   it('edge case: saving a second entry for today adds an additional row rather than updating the first (no per-day dedup at the storage layer)', () => {
     const today = new Date().toISOString();
     saveSymptomLog(makeSymptomLog({ date: today, timeOfDay: 'morning', loudness: 3, distress: 2 }));
-    saveSymptomLog(makeSymptomLog({ date: today, timeOfDay: 'night', loudness: 8, distress: 7 }));
+    saveSymptomLog(makeSymptomLog({ date: today, timeOfDay: 'evening', loudness: 8, distress: 7 }));
 
     const todayLogs = getTodayLogs();
     expect(todayLogs).toHaveLength(2);
-    expect(todayLogs.map((l) => l.timeOfDay).sort()).toEqual(['morning', 'night']);
+    expect(todayLogs.map((l) => l.timeOfDay).sort()).toEqual(['evening', 'morning']);
   });
 });
 

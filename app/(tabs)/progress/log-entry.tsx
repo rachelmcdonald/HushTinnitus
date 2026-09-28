@@ -20,7 +20,6 @@ const TIME_OPTIONS: Array<{ value: SymptomLog['timeOfDay']; label: string }> = [
   { value: 'morning', label: 'Morning' },
   { value: 'afternoon', label: 'Afternoon' },
   { value: 'evening', label: 'Evening' },
-  { value: 'night', label: 'Night' },
 ];
 
 const TRIGGER_TAGS: Array<{ value: TriggerTag; label: string }> = [
