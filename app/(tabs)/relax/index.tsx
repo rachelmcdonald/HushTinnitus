@@ -54,6 +54,7 @@ const PREMIUM_SESSIONS: PremiumSession[] = [
 // for the modal and accessibility label.
 const CARD_TITLE_BREAKS: Record<string, string> = {
   'diaphragmatic': 'Diaphragmatic\nBreathing',
+  'pmr': 'Progressive\nMuscle Relaxation',
   'guided-imagery': 'Guided\nImagery',
   'sleep-routine': 'Sleep\nPreparation',
 };
