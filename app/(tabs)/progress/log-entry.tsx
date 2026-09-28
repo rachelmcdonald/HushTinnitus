@@ -510,7 +510,7 @@ function makeStyles(
       top: 10,
       right: 10,
     },
-    triggerLockedText: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
+    triggerLockedText: { ...typography.body, color: colors.textSecondary, lineHeight: 22, paddingRight: 36 },
     triggerLockedCTA:  { ...typography.caption, color: Colors.deepTide, fontWeight: '500' as const },
 
     // Footer
