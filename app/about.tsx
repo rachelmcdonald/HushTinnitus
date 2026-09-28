@@ -197,9 +197,9 @@ function makeStyles(
       gap: 24,
     },
 
-    backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: 8, paddingRight: 8 },
+    backBtn: { alignSelf: 'flex-start', paddingTop: 8, paddingBottom: 8, paddingRight: 8 },
     backBtnPressed: { opacity: 0.6 },
-    backLabel: { fontSize: 14, color: colors.deepTide },
+    backLabel: { fontSize: 14, color: '#5DCAA5' },
 
     header: { alignItems: 'center', gap: 6 },
     pageTitle: {
