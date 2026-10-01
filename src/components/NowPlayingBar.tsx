@@ -45,7 +45,7 @@ export default function NowPlayingBar({
       style={[
         styles.container,
         styles.positioned,
-        { bottom: 60 + insets.bottom, paddingBottom: insets.bottom + Spacing.sm },
+        { paddingBottom: insets.bottom + Spacing.xs },
       ]}
     >
       {/* Top row: indicator + name + pause + stop */}
@@ -137,14 +137,15 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
       borderTopWidth: Border.width,
       borderTopColor: Colors.calmWave + '30',
     },
-    // Absolutely positioned over the screen content (not flush with its
-    // bottom — the tab bar renders in the same stacking context, so `bottom`
-    // is offset by TAB_HEIGHT (60, see app/(tabs)/_layout.tsx) + the bottom
-    // safe-area inset, set inline below, to clear it).
+    // Anchored to the literal bottom of the screen (flush above the tab bar,
+    // which handles its own safe-area positioning) — the bar accounts for the
+    // bottom inset itself via paddingBottom rather than relying on a parent
+    // SafeAreaView, which would double up the inset and leave a gap.
     positioned: {
       position: 'absolute',
       left: 0,
       right: 0,
+      bottom: 0,
     },
 
     // Top row
