@@ -45,7 +45,7 @@ export default function NowPlayingBar({
       style={[
         styles.container,
         styles.positioned,
-        { paddingBottom: Spacing.base + insets.bottom },
+        { paddingBottom: insets.bottom + Spacing.sm },
       ]}
     >
       {/* Top row: indicator + name + pause + stop */}
