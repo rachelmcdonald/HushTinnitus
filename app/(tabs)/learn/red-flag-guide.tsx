@@ -1,7 +1,8 @@
 import { useState, useMemo, useRef } from 'react';
-import { StyleSheet, Text, View, Pressable, Alert, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Alert, Platform, ScrollView, LayoutAnimation } from 'react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 import * as Clipboard from 'expo-clipboard';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -120,6 +121,11 @@ function ConditionCard({ condition }: { condition: Condition }) {
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
   const [expanded, setExpanded] = useState(false);
 
+  function toggleExpanded() {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  }
+
   return (
     <View style={styles.condCard}>
       {/* Accent border is warm coral — used only as a 3px left border, never as background */}
@@ -128,12 +134,16 @@ function ConditionCard({ condition }: { condition: Condition }) {
       <View style={styles.condContent}>
         <Pressable
           style={styles.condHeader}
-          onPress={() => setExpanded(!expanded)}
+          onPress={toggleExpanded}
           accessibilityRole="button"
           accessibilityLabel={`${condition.heading}. Tap to ${expanded ? 'collapse' : 'expand'}`}
         >
           <Text style={styles.condHeading}>{condition.heading}</Text>
-          <Text style={styles.condChevron}>{expanded ? '∧' : '∨'}</Text>
+          <Ionicons
+            name={expanded ? 'chevron-up' : 'chevron-down'}
+            size={16}
+            color={Colors.calmWave}
+          />
         </Pressable>
 
         <Text style={styles.condDescription}>{condition.description}</Text>
@@ -333,7 +343,6 @@ function makeStyles(
       gap: Spacing.sm,
     },
     condHeading: { ...typography.heading2, color: colors.textPrimary, flex: 1 },
-    condChevron: { ...typography.body, color: colors.textSecondary, lineHeight: 22 },
     condDescription: { ...typography.body, color: colors.textPrimary, lineHeight: 24 },
     condDivider: {
       height: Border.width,
