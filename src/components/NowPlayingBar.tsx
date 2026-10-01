@@ -45,7 +45,7 @@ export default function NowPlayingBar({
       style={[
         styles.container,
         styles.positioned,
-        { paddingBottom: insets.bottom + Spacing.xs },
+        { paddingBottom: insets.bottom },
       ]}
     >
       {/* Top row: indicator + name + pause + stop */}
@@ -132,7 +132,6 @@ function makeStyles(typography: ReturnType<typeof useTheme>['typography']) {
       backgroundColor: Colors.deepTide,
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.md,
-      paddingBottom: Spacing.base,
       gap: Spacing.sm,
       borderTopWidth: Border.width,
       borderTopColor: Colors.calmWave + '30',
