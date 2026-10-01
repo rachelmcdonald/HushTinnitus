@@ -49,7 +49,7 @@ function makeBackStyles(
   typography: ReturnType<typeof useTheme>['typography'],
 ) {
   return StyleSheet.create({
-    button: { paddingVertical: Spacing.sm, paddingRight: Spacing.md, alignSelf: 'flex-start' },
+    button: { paddingTop: 0, paddingBottom: Spacing.sm, paddingRight: Spacing.md, alignSelf: 'flex-start' },
     pressed: { opacity: 0.6 },
     label: { ...typography.body, color: colors.headingAccent },
   });
@@ -424,7 +424,7 @@ function makeStyles(
     scroll: {
       flexGrow: 1,
       paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.md,
+      paddingTop: 0,
       paddingBottom: Spacing.xl,
       gap: Spacing.xl,
     },
