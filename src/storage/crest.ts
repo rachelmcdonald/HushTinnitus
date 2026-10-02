@@ -160,6 +160,15 @@ export function clearAllAssessments(): void {
   db.runSync('DELETE FROM crest_draft WHERE id = 1');
 }
 
+// Dev-only reset helper — removes just the week 8 retest, leaving the
+// baseline and week 4 assessments intact, so the week 8 retest prompt
+// reappears on the Progress tab for testing.
+export function clearAssessmentByWeek(weekNumber: number): void {
+  if (!isNativePlatform()) return;
+  const db = getDb();
+  db.runSync('DELETE FROM crest_assessments WHERE weekNumber = ?', [weekNumber]);
+}
+
 export function getLatestAssessment(): CRESTAssessment | null {
   if (!isNativePlatform()) return null;
   const db = getDb();

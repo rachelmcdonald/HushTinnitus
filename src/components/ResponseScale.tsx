@@ -70,7 +70,7 @@ export default function ResponseScale({ value, onConfirm, questionText, isLast }
                 alignItems: 'center',
                 backgroundColor: isSelected
                   ? (flashing ? '#7DD9B5' : '#5DCAA5')
-                  : (isDark ? '#1A3D4A' : '#F5F1EB'),
+                  : (isDark ? '#1A3D4A' : '#E1F5EE'),
               }}
               accessibilityRole="button"
               accessibilityState={{ selected: isSelected }}
