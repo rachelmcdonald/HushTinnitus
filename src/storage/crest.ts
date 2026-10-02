@@ -161,8 +161,11 @@ export function clearAllAssessments(): void {
 }
 
 // Dev-only reset helper — removes just the week 8 retest, leaving the
-// baseline and week 4 assessments intact, so the week 8 retest prompt
-// reappears on the Progress tab for testing.
+// baseline and week 4 assessments intact (hasWeek4 must stay true for
+// getRetestWeek's week-8 branch in app/(tabs)/progress/index.tsx to be
+// reachable at all — clearing week 4 too would flip the prompt to week 4
+// instead), so the week 8 retest prompt reappears on the Progress tab for
+// testing.
 export function clearAssessmentByWeek(weekNumber: number): void {
   if (!isNativePlatform()) return;
   const db = getDb();

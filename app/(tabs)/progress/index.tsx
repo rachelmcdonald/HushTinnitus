@@ -273,7 +273,7 @@ export default function ProgressScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
-  const { preferences } = usePreferences();
+  const { preferences, updatePreferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const { width } = useWindowDimensions();
   const chartWidth = width - 2 * Spacing.xl - 2 * Spacing.base;
@@ -333,10 +333,17 @@ export default function ProgressScreen() {
 
   // Dev-only — clears the week 8 CREST assessment so the retest prompt
   // reappears, for testing the retest flow without reinstalling the app.
+  // Deleting the crest_assessments row alone isn't enough: getRetestWeek()
+  // also gates on `daysSince` computed from preferences.lastCRESTDate, which
+  // gets bumped to "today" every time a retest is completed (including the
+  // week 8 retest itself) — so without rolling that back too, the 56-day
+  // threshold can never be met again and this reset silently no-ops on every
+  // attempt after the first. week8Prompted is reset for the same reason it
+  // (separately) gates the Home tab's nudge banner.
   function handleDevResetWeek8() {
     Alert.alert(
       'Reset week 8 CREST?',
-      'This deletes the week 8 assessment so the retest prompt reappears. Dev builds only.',
+      'This deletes the week 8 assessment and rolls back the last-CREST date so the retest prompt reappears immediately. Dev builds only.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -344,6 +351,8 @@ export default function ProgressScreen() {
           style: 'destructive',
           onPress: () => {
             clearAssessmentByWeek(8);
+            const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+            updatePreferences({ lastCRESTDate: sixtyDaysAgo, week8Prompted: false });
             setAssessments(getAllAssessments());
           },
         },
