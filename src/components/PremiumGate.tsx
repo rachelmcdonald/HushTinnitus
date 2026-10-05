@@ -48,6 +48,7 @@ export default function PremiumGate({ isPremium, featureName, description, child
         onClose={() => setModalVisible(false)}
         featureName={featureName}
         description={description}
+        hideSubscribeButton
       />
     </>
   );

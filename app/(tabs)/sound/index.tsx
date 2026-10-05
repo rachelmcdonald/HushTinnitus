@@ -524,6 +524,7 @@ function PremiumTeaser() {
         onClose={() => setActiveFeature(null)}
         featureName={activeFeature?.title ?? ''}
         description={activeFeature?.description ?? ''}
+        hideSubscribeButton
       />
     </View>
   );

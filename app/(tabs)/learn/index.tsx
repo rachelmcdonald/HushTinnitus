@@ -181,6 +181,7 @@ export default function LearnScreen() {
         onClose={() => setActivePremiumItem(null)}
         featureName={activePremiumItem?.title ?? ''}
         description={activePremiumItem?.modalDescription ?? ''}
+        hideSubscribeButton
       />
     </SafeAreaView>
   );

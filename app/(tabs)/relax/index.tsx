@@ -178,6 +178,7 @@ export default function RelaxScreen() {
         onClose={() => setActiveSession(null)}
         featureName={activeSession?.title ?? ''}
         description={activeSession?.description ?? ''}
+        hideSubscribeButton
       />
     </SafeAreaView>
   );

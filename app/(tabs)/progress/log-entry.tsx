@@ -408,6 +408,7 @@ export default function LogEntryScreen() {
         onClose={() => setUpgradeVisible(false)}
         featureName="Trigger Tagging"
         description="Tag potential triggers alongside your daily log — noise exposure, stress, caffeine, alcohol, poor sleep, or illness — to identify patterns in what makes your tinnitus worse over time."
+        hideSubscribeButton
       />
     </SafeAreaView>
   );
