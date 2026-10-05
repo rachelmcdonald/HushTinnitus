@@ -920,7 +920,7 @@ function makeStyles(
     scroll: { flex: 1 },
     scrollContent: {
       paddingHorizontal: Spacing.xl,
-      paddingTop: Spacing.xs,
+      paddingTop: 0,
       paddingBottom: Spacing.xl,
       gap: Spacing.xl,
     },
