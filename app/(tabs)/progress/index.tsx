@@ -11,7 +11,7 @@ import {
   getLogsForPeriod, getRecentLogs, getSessionStats, getTriggerStats,
   getTodayLogs, groupLogsByDay, TriggerStat, SessionStats,
 } from '@/src/storage/symptomLog';
-import { getAllAssessments, clearAssessmentByWeek } from '@/src/storage/crest';
+import { getAllAssessments } from '@/src/storage/crest';
 import { severityLabel, NOTABLE_CHANGE_THRESHOLD } from '@/src/utils/crestScoring';
 import { CRESTAssessment, SymptomLog } from '@/src/types';
 import { Colors, CRESTSeverityColors, Spacing, Radius, Border } from '@/src/theme';
@@ -273,7 +273,7 @@ export default function ProgressScreen() {
   const { colors, typography } = useTheme();
   const styles = useMemo(() => makeStyles(colors, typography), [colors, typography]);
 
-  const { preferences, updatePreferences } = usePreferences();
+  const { preferences } = usePreferences();
   const isPremium = preferences?.isPremium ?? false;
   const { width } = useWindowDimensions();
   const chartWidth = width - 2 * Spacing.xl - 2 * Spacing.base;
@@ -329,35 +329,6 @@ export default function ProgressScreen() {
     } finally {
       setExportLoading(false);
     }
-  }
-
-  // Dev-only — clears the week 8 CREST assessment so the retest prompt
-  // reappears, for testing the retest flow without reinstalling the app.
-  // Deleting the crest_assessments row alone isn't enough: getRetestWeek()
-  // also gates on `daysSince` computed from preferences.lastCRESTDate, which
-  // gets bumped to "today" every time a retest is completed (including the
-  // week 8 retest itself) — so without rolling that back too, the 56-day
-  // threshold can never be met again and this reset silently no-ops on every
-  // attempt after the first. week8Prompted is reset for the same reason it
-  // (separately) gates the Home tab's nudge banner.
-  function handleDevResetWeek8() {
-    Alert.alert(
-      'Reset week 8 CREST?',
-      'This deletes the week 8 assessment and rolls back the last-CREST date so the retest prompt reappears immediately. Dev builds only.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset',
-          style: 'destructive',
-          onPress: () => {
-            clearAssessmentByWeek(8);
-            const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
-            updatePreferences({ lastCRESTDate: sixtyDaysAgo, week8Prompted: false });
-            setAssessments(getAllAssessments());
-          },
-        },
-      ]
-    );
   }
 
   return (
@@ -642,17 +613,6 @@ export default function ProgressScreen() {
         <Text style={styles.footerDisclaimer}>
           All data is stored privately on this device. Nothing is shared without your consent.
         </Text>
-
-        {__DEV__ && (
-          <Pressable
-            style={({ pressed }) => [styles.devResetBtn, pressed && styles.devResetBtnPressed]}
-            onPress={handleDevResetWeek8}
-            accessibilityRole="button"
-            accessibilityLabel="Developer: reset week 8 CREST assessment"
-          >
-            <Text style={styles.devResetBtnLabel}>DEV: Reset Week 8 CREST</Text>
-          </Pressable>
-        )}
       </ScrollWithIndicator>
     </SafeAreaView>
   );
@@ -892,17 +852,5 @@ function makeStyles(
       fontStyle: 'italic',
       marginTop: Spacing.md,
     },
-
-    // Dev-only (__DEV__) — not shown in production builds.
-    devResetBtn: {
-      borderWidth: 1,
-      borderColor: Colors.warmCoral,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.sm,
-      alignItems: 'center',
-      marginTop: Spacing.lg,
-    },
-    devResetBtnPressed: { opacity: 0.7 },
-    devResetBtnLabel: { ...typography.caption, color: Colors.warmCoral, fontWeight: '600' as const },
   });
 }
