@@ -1,10 +1,12 @@
 // Centred premium-feature modal — replaces the old bottom-sheet ComingSoonModal
 // for tabs that have been migrated to the new gold/deep-tide "locked feature"
-// treatment. Colours are fixed brand values regardless of theme, matching the
-// existing precedent of ComingSoonModal and PremiumGate's gold gate screens.
+// treatment. The gold/overlay/subscribe-button accents stay fixed brand values
+// in both themes; the card background and body text invert for light/dark.
+import { useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type Props = {
   visible: boolean;
@@ -19,6 +21,9 @@ export default function PremiumFeatureModal({
   featureName,
   description,
 }: Props) {
+  const { isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
+
   return (
     <Modal
       visible={visible}
@@ -36,7 +41,7 @@ export default function PremiumFeatureModal({
             accessibilityLabel="Close"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="close" size={22} color={Colors.softGold} />
+            <Ionicons name="close" size={22} color={isDark ? Colors.softGold : Colors.deepTide} />
           </Pressable>
 
           <View style={styles.headerRow}>
@@ -63,71 +68,73 @@ export default function PremiumFeatureModal({
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  card: {
-    width: '100%',
-    maxWidth: 400,
-    marginHorizontal: 24,
-    borderRadius: 16,
-    backgroundColor: Colors.deepTide,
-    padding: 24,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  headerText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.softGold,
-    letterSpacing: 1,
-    marginLeft: 6,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.warmSand,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  description: {
-    fontSize: 14,
-    lineHeight: 14 * 1.6,
-    color: Colors.calmWave,
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  closeIcon: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    zIndex: 1,
-  },
-  subscribeBtn: {
-    backgroundColor: 'rgba(196, 154, 106, 0.6)',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  subscribeBtnLabel: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.deepTide,
-  },
-  comingSoonCaption: {
-    marginTop: 8,
-    fontSize: 11,
-    fontStyle: 'italic',
-    color: Colors.calmWave,
-    textAlign: 'center',
-  },
-});
+function makeStyles(isDark: boolean) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    card: {
+      width: '100%',
+      maxWidth: 400,
+      marginHorizontal: 24,
+      borderRadius: 16,
+      backgroundColor: isDark ? Colors.deepTide : Colors.warmSand,
+      padding: 24,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12,
+    },
+    headerText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: Colors.softGold,
+      letterSpacing: 1,
+      marginLeft: 6,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: isDark ? Colors.warmSand : Colors.deepTide,
+      textAlign: 'center',
+      marginBottom: 12,
+    },
+    description: {
+      fontSize: 14,
+      lineHeight: 14 * 1.6,
+      color: isDark ? Colors.calmWave : 'rgba(13, 79, 92, 0.8)',
+      textAlign: 'center',
+      marginBottom: 20,
+    },
+    closeIcon: {
+      position: 'absolute',
+      top: 12,
+      right: 12,
+      zIndex: 1,
+    },
+    subscribeBtn: {
+      backgroundColor: 'rgba(196, 154, 106, 0.6)',
+      borderRadius: 8,
+      paddingVertical: 12,
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    subscribeBtnLabel: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: Colors.deepTide,
+    },
+    comingSoonCaption: {
+      marginTop: 8,
+      fontSize: 11,
+      fontStyle: 'italic',
+      color: isDark ? Colors.calmWave : Colors.midGray,
+      textAlign: 'center',
+    },
+  });
+}
