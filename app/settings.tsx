@@ -740,6 +740,7 @@ export default function SettingsScreen() {
         onClose={() => setExportComingSoonVisible(false)}
         featureName="Export My Data"
         description="Export all your personal app data as a structured report — your symptom logs, CREST scores, and session history — formatted and ready to share with your audiologist or GP."
+        hideSubscribeButton
       />
     </SafeAreaView>
   );

@@ -13,6 +13,10 @@ type Props = {
   onClose: () => void;
   featureName: string;
   description: string;
+  // When true, replaces the disabled Subscribe button + italic "Coming Soon"
+  // caption with a single prominent "Coming Soon" text — for features with no
+  // subscribe path to show yet.
+  hideSubscribeButton?: boolean;
 };
 
 export default function PremiumFeatureModal({
@@ -20,6 +24,7 @@ export default function PremiumFeatureModal({
   onClose,
   featureName,
   description,
+  hideSubscribeButton,
 }: Props) {
   const { isDark } = useTheme();
   const styles = useMemo(() => makeStyles(isDark), [isDark]);
@@ -52,16 +57,22 @@ export default function PremiumFeatureModal({
           <Text style={styles.title}>{featureName}</Text>
           <Text style={styles.description}>{description}</Text>
 
-          <Pressable
-            disabled={true}
-            style={styles.subscribeBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Subscribe — coming soon"
-            accessibilityState={{ disabled: true }}
-          >
-            <Text style={styles.subscribeBtnLabel}>Subscribe</Text>
-          </Pressable>
-          <Text style={styles.comingSoonCaption}>Coming Soon</Text>
+          {hideSubscribeButton ? (
+            <Text style={styles.comingSoonProminent}>Coming Soon</Text>
+          ) : (
+            <>
+              <Pressable
+                disabled={true}
+                style={styles.subscribeBtn}
+                accessibilityRole="button"
+                accessibilityLabel="Subscribe — coming soon"
+                accessibilityState={{ disabled: true }}
+              >
+                <Text style={styles.subscribeBtnLabel}>Subscribe</Text>
+              </Pressable>
+              <Text style={styles.comingSoonCaption}>Coming Soon</Text>
+            </>
+          )}
         </Pressable>
       </Pressable>
     </Modal>
@@ -135,6 +146,13 @@ function makeStyles(isDark: boolean) {
       fontStyle: 'italic',
       color: isDark ? Colors.calmWave : Colors.midGray,
       textAlign: 'center',
+    },
+    comingSoonProminent: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: Colors.softGold,
+      textAlign: 'center',
+      marginTop: 8,
     },
   });
 }
