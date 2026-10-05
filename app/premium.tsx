@@ -1,4 +1,4 @@
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import {
   ScrollView, View, Text, Pressable, StyleSheet,
 } from 'react-native';
@@ -7,10 +7,13 @@ import Svg, { Ellipse, Circle } from 'react-native-svg';
 import { router, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Spacing } from '@/src/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const DEEP_TIDE = '#0D4F5C';
 const CALM_WAVE = '#5DCAA5';
 const WHITE     = '#FFFFFF';
+const WARM_SAND = '#F5F1EB';
+const DARK_TEXT = '#1A2B2B';
 
 const FEATURES = [
   '3-source sound mixer',
@@ -24,6 +27,8 @@ const FEATURES = [
 ];
 
 export default function PremiumScreen() {
+  const { isDark } = useTheme();
+  const styles = useMemo(() => makeStyles(isDark), [isDark]);
   const scrollRef = useRef<ScrollView>(null);
 
   useFocusEffect(
@@ -52,7 +57,7 @@ export default function PremiumScreen() {
           accessibilityRole="button"
           accessibilityLabel="Close"
         >
-          <Ionicons name="close" size={24} color={WHITE} />
+          <Ionicons name="close" size={24} color={isDark ? WHITE : DEEP_TIDE} />
         </Pressable>
 
         {/* Logo mark — drops and ripple icon */}
@@ -92,72 +97,74 @@ export default function PremiumScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: DEEP_TIDE,
-  },
-  scroll: {
-    flexGrow: 1,
-    paddingHorizontal: 24,
-    paddingTop: 8,
-    paddingBottom: 48,
-    alignItems: 'center',
-    gap: 20,
-  },
+function makeStyles(isDark: boolean) {
+  return StyleSheet.create({
+    safe: {
+      flex: 1,
+      backgroundColor: isDark ? DEEP_TIDE : WARM_SAND,
+    },
+    scroll: {
+      flexGrow: 1,
+      paddingHorizontal: 24,
+      paddingTop: 8,
+      paddingBottom: 48,
+      alignItems: 'center',
+      gap: 20,
+    },
 
-  closeBtn: {
-    alignSelf: 'flex-end',
-    padding: Spacing.sm,
-    marginRight: -Spacing.sm,
-  },
-  closeBtnPressed: { opacity: 0.6 },
+    closeBtn: {
+      alignSelf: 'flex-end',
+      padding: Spacing.sm,
+      marginRight: -Spacing.sm,
+    },
+    closeBtnPressed: { opacity: 0.6 },
 
-  logoWrap: {
-    alignItems: 'center',
-    marginTop: Spacing.sm,
-    marginBottom: 16,
-  },
+    logoWrap: {
+      alignItems: 'center',
+      marginTop: Spacing.sm,
+      marginBottom: 16,
+    },
 
-  heading: {
-    fontSize: 20,
-    fontWeight: '500',
-    color: WHITE,
-    textAlign: 'center',
-    letterSpacing: -0.3,
-    marginTop: -4,
-  },
-  subheading: {
-    fontSize: 14,
-    color: CALM_WAVE,
-    textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 8,
-    marginTop: -8,
-  },
+    heading: {
+      fontSize: 20,
+      fontWeight: '500',
+      color: isDark ? WHITE : DEEP_TIDE,
+      textAlign: 'center',
+      letterSpacing: -0.3,
+      marginTop: -4,
+    },
+    subheading: {
+      fontSize: 14,
+      color: isDark ? CALM_WAVE : 'rgba(13, 79, 92, 0.8)',
+      textAlign: 'center',
+      lineHeight: 20,
+      paddingHorizontal: 8,
+      marginTop: -8,
+    },
 
-  featureList: {
-    alignSelf: 'stretch',
-    gap: 10,
-    paddingHorizontal: 4,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  featureText: {
-    fontSize: 14,
-    color: WHITE,
-    flex: 1,
-    lineHeight: 20,
-  },
+    featureList: {
+      alignSelf: 'stretch',
+      gap: 10,
+      paddingHorizontal: 4,
+    },
+    featureRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    featureText: {
+      fontSize: 14,
+      color: isDark ? WHITE : DARK_TEXT,
+      flex: 1,
+      lineHeight: 20,
+    },
 
-  stayTuned: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: CALM_WAVE,
-    textAlign: 'center',
-    marginTop: 8,
-  },
-});
+    stayTuned: {
+      fontSize: 16,
+      fontWeight: '500',
+      color: CALM_WAVE,
+      textAlign: 'center',
+      marginTop: 8,
+    },
+  });
+}
