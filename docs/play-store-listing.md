@@ -78,7 +78,7 @@ before making changes to how you manage your tinnitus.
 
 - Category: Health & Fitness
 - Content rating: Everyone
-- Contact email for the Play Console listing: rach-mcdonald@outlook.com (already
+- Contact email for the Play Console listing: contact.resonear@gmail.com (already
   live in the privacy policy at docs/privacy-policy.html)
 - Privacy policy URL: [GitHub Pages URL for docs/privacy-policy.html — confirm
   final published URL before submission]
