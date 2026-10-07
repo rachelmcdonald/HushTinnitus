@@ -49,19 +49,42 @@ export async function showPlaybackNotification(
   soundName: string,
   state: 'playing' | 'paused'
 ): Promise<void> {
-  if (Platform.OS === 'web') return;
+  console.log('[AudioSession] showPlaybackNotification called:', { soundName, state });
+
+  if (Platform.OS === 'web') {
+    console.log('[AudioSession] showPlaybackNotification: skipped (web)');
+    return;
+  }
   const mod = await loadMod();
-  if (!mod) return;
+  if (!mod) {
+    console.log('[AudioSession] showPlaybackNotification: skipped (native module not loaded)');
+    return;
+  }
   try {
+    console.log('[AudioSession] PlaybackNotificationManager.show() →', { title: soundName, artist: 'Hush Tinnitus', state });
     await mod.PlaybackNotificationManager.show({
       title: soundName,
       artist: 'Hush Tinnitus',
       state,
     });
+    console.log('[AudioSession] PlaybackNotificationManager.show() resolved');
+
+    const isActive = await mod.PlaybackNotificationManager.isActive();
+    console.log('[AudioSession] PlaybackNotificationManager.isActive() →', isActive);
+
+    console.log('[AudioSession] enableControl(play) →', state === 'paused');
     await mod.PlaybackNotificationManager.enableControl('play', state === 'paused');
+
+    console.log('[AudioSession] enableControl(pause) →', state === 'playing');
     await mod.PlaybackNotificationManager.enableControl('pause', state === 'playing');
+
+    console.log('[AudioSession] enableControl(stop) →', true);
     await mod.PlaybackNotificationManager.enableControl('stop', true);
-  } catch {}
+
+    console.log('[AudioSession] showPlaybackNotification: all controls enabled successfully');
+  } catch (err) {
+    console.error('[AudioSession] showPlaybackNotification FAILED:', err);
+  }
 }
 
 export async function hidePlaybackNotification(): Promise<void> {
