@@ -13,7 +13,7 @@
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash.png",
-      "resizeMode": "contain",
+      "resizeMode": "cover",
       "backgroundColor": "#0D4F5C"
     },
     "ios": {
@@ -29,6 +29,11 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0D4F5C"
+      },
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "cover",
         "backgroundColor": "#0D4F5C"
       },
       "edgeToEdgeEnabled": true,
@@ -50,6 +55,7 @@
       "expo-sqlite",
       "react-native-audio-api",
       "expo-asset",
+      "expo-splash-screen",
       [
         "expo-notifications",
         {
