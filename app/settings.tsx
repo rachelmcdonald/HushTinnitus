@@ -728,6 +728,11 @@ export default function SettingsScreen() {
             <Ionicons name="chevron-forward" size={18} color={Colors.calmWave} />
           </Pressable>
         </View>
+
+        {/* ── Version ────────────────────────────────────────────────────── */}
+        <Text style={{ fontSize: 12, color: '#666666', textAlign: 'center', paddingVertical: 16 }}>
+          Version 1.0.0 (4)
+        </Text>
       </ScrollWithIndicator>
 
       <DisclaimerModal

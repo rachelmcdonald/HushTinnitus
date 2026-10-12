@@ -40,7 +40,7 @@ async function _initAsync(): Promise<void> {
     });
     mod.AudioManager.observeAudioInterruptions('gain');
     mod.AudioManager.activelyReclaimSession(true);
-  } catch {}
+  } catch (err) { console.error('[AudioSession] _initAsync FAILED:', err); }
 }
 
 // ─── Playback notification ────────────────────────────────────────────────────
@@ -108,6 +108,7 @@ type Subscription = { remove(): void };
 export function subscribeToExternalControls(
   handlers: ExternalControlHandlers
 ): () => void {
+  console.log('[AudioSession] subscribeToExternalControls called');
   if (Platform.OS === 'web') return () => {};
 
   const subs: Subscription[] = [];
@@ -118,7 +119,7 @@ export function subscribeToExternalControls(
       subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationPlay',  handlers.onPlay));
       subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationPause', handlers.onPause));
       subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationStop',  handlers.onStop));
-    } catch {}
+    } catch (err) { console.error('[AudioSession] subscribeToExternalControls FAILED:', err); }
   }).catch(() => {});
 
   return () => subs.forEach((s) => s.remove());
