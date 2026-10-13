@@ -731,7 +731,7 @@ export default function SettingsScreen() {
 
         {/* ── Version ────────────────────────────────────────────────────── */}
         <Text style={{ fontSize: 12, color: '#666666', textAlign: 'center', paddingVertical: 16 }}>
-          Version 1.0.0 (4)
+          Version 1.0.0 (5)
         </Text>
       </ScrollWithIndicator>
 

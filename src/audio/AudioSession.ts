@@ -114,13 +114,37 @@ export function subscribeToExternalControls(
   const subs: Subscription[] = [];
 
   loadMod().then((mod) => {
-    if (!mod) return;
-    try {
-      subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationPlay',  handlers.onPlay));
-      subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationPause', handlers.onPause));
-      subs.push(mod.PlaybackNotificationManager.addEventListener('playbackNotificationStop',  handlers.onStop));
-    } catch (err) { console.error('[AudioSession] subscribeToExternalControls FAILED:', err); }
-  }).catch(() => {});
+    if (!mod) {
+      console.log('[AudioSession] subscribeToExternalControls: native module NOT loaded — no listeners attached');
+      return;
+    }
+    console.log('[AudioSession] subscribeToExternalControls: module loaded', {
+      hasPlaybackNotificationManager: !!mod.PlaybackNotificationManager,
+      hasGlobalAudioEventEmitter: !!(global as any).AudioEventEmitter,
+    });
+
+    // Event names verified against react-native-audio-api@0.12.2
+    // (src/system/notification/types.ts and common/cpp/.../JsEnumParser.cpp).
+    const listeners: [string, () => void][] = [
+      ['playbackNotificationPlay',  handlers.onPlay],
+      ['playbackNotificationPause', handlers.onPause],
+      ['playbackNotificationStop',  handlers.onStop],
+    ];
+    for (const [eventName, handler] of listeners) {
+      try {
+        console.log('[AudioSession] addEventListener →', eventName);
+        const sub = mod.PlaybackNotificationManager.addEventListener(eventName, () => {
+          console.log('[AudioSession] event received:', eventName);
+          handler();
+        });
+        subs.push(sub);
+        console.log('[AudioSession] addEventListener OK:', eventName, sub);
+      } catch (err) {
+        console.error('[AudioSession] addEventListener FAILED:', eventName, err);
+      }
+    }
+    console.log('[AudioSession] subscribeToExternalControls: subscribed', subs.length, 'of', listeners.length);
+  }).catch((err) => console.error('[AudioSession] subscribeToExternalControls loadMod FAILED:', err));
 
   return () => subs.forEach((s) => s.remove());
 }
