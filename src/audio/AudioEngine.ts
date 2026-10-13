@@ -34,6 +34,26 @@ async function loadApi(): Promise<any> {
   return _api;
 }
 
+// ─── Audio focus ──────────────────────────────────────────────────────────────
+// Requested on the first play rather than at launch, so opening the app never
+// interrupts other audio. Android only: observeAudioInterruptions('gain')
+// requests AUDIOFOCUS_GAIN. iOS needs no call — the 'playback' session category
+// interrupts other audio when the context is resumed.
+
+let _audioFocusRequested = false;
+
+function requestAudioFocus(api: any): void {
+  if (Platform.OS !== 'android' || _audioFocusRequested) return;
+  _audioFocusRequested = true;
+  try {
+    api.AudioManager.observeAudioInterruptions('gain');
+    console.log('[AudioEngine] audio focus requested');
+  } catch (err) {
+    _audioFocusRequested = false;
+    console.error('[AudioEngine] requestAudioFocus FAILED:', err);
+  }
+}
+
 // ─── Asset caches ─────────────────────────────────────────────────────────────
 // Both maps are populated by preloadAssets() on Sound tab mount.
 // _assetUriCache: skips downloadAsync on subsequent plays.
@@ -66,6 +86,7 @@ class AudioEngine {
   private _sessionStartTime: number | null = null;
   private _notchedFrequencyHz: number | null = null;
   private _isPaused = false;
+  private _warmupPromise: Promise<void> | null = null;
 
   private constructor() {}
 
@@ -84,6 +105,33 @@ class AudioEngine {
   get volume(): number { return this._volume; }
   get notchedFrequencyHz(): number | null { return this._notchedFrequencyHz; }
   get isPaused(): boolean { return this._isPaused; }
+
+  // Loads the native module and creates the AudioContext without playing
+  // anything, so the first tap doesn't pay that cost. Called on Sound tab mount.
+  // Deliberately does NOT resume(): starting the context activates the iOS
+  // audio session (category 'playback', no mixWithOthers), which would stop
+  // Spotify etc. just by opening the tab. _doPlay() resumes on the user's tap.
+  // Idempotent — concurrent and repeat calls share one promise. Never rejects.
+  warmup(): Promise<void> {
+    if (!this._warmupPromise) {
+      this._warmupPromise = this._doWarmup();
+    }
+    return this._warmupPromise;
+  }
+
+  private async _doWarmup(): Promise<void> {
+    if (Platform.OS === 'web') return;
+    const api = await loadApi();
+    if (!api) return;
+    try {
+      if (!this.ctx) {
+        this.ctx = new api.AudioContext();
+      }
+      console.log('[AudioEngine] warmup complete | ctx.state:', this.ctx.state);
+    } catch (err) {
+      console.error('[AudioEngine] warmup FAILED:', err);
+    }
+  }
 
   // play() returns void and fires the async work in the background so callers
   // do not need to be made async.
@@ -104,15 +152,17 @@ class AudioEngine {
 
     this.clearNodes();
 
-    // Create / reuse AudioContext
+    // Create / reuse AudioContext (a no-op if the Sound tab already warmed up).
+    await this.warmup();
     if (!this.ctx) {
       this.ctx = new api.AudioContext();
     }
 
-    // Android (and some react-native-audio-api builds) may start the context in
-    // 'suspended' state. Buffer-based sounds silently queue audio that never
-    // plays until resumed; oscillators can bypass this on some implementations.
-    // Explicitly resume before building any nodes.
+    // warmup() leaves the context suspended (it's also suspended after pause()).
+    // Resuming here, on the user's tap, is what activates the audio session /
+    // starts output. Buffer-based sounds silently queue audio that never plays
+    // until resumed, so resume before building any nodes.
+    requestAudioFocus(api);
     if (this.ctx.state === 'suspended') {
       try { await this.ctx.resume(); } catch {}
     }
@@ -210,6 +260,7 @@ class AudioEngine {
     if (Platform.OS === 'web') return;
     const api = await loadApi();
     if (!api) return;
+    await this.warmup();
     if (!this.ctx) {
       this.ctx = new api.AudioContext();
     }

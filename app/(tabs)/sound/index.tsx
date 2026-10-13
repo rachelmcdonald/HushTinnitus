@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   StyleSheet, Text, View, Pressable, ScrollView,
-  FlatList, useWindowDimensions, LayoutAnimation,
+  FlatList, useWindowDimensions, LayoutAnimation, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -250,12 +250,13 @@ type CardProps = {
   sound: SoundDef;
   isActive: boolean;
   isPaused: boolean;
+  isAudioReady: boolean;
   cardWidth: number;
   onToggle: () => void;
   onPauseResume: () => void;
 };
 
-function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseResume }: CardProps) {
+function CarouselCard({ sound, isActive, isPaused, isAudioReady, cardWidth, onToggle, onPauseResume }: CardProps) {
   const waveOpacity = useSharedValue(0.45);
 
   useEffect(() => {
@@ -298,8 +299,10 @@ function CarouselCard({ sound, isActive, isPaused, cardWidth, onToggle, onPauseR
           <Text style={cc.name} numberOfLines={2}>{sound.name}</Text>
         </View>
 
-        <View style={cc.playBtn}>
-          {isActive && !isPaused ? (
+        <View style={[cc.playBtn, !isAudioReady && cc.playBtnLoading]}>
+          {!isAudioReady ? (
+            <ActivityIndicator size="small" color={Colors.deepTide} />
+          ) : isActive && !isPaused ? (
             <View style={cc.pauseIcon}>
               <View style={cc.pauseBar} />
               <View style={cc.pauseBar} />
@@ -358,6 +361,7 @@ const cc = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  playBtnLoading: { opacity: 0.5 },
   playTriangle: {
     width: 0, height: 0,
     borderTopWidth: 7, borderBottomWidth: 7, borderLeftWidth: 12,
@@ -381,13 +385,14 @@ type CarouselProps = {
   sounds: SoundDef[];
   currentSound: SoundSource | null;
   isPaused: boolean;
+  isAudioReady: boolean;
   onToggle: (id: SoundSource) => void;
   onPauseResume: () => void;
   cardWidth: number;
 };
 
 function SoundCarousel({
-  sounds, currentSound, isPaused, onToggle, onPauseResume, cardWidth,
+  sounds, currentSound, isPaused, isAudioReady, onToggle, onPauseResume, cardWidth,
 }: CarouselProps) {
   const { colors } = useTheme();
   const cr = useMemo(() => makeCrStyles(colors), [colors]);
@@ -419,6 +424,7 @@ function SoundCarousel({
             sound={item}
             isActive={currentSound === item.id}
             isPaused={isPaused}
+            isAudioReady={isAudioReady}
             cardWidth={cardWidth}
             onToggle={() => onToggle(item.id)}
             onPauseResume={onPauseResume}
@@ -783,6 +789,15 @@ export default function SoundScreen() {
     }, [])
   );
 
+  // Start the AudioContext on first mount so the first tap doesn't wait for it.
+  // Play buttons show a dimmed spinner until it's ready. warmup() never rejects.
+  const [isAudioReady, setIsAudioReady] = useState(false);
+  useEffect(() => {
+    let mounted = true;
+    audioEngine.warmup().then(() => { if (mounted) setIsAudioReady(true); });
+    return () => { mounted = false; };
+  }, []);
+
   // Preload all file-based sound assets in the background on first mount so
   // the per-play download step is already complete when the user taps a card.
   useEffect(() => {
@@ -822,6 +837,7 @@ export default function SoundScreen() {
   const carouselProps = {
     currentSound,
     isPaused,
+    isAudioReady,
     onToggle: toggle,
     onPauseResume: pauseResume,
     cardWidth,

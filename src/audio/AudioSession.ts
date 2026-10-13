@@ -38,7 +38,9 @@ async function _initAsync(): Promise<void> {
       iosMode: 'default',
       iosOptions: ['allowAirPlay', 'allowBluetoothA2DP'],
     });
-    mod.AudioManager.observeAudioInterruptions('gain');
+    // Audio focus is NOT requested here — on Android, observeAudioInterruptions
+    // requests AUDIOFOCUS_GAIN immediately, which would pause Spotify etc. just
+    // by opening the app. AudioEngine requests it on the first play instead.
     mod.AudioManager.activelyReclaimSession(true);
   } catch (err) { console.error('[AudioSession] _initAsync FAILED:', err); }
 }
