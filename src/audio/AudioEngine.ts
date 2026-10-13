@@ -39,17 +39,15 @@ async function loadApi(): Promise<any> {
 // interrupts other audio. Android only: observeAudioInterruptions('gain')
 // requests AUDIOFOCUS_GAIN. iOS needs no call — the 'playback' session category
 // interrupts other audio when the context is resumed.
-
-let _audioFocusRequested = false;
+// Requested on every play (not just the first) so Hush reclaims focus if
+// another app (e.g. Spotify) took it in the meantime.
 
 function requestAudioFocus(api: any): void {
-  if (Platform.OS !== 'android' || _audioFocusRequested) return;
-  _audioFocusRequested = true;
+  if (Platform.OS !== 'android') return;
   try {
     api.AudioManager.observeAudioInterruptions('gain');
     console.log('[AudioEngine] audio focus requested');
   } catch (err) {
-    _audioFocusRequested = false;
     console.error('[AudioEngine] requestAudioFocus FAILED:', err);
   }
 }
