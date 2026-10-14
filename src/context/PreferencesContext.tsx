@@ -6,7 +6,7 @@ import { getPreferences, updatePreferences as persistUpdate } from '@/src/storag
 const WEB_DEFAULTS: UserPreferences = {
   onboardingComplete: false,
   isPremium: false,
-  darkMode: 'system',
+  darkMode: 'dark',
   textSize: 'medium',
   notificationsEnabled: false,
   notificationTime: '09:00',

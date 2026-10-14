@@ -19,7 +19,7 @@ type PreferencesRow = {
 const DEFAULT_PREFERENCES: UserPreferences = {
   onboardingComplete: false,
   isPremium: false,
-  darkMode: 'system',
+  darkMode: 'dark',
   textSize: 'medium',
   notificationsEnabled: false,
   notificationTime: '09:00',
