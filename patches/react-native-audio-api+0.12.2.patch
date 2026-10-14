@@ -1,0 +1,45 @@
+diff --git a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotificationReceiver.kt b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotificationReceiver.kt
+index d1cb3b6..8087699 100644
+--- a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotificationReceiver.kt
++++ b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotificationReceiver.kt
+@@ -3,6 +3,8 @@ package com.swmansion.audioapi.system.notification
+ import android.content.BroadcastReceiver
+ import android.content.Context
+ import android.content.Intent
++import android.os.Build
++import android.view.KeyEvent
+ import com.swmansion.audioapi.AudioAPIModule
+ import com.swmansion.audioapi.system.AudioEvent
+ 
+@@ -40,6 +42,31 @@ class PlaybackNotificationReceiver : BroadcastReceiver() {
+         val body = HashMap<String, Any>().apply { put("value", 15) }
+         audioAPIModule?.invokeHandlerWithEventNameAndEventBody(AudioEvent.PLAYBACK_NOTIFICATION_SKIP_BACKWARD.ordinal, body)
+       }
++
++      // [Hush patch] Play/pause/stop notification buttons broadcast MEDIA_BUTTON
++      // (see PlaybackNotification.createAction) and this receiver is registered
++      // for it, but upstream (<= 0.13.6 / 1.0.0 nightly 2026-10-14) never handled
++      // it, so taps were silently dropped. This is the path used by notification
++      // action buttons (e.g. Android 12 / MIUI). On Android 13+ the shade's media
++      // controls go through MediaSessionCompat.Callback (onPlay/onPause/onStop in
++      // PlaybackNotification), which was already wired — both paths now work.
++      PlaybackNotification.MEDIA_BUTTON -> {
++        val keyEvent =
++          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
++            intent?.getParcelableExtra(Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
++          } else {
++            @Suppress("DEPRECATION")
++            intent?.getParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
++          }
++        val event =
++          when (keyEvent?.keyCode) {
++            KeyEvent.KEYCODE_MEDIA_PLAY -> AudioEvent.PLAYBACK_NOTIFICATION_PLAY
++            KeyEvent.KEYCODE_MEDIA_PAUSE -> AudioEvent.PLAYBACK_NOTIFICATION_PAUSE
++            KeyEvent.KEYCODE_MEDIA_STOP -> AudioEvent.PLAYBACK_NOTIFICATION_STOP
++            else -> null
++          }
++        event?.let { audioAPIModule?.invokeHandlerWithEventNameAndEventBody(it.ordinal, mapOf()) }
++      }
+     }
+   }
+ }
