@@ -2,7 +2,7 @@
 // See AudioEngine.ts for the rationale. Every function that needs the module
 // loads it via dynamic import() at call time, never at module-evaluation time.
 
-import { Platform } from 'react-native';
+import { Image, Platform } from 'react-native';
 
 // ─── Lazy module cache ────────────────────────────────────────────────────────
 
@@ -47,6 +47,11 @@ async function _initAsync(): Promise<void> {
 
 // ─── Playback notification ────────────────────────────────────────────────────
 
+// Artwork for the media notification (512×512, solid #0D4F5C). On Android 11+
+// and MIUI the media notification also takes its background colour from this.
+// { uri } form: resolves to a bundled drawable in release, a Metro URL in dev.
+const ARTWORK_URI = Image.resolveAssetSource(require('@/assets/notification-artwork.png')).uri;
+
 export async function showPlaybackNotification(
   soundName: string,
   state: 'playing' | 'paused'
@@ -63,11 +68,12 @@ export async function showPlaybackNotification(
     return;
   }
   try {
-    console.log('[AudioSession] PlaybackNotificationManager.show() →', { title: soundName, artist: 'Hush Tinnitus', state });
+    console.log('[AudioSession] PlaybackNotificationManager.show() →', { title: soundName, artist: 'Hush Tinnitus', state, artwork: ARTWORK_URI });
     await mod.PlaybackNotificationManager.show({
       title: soundName,
       artist: 'Hush Tinnitus',
       state,
+      artwork: { uri: ARTWORK_URI },
     });
     console.log('[AudioSession] PlaybackNotificationManager.show() resolved');
 
