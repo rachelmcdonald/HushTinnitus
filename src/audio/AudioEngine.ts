@@ -53,11 +53,16 @@ function requestAudioFocus(api: any): void {
 }
 
 // ─── Asset caches ─────────────────────────────────────────────────────────────
-// Both maps are populated by preloadAssets() on Sound tab mount.
+// Populated lazily, one sound at a time — by play() or by preloadSound() when
+// the user scrolls to a card. Nothing is loaded on Sound tab mount: decoding
+// all ~19 MB of MP3s at once starved the decode of the sound actually tapped.
 // _assetUriCache: skips downloadAsync on subsequent plays.
 // _decodedBufferCache: skips fetch + decodeAudioData — play is instant on hit.
+// _bufferLoads: in-flight loads, so play() joins a running preload instead of
+// starting a second, competing decode of the same file.
 const _assetUriCache = new Map<string, string>();
 const _decodedBufferCache = new Map<string, any>(); // value: AudioBuffer
+const _bufferLoads = new Map<string, Promise<any>>(); // value: Promise<AudioBuffer>
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -85,6 +90,10 @@ class AudioEngine {
   private _notchedFrequencyHz: number | null = null;
   private _isPaused = false;
   private _warmupPromise: Promise<void> | null = null;
+  // Incremented by every play() and stop(). A _doPlay whose generation is no
+  // longer current (the user tapped another sound or stopped while its file was
+  // still loading) must not start its source — nothing would ever stop it.
+  private _playGeneration = 0;
 
   private constructor() {}
 
@@ -131,21 +140,23 @@ class AudioEngine {
     }
   }
 
-  // play() returns void and fires the async work in the background so callers
-  // do not need to be made async.
-  play(soundId: SoundSource, volume: number = DEFAULT_GAIN): void {
+  // play() starts the async work immediately; callers that don't care can ignore
+  // the result. It resolves true once the sound's source has actually started
+  // (i.e. audio is audible), false if playback failed or was superseded by a
+  // later play()/stop() — used by the UI to show a loading state until then.
+  play(soundId: SoundSource, volume: number = DEFAULT_GAIN): Promise<boolean> {
     this._volume = volume;
-    this._doPlay(soundId, volume);
+    return this._doPlay(soundId, volume, ++this._playGeneration);
   }
 
-  private async _doPlay(soundId: SoundSource, volume: number): Promise<void> {
+  private async _doPlay(soundId: SoundSource, volume: number, generation: number): Promise<boolean> {
     const api = await loadApi();
     if (!api) {
       Alert.alert(
         'Audio unavailable',
         'Audio playback requires a development build. Expo Go does not support native audio.'
       );
-      return;
+      return false;
     }
 
     this.clearNodes();
@@ -164,6 +175,8 @@ class AudioEngine {
     if (this.ctx.state === 'suspended') {
       try { await this.ctx.resume(); } catch {}
     }
+
+    if (generation !== this._playGeneration) return false; // superseded during warmup/resume
 
     console.log('[AudioEngine] play:', soundId, '| ctx.state:', this.ctx.state);
 
@@ -189,24 +202,28 @@ class AudioEngine {
     try {
       if (soundId === 'binaural-alpha' || soundId === 'binaural-theta') {
         this.buildBinauralNodes(soundId, gain);
-      } else if (soundId === 'white-noise' || soundId === 'pink-noise' || soundId === 'brown-noise' || soundId === 'rain' || soundId === 'ocean' || soundId === 'stream' || soundId === 'forest' || soundId === 'fire') {
-        await this.buildNoiseFileNodes(soundId, gain);
-      } else if (soundId === 'cafe') {
-        await this.buildCafeFileNodes(gain);
+      } else if (AudioEngine.isFileBased(soundId)) {
+        await this.buildFileNodes(soundId, gain, generation);
       } else {
         this.buildBufferNodes(soundId, gain);
       }
     } catch (err) {
       console.error('[AudioEngine] buildNodes failed for', soundId, err);
-      this.clearNodes();
-      return;
+      // Only tear down if this play is still current — otherwise clearNodes()
+      // would stop the sound the user has since switched to.
+      if (generation === this._playGeneration) this.clearNodes();
+      return false;
     }
+
+    if (generation !== this._playGeneration) return false; // superseded while loading
 
     this._currentSound = soundId;
     this._sessionStartTime = Date.now();
+    return true;
   }
 
   stop(): void {
+    this._playGeneration++;
     this.clearNodes();
     this._currentSound = null;
     this._sessionStartTime = null;
@@ -252,38 +269,48 @@ class AudioEngine {
     if (this._currentSound) this.play(this._currentSound, this._volume);
   }
 
-  // Downloads and decodes all file-based sound assets in parallel on Sound tab
-  // mount. After this runs, every play hits _decodedBufferCache and is instant.
-  async preloadAssets(): Promise<void> {
-    if (Platform.OS === 'web') return;
-    const api = await loadApi();
-    if (!api) return;
-    await this.warmup();
-    if (!this.ctx) {
-      this.ctx = new api.AudioContext();
+  // Downloads and decodes ONE file-based sound in the background so a later
+  // tap on it is instant. Called when the user scrolls to that sound's card.
+  // No-op for synthesised/binaural sounds and for sounds already loaded/loading.
+  preloadSound(soundId: SoundSource): void {
+    if (Platform.OS === 'web' || !AudioEngine.isFileBased(soundId)) return;
+    this.warmup()
+      .then(() => { if (this.ctx) return this.loadFileBuffer(soundId); })
+      .catch((err) => console.error('[AudioEngine] preloadSound failed for', soundId, err));
+  }
+
+  static isFileBased(soundId: SoundSource): boolean {
+    return soundId in AudioEngine.NOISE_MODULES;
+  }
+
+  // Returns the decoded AudioBuffer for a file-based sound, loading it at most
+  // once: cached buffer → in-flight load → new download + decode.
+  private loadFileBuffer(soundId: SoundSource): Promise<any> {
+    const cached = _decodedBufferCache.get(soundId);
+    if (cached) return Promise.resolve(cached);
+
+    let load = _bufferLoads.get(soundId);
+    if (!load) {
+      load = (async () => {
+        const t0 = Date.now();
+        let localUri = _assetUriCache.get(soundId);
+        if (!localUri) {
+          const { Asset } = await import('expo-asset');
+          const asset = Asset.fromModule(AudioEngine.NOISE_MODULES[soundId]);
+          await asset.downloadAsync();
+          localUri = asset.localUri!;
+          _assetUriCache.set(soundId, localUri);
+        }
+        const response = await fetch(localUri);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
+        _decodedBufferCache.set(soundId, audioBuffer);
+        console.log('[AudioEngine] loaded', soundId, 'in', Date.now() - t0, 'ms');
+        return audioBuffer;
+      })().finally(() => { _bufferLoads.delete(soundId); });
+      _bufferLoads.set(soundId, load);
     }
-    try {
-      const { Asset } = await import('expo-asset');
-      await Promise.all(
-        Object.entries(AudioEngine.NOISE_MODULES).map(async ([id, module]) => {
-          if (_decodedBufferCache.has(id)) return;
-          try {
-            let localUri = _assetUriCache.get(id);
-            if (!localUri) {
-              const asset = Asset.fromModule(module);
-              await asset.downloadAsync();
-              if (!asset.localUri) return;
-              localUri = asset.localUri;
-              _assetUriCache.set(id, localUri);
-            }
-            const response = await fetch(localUri);
-            const arrayBuffer = await response.arrayBuffer();
-            const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
-            _decodedBufferCache.set(id, audioBuffer);
-          } catch {}
-        })
-      );
-    } catch {}
+    return load;
   }
 
   // ─── Node builders ────────────────────────────────────────────────────────
@@ -347,9 +374,10 @@ class AudioEngine {
   }
 
   // ─── Noise files (file-based) ────────────────────────────────────────────
-  // Loads a pre-generated MP3 (ffmpeg anoisesrc — mathematically accurate spectral
-  // profile) and plays it as a looping buffer. Replaces synthesised versions
-  // which were perceptually indistinct on device.
+  // Pre-generated MP3s (ffmpeg anoisesrc — mathematically accurate spectral
+  // profile) replace synthesised noise, which was perceptually indistinct on
+  // device. cafe-ambience.mp3 is CC0 (The Designer's Choice collection via
+  // archive.org). All play as looping buffers.
 
   private static readonly NOISE_MODULES: Record<string, any> = {
     'white-noise': require('@/assets/sounds/white-noise.mp3'),
@@ -363,50 +391,9 @@ class AudioEngine {
     'cafe':        require('@/assets/sounds/cafe-ambience.mp3'),
   };
 
-  private async buildNoiseFileNodes(soundId: SoundSource, gain: any): Promise<void> {
-    let audioBuffer = _decodedBufferCache.get(soundId);
-    if (!audioBuffer) {
-      let localUri = _assetUriCache.get(soundId);
-      if (!localUri) {
-        const { Asset } = await import('expo-asset');
-        const asset = Asset.fromModule(AudioEngine.NOISE_MODULES[soundId]);
-        await asset.downloadAsync();
-        localUri = asset.localUri!;
-        _assetUriCache.set(soundId, localUri);
-      }
-      const response = await fetch(localUri);
-      const arrayBuffer = await response.arrayBuffer();
-      audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
-      _decodedBufferCache.set(soundId, audioBuffer);
-    }
-    const source = this.ctx.createBufferSource();
-    source.buffer = audioBuffer;
-    source.loop = true;
-    source.connect(gain);
-    source.start();
-    this.activeSource = source;
-  }
-
-  // ─── Cafe ambience (file-based) ──────────────────────────────────────────
-  // Loads assets/sounds/cafe-ambience.mp3 (CC0 — The Designer's Choice collection
-  // via archive.org), decodes via Web Audio API, and plays as a looping buffer.
-
-  private async buildCafeFileNodes(gain: any): Promise<void> {
-    let audioBuffer = _decodedBufferCache.get('cafe');
-    if (!audioBuffer) {
-      let localUri = _assetUriCache.get('cafe');
-      if (!localUri) {
-        const { Asset } = await import('expo-asset');
-        const asset = Asset.fromModule(AudioEngine.NOISE_MODULES['cafe']);
-        await asset.downloadAsync();
-        localUri = asset.localUri!;
-        _assetUriCache.set('cafe', localUri);
-      }
-      const response = await fetch(localUri);
-      const arrayBuffer = await response.arrayBuffer();
-      audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
-      _decodedBufferCache.set('cafe', audioBuffer);
-    }
+  private async buildFileNodes(soundId: SoundSource, gain: any, generation: number): Promise<void> {
+    const audioBuffer = await this.loadFileBuffer(soundId);
+    if (generation !== this._playGeneration) return; // superseded while loading
     const source = this.ctx.createBufferSource();
     source.buffer = audioBuffer;
     source.loop = true;

@@ -23,6 +23,8 @@ export type AudioPlaybackState = {
   currentSound: SoundSource | null;
   isPlaying: boolean;
   isPaused: boolean;
+  /** True from a tap on a sound until its audio is actually audible. */
+  isLoading: boolean;
   selectedTimer: number | null;
   timeRemaining: number | null;
   toggle: (id: SoundSource) => void;
@@ -36,6 +38,10 @@ export function useAudioPlayback(): AudioPlaybackState {
     () => audioEngine.currentSound
   );
   const [isPaused, setIsPaused] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  // Identifies the latest play request, so a slow load that was superseded by
+  // another tap (or a stop) can't clear the newer request's loading state.
+  const playRequestRef = useRef(0);
   const [selectedTimer, setSelectedTimer] = useState<number | null>(null);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
@@ -105,6 +111,8 @@ export function useAudioPlayback(): AudioPlaybackState {
       if (Platform.OS !== 'web') {
         audioEngine.stop();
       }
+      playRequestRef.current++;
+      setIsLoading(false);
 
       saveSession(duration);
 
@@ -167,7 +175,13 @@ export function useAudioPlayback(): AudioPlaybackState {
       }
 
       if (Platform.OS !== 'web') {
-        audioEngine.play(soundId);
+        // The card shows a spinner (isLoading) until the file is loaded and the
+        // audio has actually started, rather than "playing" while still silent.
+        const request = ++playRequestRef.current;
+        setIsLoading(true);
+        audioEngine.play(soundId).then(() => {
+          if (request === playRequestRef.current) setIsLoading(false);
+        });
       }
 
       sessionStartRef.current = Date.now();
@@ -182,7 +196,9 @@ export function useAudioPlayback(): AudioPlaybackState {
   // ─── Pause / resume ───────────────────────────────────────────────────────
 
   const pauseResume = useCallback(async () => {
-    if (!currentSound) return;
+    // Ignore while the sound is still loading: the engine has no current sound
+    // yet, so pause() would be a no-op and the UI would show paused over audio.
+    if (!currentSound || isLoading) return;
     if (isPaused) {
       if (Platform.OS !== 'web') await audioEngine.resume();
       setIsPaused(false);
@@ -190,7 +206,7 @@ export function useAudioPlayback(): AudioPlaybackState {
       if (Platform.OS !== 'web') await audioEngine.pause();
       setIsPaused(true);
     }
-  }, [currentSound, isPaused]);
+  }, [currentSound, isPaused, isLoading]);
 
   // ─── Stop all ─────────────────────────────────────────────────────────────
 
@@ -217,6 +233,7 @@ export function useAudioPlayback(): AudioPlaybackState {
     currentSound,
     isPlaying: currentSound !== null,
     isPaused,
+    isLoading,
     selectedTimer,
     timeRemaining,
     toggle,

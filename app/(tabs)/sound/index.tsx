@@ -251,16 +251,21 @@ type CardProps = {
   isActive: boolean;
   isPaused: boolean;
   isAudioReady: boolean;
+  isLoading: boolean;
   cardWidth: number;
   onToggle: () => void;
   onPauseResume: () => void;
 };
 
-function CarouselCard({ sound, isActive, isPaused, isAudioReady, cardWidth, onToggle, onPauseResume }: CardProps) {
+function CarouselCard({ sound, isActive, isPaused, isAudioReady, isLoading, cardWidth, onToggle, onPauseResume }: CardProps) {
+  // Tapped but not yet audible (file still loading/decoding): the card is shown
+  // active, with a spinner in place of the pause button.
+  const isStarting = isActive && isLoading;
+
   const waveOpacity = useSharedValue(0.45);
 
   useEffect(() => {
-    if (isActive && !isPaused) {
+    if (isActive && !isPaused && !isStarting) {
       waveOpacity.value = withRepeat(
         withSequence(
           withTiming(1,    { duration: 1200, easing: Easing.inOut(Easing.ease) }),
@@ -274,21 +279,25 @@ function CarouselCard({ sound, isActive, isPaused, isAudioReady, cardWidth, onTo
       waveOpacity.value = withTiming(isActive ? 0.7 : 0.45, { duration: 400 });
     }
     return () => { cancelAnimation(waveOpacity); };
-  }, [isActive, isPaused]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isActive, isPaused, isStarting]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const waveStyle = useAnimatedStyle(() => ({ opacity: waveOpacity.value }));
 
-  const a11yLabel = isActive
+  const a11yLabel = isStarting
+    ? `${sound.name} loading.`
+    : isActive
     ? `${sound.name} ${isPaused ? 'paused' : 'playing'}. Tap to ${isPaused ? 'resume' : 'pause'}.`
     : `${sound.name}. Tap to play.`;
 
   return (
     <Pressable
       style={[cc.card, { width: cardWidth }]}
-      onPress={isActive ? onPauseResume : onToggle}
+      // While starting, the engine has no current sound yet, so pause would be
+      // a no-op and the UI would show paused over audible audio — ignore taps.
+      onPress={isStarting ? undefined : isActive ? onPauseResume : onToggle}
       accessibilityRole="button"
       accessibilityLabel={a11yLabel}
-      accessibilityState={{ selected: isActive }}
+      accessibilityState={{ selected: isActive, busy: isStarting }}
     >
       <View style={cc.row}>
         <Animated.View style={[waveStyle, cc.iconWrap]}>
@@ -300,7 +309,7 @@ function CarouselCard({ sound, isActive, isPaused, isAudioReady, cardWidth, onTo
         </View>
 
         <View style={[cc.playBtn, !isAudioReady && cc.playBtnLoading]}>
-          {!isAudioReady ? (
+          {!isAudioReady || isStarting ? (
             <ActivityIndicator size="small" color={Colors.deepTide} />
           ) : isActive && !isPaused ? (
             <View style={cc.pauseIcon}>
@@ -386,19 +395,31 @@ type CarouselProps = {
   currentSound: SoundSource | null;
   isPaused: boolean;
   isAudioReady: boolean;
+  isLoading: boolean;
   onToggle: (id: SoundSource) => void;
   onPauseResume: () => void;
   cardWidth: number;
 };
 
 function SoundCarousel({
-  sounds, currentSound, isPaused, isAudioReady, onToggle, onPauseResume, cardWidth,
+  sounds, currentSound, isPaused, isAudioReady, isLoading, onToggle, onPauseResume, cardWidth,
 }: CarouselProps) {
   const { colors } = useTheme();
   const cr = useMemo(() => makeCrStyles(colors), [colors]);
 
   const listRef = useRef<FlatList<SoundDef>>(null);
   const [idx, setIdx] = useState(0);
+
+  // Lazily decode a sound when the user scrolls to its card, so a tap on it is
+  // instant. Skipped on mount — nothing is preloaded until the user navigates
+  // (a tap on the first card loads just that sound via play()).
+  const prevIdxRef = useRef(idx);
+  useEffect(() => {
+    if (idx === prevIdxRef.current) return;
+    prevIdxRef.current = idx;
+    const sound = sounds[idx];
+    if (sound) audioEngine.preloadSound(sound.id);
+  }, [idx]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function goTo(i: number) {
     const next = Math.max(0, Math.min(sounds.length - 1, i));
@@ -425,6 +446,7 @@ function SoundCarousel({
             isActive={currentSound === item.id}
             isPaused={isPaused}
             isAudioReady={isAudioReady}
+            isLoading={isLoading}
             cardWidth={cardWidth}
             onToggle={() => onToggle(item.id)}
             onPauseResume={onPauseResume}
@@ -798,16 +820,11 @@ export default function SoundScreen() {
     return () => { mounted = false; };
   }, []);
 
-  // Preload all file-based sound assets in the background on first mount so
-  // the per-play download step is already complete when the user taps a card.
-  useEffect(() => {
-    audioEngine.preloadAssets();
-  }, []);
-
   const {
     currentSound,
     isPlaying,
     isPaused,
+    isLoading,
     selectedTimer,
     timeRemaining,
     toggle,
@@ -838,6 +855,7 @@ export default function SoundScreen() {
     currentSound,
     isPaused,
     isAudioReady,
+    isLoading,
     onToggle: toggle,
     onPauseResume: pauseResume,
     cardWidth,
