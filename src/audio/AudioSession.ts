@@ -108,6 +108,8 @@ type ExternalControlHandlers = {
   onPlay: () => void;
   onPause: () => void;
   onStop: () => void;
+  /** Another app took audio focus (e.g. Spotify started playing, phone call). */
+  onInterruptionBegan: () => void;
 };
 
 // Subscription type is local — no import from react-native-audio-api needed.
@@ -152,6 +154,26 @@ export function subscribeToExternalControls(
       }
     }
     console.log('[AudioSession] subscribeToExternalControls: subscribed', subs.length, 'of', listeners.length);
+
+    // Audio focus loss. On Android the library emits 'interruption' with
+    // type 'began' on AUDIOFOCUS_LOSS / LOSS_TRANSIENT (only while we hold focus,
+    // which AudioEngine requests on each play/resume) and type 'ended' when focus
+    // returns. We pause on 'began' and deliberately ignore 'ended' — no
+    // auto-resume; the user taps play to continue. 'duck' (transient
+    // can-duck, e.g. a notification sound) is left to Android's automatic ducking.
+    try {
+      const sub = mod.AudioManager.addSystemEventListener(
+        'interruption',
+        (event: { type: 'began' | 'ended'; shouldResume: boolean }) => {
+          console.log('[AudioSession] interruption event received:', event);
+          if (event.type === 'began') handlers.onInterruptionBegan();
+        }
+      );
+      subs.push(sub);
+      console.log('[AudioSession] addSystemEventListener OK: interruption');
+    } catch (err) {
+      console.error('[AudioSession] addSystemEventListener FAILED: interruption', err);
+    }
   }).catch((err) => console.error('[AudioSession] subscribeToExternalControls loadMod FAILED:', err));
 
   return () => subs.forEach((s) => s.remove());

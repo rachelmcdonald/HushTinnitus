@@ -75,6 +75,14 @@ export function useAudioPlayback(): AudioPlaybackState {
       onStop: () => {
         performStopRef.current?.();
       },
+      // Another app took audio focus: pause (the notification-sync effect then
+      // shows the paused state; the notification stays so the user can resume).
+      // No auto-resume when focus returns — the user taps play.
+      onInterruptionBegan: () => {
+        if (!audioEngine.isPaused && audioEngine.isPlaying) {
+          audioEngine.pause().then(() => setIsPaused(true));
+        }
+      },
     });
     return unsubscribe;
   }, []); // eslint-disable-line react-hooks/exhaustive-deps

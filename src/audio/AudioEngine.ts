@@ -238,6 +238,10 @@ class AudioEngine {
 
   async resume(): Promise<void> {
     if (!this.ctx || !this._currentSound || !this._isPaused) return;
+    // Re-request focus: if we were paused because another app took it, resuming
+    // without it would play underneath that app.
+    const api = await loadApi();
+    if (api) requestAudioFocus(api);
     await this.ctx.resume();
     this._isPaused = false;
   }
