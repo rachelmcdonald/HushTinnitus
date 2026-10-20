@@ -377,7 +377,8 @@ class AudioEngine {
   // Pre-generated MP3s (ffmpeg anoisesrc — mathematically accurate spectral
   // profile) replace synthesised noise, which was perceptually indistinct on
   // device. cafe-ambience.mp3 is CC0 (The Designer's Choice collection via
-  // archive.org). All play as looping buffers.
+  // archive.org). All play as looping buffers. All were trimmed to 30 s loops
+  // (from 60 s noise / ~2–3 min nature + cafe) so a first play decodes fast.
 
   private static readonly NOISE_MODULES: Record<string, any> = {
     'white-noise': require('@/assets/sounds/white-noise.mp3'),
@@ -391,6 +392,25 @@ class AudioEngine {
     'cafe':        require('@/assets/sounds/cafe-ambience.mp3'),
   };
 
+  // All file-based sounds are 32 s: [loop 29–30 s][30 s loop][loop 0–1 s], built
+  // with a 2 s equal-power crossfade so the loop has no seam. Looping the
+  // [1 s, 31 s] window (rather than the whole buffer) skips the MP3 encoder
+  // delay/padding — the app's MP3 decoder doesn't strip it, and it would
+  // otherwise be an audible ~25–50 ms dropout every loop. Because the file's
+  // content repeats with a 30 s period, the window stays seamless even though
+  // that encoder delay shifts it slightly.
+  private static readonly LOOP_REGIONS: Partial<Record<SoundSource, [number, number]>> = {
+    'white-noise': [1, 31],
+    'pink-noise':  [1, 31],
+    'brown-noise': [1, 31],
+    'rain':   [1, 31],
+    'ocean':  [1, 31],
+    'stream': [1, 31],
+    'forest': [1, 31],
+    'fire':   [1, 31],
+    'cafe':   [1, 31],
+  };
+
   private async buildFileNodes(soundId: SoundSource, gain: any, generation: number): Promise<void> {
     const audioBuffer = await this.loadFileBuffer(soundId);
     if (generation !== this._playGeneration) return; // superseded while loading
@@ -398,7 +418,14 @@ class AudioEngine {
     source.buffer = audioBuffer;
     source.loop = true;
     source.connect(gain);
-    source.start();
+    const region = AudioEngine.LOOP_REGIONS[soundId];
+    if (region) {
+      source.loopStart = region[0];
+      source.loopEnd = region[1];
+      source.start(0, region[0]);
+    } else {
+      source.start();
+    }
     this.activeSource = source;
   }
 

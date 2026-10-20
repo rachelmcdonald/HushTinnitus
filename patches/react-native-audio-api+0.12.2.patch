@@ -1,3 +1,75 @@
+diff --git a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/CentralizedForegroundService.kt b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/CentralizedForegroundService.kt
+index 086e348..8586f04 100644
+--- a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/CentralizedForegroundService.kt
++++ b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/CentralizedForegroundService.kt
+@@ -7,7 +7,10 @@ import android.app.Service
+ import android.content.Context
+ import android.content.Intent
+ import android.os.Build
++import android.os.Handler
+ import android.os.IBinder
++import android.os.Looper
++import android.os.Process
+ import android.util.Log
+ import androidx.core.app.NotificationCompat
+ import com.swmansion.audioapi.system.MediaSessionManager.CHANNEL_ID
+@@ -25,6 +28,13 @@ class CentralizedForegroundService : Service() {
+     const val ACTION_STOP = "STOP_FOREGROUND"
+   }
+ 
++  // [Hush patch] Set when the library stops the service itself (playback ended).
++  // If onDestroy runs without it, Android stopped the service because the user
++  // swiped the app away from recents (stopWithTask=true). The notification goes
++  // with the service, but the process — and its native audio thread — stays
++  // alive, so audio kept playing with no way to stop it.
++  private var stopRequested = false
++
+   override fun onBind(intent: Intent?): IBinder? = null
+ 
+   override fun onStartCommand(
+@@ -38,6 +48,7 @@ class CentralizedForegroundService : Service() {
+       }
+ 
+       ACTION_STOP -> {
++        stopRequested = true
+         stopForeground(STOP_FOREGROUND_REMOVE)
+         stopSelf()
+       }
+@@ -108,6 +119,14 @@ class CentralizedForegroundService : Service() {
+ 
+   override fun onDestroy() {
+     Log.d(TAG, "Centralized foreground service destroyed")
++    if (!stopRequested) {
++      // [Hush patch] App swiped away while audio was active: ask JS to stop
++      // playback (saves the session, hides the notification), then end the
++      // process shortly after as a guarantee in case JS is not running.
++      Log.d(TAG, "Service stopped with task — stopping playback and ending process")
++      MediaSessionManager.notifyTaskRemoved()
++      Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(Process.myPid()) }, 1500)
++    }
+     super.onDestroy()
+   }
+ }
+diff --git a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/MediaSessionManager.kt b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/MediaSessionManager.kt
+index b1f176e..13b3df8 100644
+--- a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/MediaSessionManager.kt
++++ b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/MediaSessionManager.kt
+@@ -83,6 +83,15 @@ object MediaSessionManager {
+     this.notificationRegistry = NotificationRegistry(this.reactContext, this.audioAPIModule)
+   }
+ 
++  // [Hush patch] Called by CentralizedForegroundService when it is destroyed
++  // without an explicit stop — i.e. the user swiped the app away from recents
++  // (the service is declared stopWithTask=true). Delivers the same event as the
++  // notification's stop button so JS stops playback and saves the session.
++  fun notifyTaskRemoved() {
++    if (!::audioAPIModule.isInitialized) return
++    audioAPIModule.get()?.invokeHandlerWithEventNameAndEventBody(AudioEvent.PLAYBACK_NOTIFICATION_STOP.ordinal, mapOf())
++  }
++
+   fun getDevicePreferredSampleRate(): Double {
+     val sampleRate = this.audioManager.getProperty(AudioManager.PROPERTY_OUTPUT_SAMPLE_RATE)
+     return sampleRate.toDouble()
 diff --git a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotification.kt b/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotification.kt
 index 3364c7a..fc957c0 100644
 --- a/node_modules/react-native-audio-api/android/src/main/java/com/swmansion/audioapi/system/notification/PlaybackNotification.kt
