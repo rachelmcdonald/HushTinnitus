@@ -44,8 +44,11 @@ export default function AboutScreen() {
     }, [])
   );
 
+  // 'bottom' edge included: this screen has no tab bar, and with edge-to-edge
+  // the app draws behind the Android navigation bar — without the inset the
+  // last content sits underneath it.
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
       <ScrollWithIndicator
         ref={scrollRef}
         contentContainerStyle={styles.scroll}

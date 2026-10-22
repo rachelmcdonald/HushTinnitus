@@ -294,7 +294,15 @@ function makeStyles(
       paddingBottom: Spacing.xl,
       gap: Spacing.lg,
     },
-    backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm },
+    // Negative marginBottom pulls the heading up to 4px below "← Relax" (was
+    // 28px: 8px button padding + 20px scroll gap) so the Start button fits
+    // without scrolling. The padding is kept so the tap target doesn't shrink.
+    backBtn: {
+      alignSelf: 'flex-start',
+      paddingTop: 0,
+      paddingBottom: Spacing.sm,
+      marginBottom: -(Spacing.sm + Spacing.lg - Spacing.xs),
+    },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: colors.headingAccent },
     header: { gap: Spacing.sm },
