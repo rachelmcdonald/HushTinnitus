@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  StyleSheet, Text, View, Pressable, Platform,
+  StyleSheet, Text, View, Pressable, Platform, ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -144,7 +144,14 @@ export default function CRESTRetestScreen() {
         <ProgressBar current={currentIndex} total={TOTAL} />
       </View>
 
-      <View style={styles.content}>
+      {/* Scrolls so the response options and Continue stay reachable at large
+          system font sizes. Header (back + progress) stays fixed above. */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        scrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+      >
         <DomainBadge label={DOMAIN_LABELS[question.domain]} />
 
         <Text style={styles.questionText}>{question.text}</Text>
@@ -155,7 +162,7 @@ export default function CRESTRetestScreen() {
           questionText={question.text}
           isLast={isLast}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -188,10 +195,12 @@ function makeStyles(
     },
     weekBadgeText: { ...typography.micro, color: Colors.deepTide },
     counter:       { ...typography.caption, color: colors.textSecondary },
+    scroll: { flex: 1 },
     content: {
-      flex: 1,
+      flexGrow: 1,
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
       gap: Spacing.xl,
     },
     questionText: { ...typography.heading1, color: colors.textPrimary, lineHeight: 30 },

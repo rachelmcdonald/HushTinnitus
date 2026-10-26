@@ -215,7 +215,9 @@ export default function BoxBreathingScreen() {
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!isRunning}
+        // Always scrollable (was disabled while running) so Stop stays
+        // reachable when large system font sizes push it below the fold.
+        scrollEnabled={true}
       >
         {/* Back */}
         <Pressable

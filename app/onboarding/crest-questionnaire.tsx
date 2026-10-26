@@ -5,6 +5,7 @@ import {
   View,
   Pressable,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -174,7 +175,14 @@ export default function CRESTQuestionnaireScreen() {
       </View>
 
       {/* Content */}
-      <View style={styles.content}>
+      {/* Scrolls so the response options and Continue stay reachable at large
+          system font sizes. Header (back + progress) stays fixed above. */}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        scrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+      >
         <DomainBadge label={DOMAIN_LABELS[question.domain]} />
 
         <Text style={styles.questionText}>{question.text}</Text>
@@ -185,7 +193,7 @@ export default function CRESTQuestionnaireScreen() {
           questionText={question.text}
           isLast={isLast}
         />
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -229,10 +237,14 @@ function makeStyles(
     },
 
     // Content
-    content: {
+    scroll: {
       flex: 1,
+    },
+    content: {
+      flexGrow: 1,
       paddingHorizontal: Spacing.xl,
       paddingTop: Spacing.xl,
+      paddingBottom: Spacing.xl,
       gap: Spacing.xl,
     },
     questionText: {

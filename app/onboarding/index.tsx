@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, Image } from 'react-native';
+import { StyleSheet, Text, View, Pressable, Image, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Svg, { Path, Circle } from 'react-native-svg';
@@ -62,7 +62,13 @@ export default function WelcomeScreen() {
 
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
+      {/* Scrolls so "Get started" stays reachable at large system font sizes;
+          flexGrow keeps the space-between layout when content fits. */}
+      <ScrollView
+        contentContainerStyle={styles.container}
+        scrollEnabled={true}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Logo + wordmark */}
         <View style={styles.brandBlock}>
@@ -106,7 +112,7 @@ export default function WelcomeScreen() {
           </View>
         </View>
 
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -121,7 +127,7 @@ function makeStyles(
       backgroundColor: colors.background,
     },
     container: {
-      flex: 1,
+      flexGrow: 1,
       paddingHorizontal: Spacing.xl,
       justifyContent: 'space-between',
       paddingTop: Spacing.huge * 2,

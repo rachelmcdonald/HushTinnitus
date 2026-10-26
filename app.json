@@ -31,11 +31,14 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.hushtinnitus.app",
-      "versionCode": 9,
+      "versionCode": 10,
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ]
+    },
+    "androidNavigationBar": {
+      "enforceContrast": false
     },
     "web": {
       "bundler": "metro",
