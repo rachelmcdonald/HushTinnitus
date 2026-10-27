@@ -194,8 +194,8 @@ export default function Breathing478Screen() {
         </Pressable>
 
         <View style={styles.header}>
-          <Text style={styles.title}>4-7-8 Breathing</Text>
-          <Text style={styles.lead}>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>4-7-8 Breathing</Text>
+          <Text style={styles.lead} maxFontSizeMultiplier={1.3}>
             Inhale for 4 seconds, hold for 7, exhale for 8. A complete cycle
             takes 19 seconds. Most people find 3–4 cycles helpful for settling
             the nervous system.

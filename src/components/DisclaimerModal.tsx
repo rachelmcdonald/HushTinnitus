@@ -1,4 +1,5 @@
 import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Spacing, Radius, Border } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -19,6 +20,7 @@ type Props = {
 
 export default function DisclaimerModal({ visible, onClose }: Props) {
   const { colors, typography, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Modal
@@ -36,6 +38,9 @@ export default function DisclaimerModal({ visible, onClose }: Props) {
           style={[
             styles.sheet,
             { backgroundColor: isDark ? Colors.midnight : Colors.warmSand },
+            // statusBarTranslucent + edge-to-edge draws the sheet under the
+            // navigation bar, so lift the Close button clear of it.
+            { paddingBottom: Spacing.xxl + insets.bottom },
           ]}
           onPress={() => {}}
         >

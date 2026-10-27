@@ -103,7 +103,7 @@ export default function NowPlayingBar({
               onPress={() => onSetTimer(null)}
               accessibilityLabel="No timer"
             >
-              <Text style={[styles.chipText, selectedTimer === null && styles.chipTextActive]}>
+              <Text style={[styles.chipText, selectedTimer === null && styles.chipTextActive]} maxFontSizeMultiplier={1.0}>
                 Off
               </Text>
             </Pressable>
@@ -114,7 +114,7 @@ export default function NowPlayingBar({
                 onPress={() => onSetTimer(selectedTimer === m ? null : m)}
                 accessibilityLabel={`${m} minute timer`}
               >
-                <Text style={[styles.chipText, selectedTimer === m && styles.chipTextActive]}>
+                <Text style={[styles.chipText, selectedTimer === m && styles.chipTextActive]} maxFontSizeMultiplier={1.0}>
                   {m}m
                 </Text>
               </Pressable>

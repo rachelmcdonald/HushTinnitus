@@ -155,12 +155,16 @@ export default function RelaxScreen() {
                   color={Colors.softGold}
                   style={styles.lockIcon}
                 />
+                {/* paddingRight now applies to every title, which narrows the
+                    text box — adjustsFontSizeToFit shrinks a title slightly
+                    rather than letting a long word ("Diaphragmatic") break
+                    mid-word or a title spill onto a truncated third line. */}
                 <Text
-                  style={[
-                    styles.premiumCardTitle,
-                    (item.id === 'mindfulness' || item.id === 'body-scan') && styles.premiumCardTitleNarrow,
-                  ]}
+                  style={styles.premiumCardTitle}
                   numberOfLines={2}
+                  maxFontSizeMultiplier={1.2}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.75}
                 >
                   {cardTitleDisplay(item)}
                 </Text>
@@ -263,12 +267,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>['colors'], typography: R
       fontSize: typography.heading2.fontSize - 2,
       fontWeight: '600' as const,
       color: colors.textPrimary,
-    },
-    // "Mindfulness Practice" and "Body Scan Meditation" only — these two
-    // titles overlap the padlock icon at medium/small text sizes. Scoped to
-    // just these cards rather than applied globally: a global paddingRight
-    // previously made "Diaphragmatic Breathing" break mid-word.
-    premiumCardTitleNarrow: {
       paddingRight: 36, // 18px icon + 10px right offset + breathing room
     },
     premiumCardDuration: { ...typography.caption, color: colors.textSecondary },

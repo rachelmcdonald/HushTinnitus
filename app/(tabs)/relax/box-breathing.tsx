@@ -237,8 +237,8 @@ export default function BoxBreathingScreen() {
         </Pressable>
 
         <View style={styles.header}>
-          <Text style={styles.title}>Box Breathing</Text>
-          <Text style={styles.lead}>
+          <Text style={styles.title} maxFontSizeMultiplier={1.3}>Box Breathing</Text>
+          <Text style={styles.lead} maxFontSizeMultiplier={1.3}>
             Four equal phases of 4 seconds each — inhale, hold, exhale, hold.
             Follow the dot around the box and breathe with it.
           </Text>

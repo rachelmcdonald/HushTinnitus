@@ -193,8 +193,8 @@ function CitationCard({ citation }: { citation: Citation }) {
           accessibilityRole="link"
           accessibilityLabel={`View source for ${citation.title}`}
         >
-          <Text style={styles.linkBtnText}>View source — {citation.urlLabel}</Text>
-          <Text style={styles.linkBtnArrow}> ↗</Text>
+          <Text style={styles.linkBtnText} maxFontSizeMultiplier={1.2}>View source — {citation.urlLabel}</Text>
+          <Text style={styles.linkBtnArrow} maxFontSizeMultiplier={1.2}> ↗</Text>
         </Pressable>
       )}
     </View>
@@ -325,6 +325,7 @@ function makeStyles(
       gap: Spacing.sm,
       borderTopWidth: 3,
       borderTopColor: Colors.calmWave,
+      overflow: 'hidden',
     },
     cardMeta: {
       flexDirection: 'row',
@@ -368,13 +369,17 @@ function makeStyles(
       flexDirection: 'row',
       alignItems: 'center',
       alignSelf: 'flex-start',
+      // Wrap inside the card at large text sizes instead of running past its edge.
+      flexWrap: 'wrap',
+      flexShrink: 1,
+      maxWidth: '100%',
       backgroundColor: colors.surfaceVariant,
       borderRadius: Radius.chip,
       paddingHorizontal: Spacing.md,
       paddingVertical: Spacing.xs,
     },
     linkBtnPressed: { opacity: 0.7 },
-    linkBtnText:    { ...typography.micro, color: colors.headingAccent },
+    linkBtnText:    { ...typography.micro, color: colors.headingAccent, flexShrink: 1 },
     linkBtnArrow:   { ...typography.micro, color: colors.headingAccent },
 
     footer: {

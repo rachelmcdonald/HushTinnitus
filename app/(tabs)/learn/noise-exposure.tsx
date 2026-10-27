@@ -84,7 +84,7 @@ function ThresholdCard({
     <View style={[styles.thresholdCard, { borderLeftColor: color }]}>
       <View style={styles.thresholdHeader}>
         <Text style={[styles.thresholdLabel, { color }]}>{label}</Text>
-        <Text style={styles.thresholdRange}>{range}</Text>
+        <Text style={styles.thresholdRange} maxFontSizeMultiplier={1.1}>{range}</Text>
       </View>
       <Text style={styles.thresholdDesc}>{description}</Text>
     </View>
@@ -126,12 +126,12 @@ function ChartRow({ entry }: { entry: NoiseEntry }) {
         />
       </View>
 
-      <Text style={[styles.dbValue, { color }]}>{entry.db}</Text>
+      <Text style={[styles.dbValue, { color }]} maxFontSizeMultiplier={1.1}>{entry.db}</Text>
 
       <View style={styles.riskBadgeSlot}>
         {risk && (
           <View style={[styles.riskBadge, { backgroundColor: color + '20' }]}>
-            <Text style={[styles.riskBadgeText, { color }]}>{risk}</Text>
+            <Text style={[styles.riskBadgeText, { color }]} maxFontSizeMultiplier={1.0} numberOfLines={1}>{risk}</Text>
           </View>
         )}
       </View>
@@ -341,9 +341,11 @@ function makeStyles(
       gap: 4,
       borderLeftWidth: 3,
     },
-    thresholdHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    thresholdLabel:  { ...typography.heading2 },
-    thresholdRange:  { ...typography.caption, color: colors.textSecondary },
+    // Label and range share the row: both may shrink and wrap so long pairs
+    // ("Protection strongly advised" / "100 dB and above") stay inside the card.
+    thresholdHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: Spacing.sm },
+    thresholdLabel:  { ...typography.heading2, flex: 1, flexShrink: 1 },
+    thresholdRange:  { ...typography.caption, color: colors.textSecondary, flexShrink: 1, textAlign: 'right' },
     thresholdDesc:   { ...typography.caption, color: colors.textSecondary, lineHeight: 18 },
 
     // Legend
@@ -394,7 +396,7 @@ function makeStyles(
     dbValue: {
       ...typography.caption,
       fontWeight: '600',
-      width: 28,
+      width: 34, // fits "115" at the largest in-app text size
       textAlign: 'right',
       flexShrink: 0,
     },
