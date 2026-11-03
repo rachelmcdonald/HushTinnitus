@@ -222,6 +222,40 @@ export default function Breathing478Screen() {
           <Animated.View style={[styles.circle, animatedCircleStyle]} />
         </View>
 
+        {/* Phase guide */}
+        {isRunning && (
+          <View style={styles.phaseGuide}>
+            {(['inhale', 'hold', 'exhale'] as const).map((p) => (
+              <View
+                key={p}
+                style={[styles.phaseStep, phase === p && styles.phaseStepActive]}
+              >
+                <Text
+                  style={[
+                    styles.phaseStepLabel,
+                    phase === p && styles.phaseStepLabelActive,
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {PHASES[p].label}
+                </Text>
+                <Text
+                  style={[
+                    styles.phaseStepCount,
+                    phase === p && styles.phaseStepCountActive,
+                  ]}
+                  maxFontSizeMultiplier={1.3}
+                  numberOfLines={1}
+                >
+                  {PHASES[p].seconds}s
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {/* Stop */}
         {isRunning && (
           <Pressable
@@ -262,16 +296,16 @@ function makeStyles(
       paddingHorizontal: Spacing.xl,
       paddingTop: 0,
       paddingBottom: Spacing.xl,
-      gap: Spacing.lg,
+      gap: Spacing.md,
     },
     // Negative marginBottom pulls the phase text up to 4px below "← Relax" (was
-    // 28px: 8px button padding + 20px scroll gap) so the Stop button fits
+    // 20px: 8px button padding + 12px scroll gap) so the Stop button fits
     // without scrolling. The padding is kept so the tap target doesn't shrink.
     backBtn: {
       alignSelf: 'flex-start',
       paddingTop: 0,
       paddingBottom: Spacing.sm,
-      marginBottom: -(Spacing.sm + Spacing.lg - Spacing.xs),
+      marginBottom: -(Spacing.sm + Spacing.md - Spacing.xs),
     },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: colors.headingAccent },
@@ -325,6 +359,25 @@ function makeStyles(
       shadowRadius: 20,
       elevation: 8,
     },
+
+    phaseGuide: {
+      flexDirection: 'row',
+      backgroundColor: colors.background,
+      borderRadius: Radius.card,
+      gap: Spacing.xs,
+    },
+    phaseStep: {
+      flex: 1,
+      alignItems: 'center',
+      paddingVertical: Spacing.xs,
+      borderRadius: Radius.chip,
+      gap: 2,
+    },
+    phaseStepActive: { backgroundColor: colors.surfaceVariant },
+    phaseStepLabel: { ...typography.caption, color: colors.textSecondary },
+    phaseStepLabelActive: { color: colors.deepTide, fontWeight: '600' },
+    phaseStepCount: { ...typography.heading2, color: colors.textSecondary },
+    phaseStepCountActive: { color: colors.deepTide },
 
     btn: {
       borderRadius: Radius.chip,
