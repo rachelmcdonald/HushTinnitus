@@ -12,6 +12,7 @@ import Animated, {
 import { Duration, Colors, Spacing, Radius, Border } from '@/src/theme';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
 import { useTheme } from '@/src/context/ThemeContext';
+import BreathingStartModal from '@/src/components/BreathingStartModal';
 
 // ─── Geometry ─────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ const HALF_BORDER = BORDER_WIDTH / 2;
 // right and bottom edges still read ~2px outside the stroke. Only those
 // three corners get this extra nudge — top-left is untouched.
 const VISUAL_NUDGE = 2;
+const STILL_SCALE = 0.7; // the pre-start modal's square, relative to SQUARE
 
 // Dot top-left positions at each corner (dot centred at corner):
 // Using left/top in animated style; dot is absolute inside the square view.
@@ -81,12 +83,13 @@ export default function BoxBreathingScreen() {
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<BoxPhase>('idle');
   const [countdown, setCountdown] = useState(0);
-  const [cycleCount, setCycleCount] = useState(0);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   // Dot position as shared values (left/top in absolute coordinates)
   const dotLeft = useSharedValue(CORNER.bottomLeft.left);
   const dotTop  = useSharedValue(CORNER.bottomLeft.top);
 
+  const scrollRef = useRef<ScrollView>(null);
   const intervalRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const isRunningRef  = useRef(false);
   const sessionStartRef = useRef<number | null>(null);
@@ -134,7 +137,6 @@ export default function BoxBreathingScreen() {
     setPhase('hold2');
     // Phase 4: top-left → bottom-left (left stays -HALF_DOT, top goes bottom)
     animateDot(CORNER.bottomLeft.left, CORNER.bottomLeft.top, () => {
-      setCycleCount((n) => n + 1);
       runInhale();
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -167,7 +169,6 @@ export default function BoxBreathingScreen() {
     isRunningRef.current = true;
     sessionStartRef.current = Date.now();
     setIsRunning(true);
-    setCycleCount(0);
     runInhale();
   }
 
@@ -182,10 +183,23 @@ export default function BoxBreathingScreen() {
     setIsRunning(false);
     setPhase('idle');
     setCountdown(0);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
     if (sessionStartRef.current) {
       const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       saveSession(elapsed);
       sessionStartRef.current = null;
+    }
+  }
+
+  function handleBack() {
+    // Set before handleStop's state update commits, so the pre-start modal
+    // doesn't reappear over the outgoing screen.
+    setIsLeaving(true);
+    if (isRunning) handleStop();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
     }
   }
 
@@ -210,9 +224,23 @@ export default function BoxBreathingScreen() {
   };
   const currentSide = activeSide[phase];
 
+  // Corner dots (static, visual guides)
+  const cornerMarks = [
+    CORNER.topLeft,
+    CORNER.topRight,
+    CORNER.bottomLeft,
+    CORNER.bottomRight,
+  ].map((pos, i) => (
+    <View
+      key={i}
+      style={[styles.cornerMark, { left: pos.left + HALF_DOT - 4, top: pos.top + HALF_DOT - 4 }]}
+    />
+  ));
+
   return (
     <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         // Always scrollable (was disabled while running) so Stop stays
@@ -222,31 +250,16 @@ export default function BoxBreathingScreen() {
         {/* Back */}
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-          onPress={() => {
-            if (isRunning) handleStop();
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)');
-            }
-          }}
+          onPress={handleBack}
           accessibilityRole="button"
           accessibilityLabel="Back to Relax"
         >
           <Text style={styles.backLabel}>← Relax</Text>
         </Pressable>
 
-        <View style={styles.header}>
-          <Text style={styles.title} maxFontSizeMultiplier={1.3}>Box Breathing</Text>
-          <Text style={styles.lead} maxFontSizeMultiplier={1.3}>
-            Four equal phases of 4 seconds each — inhale, hold, exhale, hold.
-            Follow the dot around the box and breathe with it.
-          </Text>
-        </View>
-
         {/* Phase display */}
         <View style={styles.phaseArea}>
-          {isRunning ? (
+          {isRunning && (
             <>
               <Text style={styles.phaseLabel} accessibilityLiveRegion="polite">
                 {activePhase?.label ?? ''}
@@ -256,12 +269,6 @@ export default function BoxBreathingScreen() {
                 {countdown}
               </Text>
             </>
-          ) : (
-            <Text style={styles.idleLabel}>
-              {cycleCount > 0
-                ? `${cycleCount} cycle${cycleCount !== 1 ? 's' : ''} completed`
-                : 'Follow the dot around the box'}
-            </Text>
           )}
         </View>
 
@@ -280,18 +287,7 @@ export default function BoxBreathingScreen() {
 
             {/* The box */}
             <View style={styles.box}>
-              {/* Corner dots (static, visual guides) */}
-              {[
-                CORNER.topLeft,
-                CORNER.topRight,
-                CORNER.bottomLeft,
-                CORNER.bottomRight,
-              ].map((pos, i) => (
-                <View
-                  key={i}
-                  style={[styles.cornerMark, { left: pos.left + HALF_DOT - 4, top: pos.top + HALF_DOT - 4 }]}
-                />
-              ))}
+              {cornerMarks}
 
               {/* Animated dot */}
               <Animated.View style={[styles.dot, animatedDotStyle]} />
@@ -309,28 +305,34 @@ export default function BoxBreathingScreen() {
           </Text>
         </View>
 
-        {/* Start / Stop */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.btn,
-            isRunning ? styles.btnStop : styles.btnStart,
-            pressed && styles.btnPressed,
-          ]}
-          onPress={isRunning ? handleStop : handleStart}
-          accessibilityRole="button"
-          accessibilityLabel={isRunning ? 'Stop session' : 'Start breathing exercise'}
-        >
-          <Text style={styles.btnLabel}>{isRunning ? 'Stop' : 'Start'}</Text>
-        </Pressable>
-
-        {!isRunning && (
-          <Text style={styles.tip}>
-            Breathe naturally through your nose for both inhale and exhale.
-            Each complete cycle takes 16 seconds. Most people find 4–6 cycles
-            helpful for building focus and calm.
-          </Text>
+        {/* Stop */}
+        {isRunning && (
+          <Pressable
+            style={({ pressed }) => [styles.btn, styles.btnStop, pressed && styles.btnPressed]}
+            onPress={handleStop}
+            accessibilityRole="button"
+            accessibilityLabel="Stop session"
+          >
+            <Text style={styles.btnLabel}>Stop</Text>
+          </Pressable>
         )}
       </ScrollView>
+
+      <BreathingStartModal
+        visible={!isRunning && !isLeaving}
+        title="Box Breathing"
+        description="Four equal phases of 4 seconds each — inhale, hold, exhale, hold. Follow the dot around the box and breathe with it."
+        onStart={handleStart}
+        onBack={handleBack}
+      >
+        {/* Side labels are left out: at full width they would overflow the card. */}
+        <View style={styles.stillVisual}>
+          <View style={[styles.box, styles.stillBox]}>
+            {cornerMarks}
+            <View style={[styles.dot, CORNER.bottomLeft]} />
+          </View>
+        </View>
+      </BreathingStartModal>
     </SafeAreaView>
   );
 }
@@ -351,13 +353,11 @@ function makeStyles(
     backBtn: { alignSelf: 'flex-start', paddingTop: 0, paddingBottom: Spacing.sm },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: colors.headingAccent },
-    header: { gap: Spacing.sm },
-    title: { ...typography.display, color: colors.textPrimary },
-    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
     phaseArea: {
       alignItems: 'center',
-      minHeight: 80,
+      // Reserves the running height so the visual doesn't shift on Start/Stop.
+      minHeight: 126,
       justifyContent: 'center',
       gap: 4,
     },
@@ -374,7 +374,6 @@ function makeStyles(
       color: Colors.deepTide,
       lineHeight: 60,
     },
-    idleLabel: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
 
     // Box diagram with labels
     boxWrapper: { alignItems: 'center', gap: Spacing.sm },
@@ -395,6 +394,14 @@ function makeStyles(
       position: 'relative',
       backgroundColor: colors.surfaceVariant,
     },
+
+    // Pre-start modal's still square, scaled about its centre
+    stillVisual: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: SQUARE * STILL_SCALE + DOT,
+    },
+    stillBox: { transform: [{ scale: STILL_SCALE }] },
 
     // Corner guide marks
     cornerMark: {
@@ -436,17 +443,9 @@ function makeStyles(
       paddingVertical: Spacing.base,
       alignItems: 'center',
     },
-    btnStart:  { backgroundColor: Colors.deepTide },
     btnStop:   { backgroundColor: Colors.warmCoral },
     btnPressed: { opacity: 0.85 },
     btnLabel: { ...typography.heading2, color: Colors.white },
 
-    tip: {
-      ...typography.caption,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 20,
-      fontStyle: 'italic',
-    },
   });
 }

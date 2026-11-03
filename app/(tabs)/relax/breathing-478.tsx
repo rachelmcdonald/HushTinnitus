@@ -12,6 +12,7 @@ import Animated, {
 import { Duration, Colors, Spacing, Radius } from '@/src/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { saveSoundSession, createSessionId } from '@/src/storage/soundSessions';
+import BreathingStartModal from '@/src/components/BreathingStartModal';
 
 // ─── Phase definitions ────────────────────────────────────────────────────────
 
@@ -41,6 +42,7 @@ const PHASES: Record<Exclude<Phase, 'idle'>, { label: string; hint: string; seco
 const RESTING_SCALE = 0.72;
 const EXPANDED_SCALE = 1.18;
 const CIRCLE_BASE = 170; // px — base diameter
+const STILL_CIRCLE = { transform: [{ scale: RESTING_SCALE }] };
 
 // ─── Session helper ───────────────────────────────────────────────────────────
 
@@ -69,9 +71,10 @@ export default function Breathing478Screen() {
   const [isRunning, setIsRunning] = useState(false);
   const [phase, setPhase] = useState<Phase>('idle');
   const [countdown, setCountdown] = useState(0);
-  const [cycleCount, setCycleCount] = useState(0);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   const circleScale = useSharedValue(RESTING_SCALE);
+  const scrollRef = useRef<ScrollView>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isRunningRef = useRef(false);
   const sessionStartRef = useRef<number | null>(null);
@@ -110,7 +113,6 @@ export default function Breathing478Screen() {
       easing: Easing.inOut(Easing.ease),
     });
     startCountdown(PHASES.exhale.seconds, () => {
-      setCycleCount((n) => n + 1);
       runInhale();
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -135,7 +137,6 @@ export default function Breathing478Screen() {
     isRunningRef.current = true;
     sessionStartRef.current = Date.now();
     setIsRunning(true);
-    setCycleCount(0);
     runInhale();
   }
 
@@ -150,10 +151,23 @@ export default function Breathing478Screen() {
     setIsRunning(false);
     setPhase('idle');
     setCountdown(0);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
     if (sessionStartRef.current) {
       const elapsed = Math.floor((Date.now() - sessionStartRef.current) / 1000);
       saveSession(elapsed);
       sessionStartRef.current = null;
+    }
+  }
+
+  function handleBack() {
+    // Set before handleStop's state update commits, so the pre-start modal
+    // doesn't reappear over the outgoing screen.
+    setIsLeaving(true);
+    if (isRunning) handleStop();
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
     }
   }
 
@@ -170,6 +184,7 @@ export default function Breathing478Screen() {
   return (
     <SafeAreaView style={styles.safe} edges={['left', 'right']}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         // Always scrollable (was disabled while running) so Stop stays
@@ -179,32 +194,16 @@ export default function Breathing478Screen() {
         {/* Back */}
         <Pressable
           style={({ pressed }) => [styles.backBtn, pressed && styles.backBtnPressed]}
-          onPress={() => {
-            if (isRunning) handleStop();
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/(tabs)');
-            }
-          }}
+          onPress={handleBack}
           accessibilityRole="button"
           accessibilityLabel="Back to Relax"
         >
           <Text style={styles.backLabel}>← Relax</Text>
         </Pressable>
 
-        <View style={styles.header}>
-          <Text style={styles.title} maxFontSizeMultiplier={1.3}>4-7-8 Breathing</Text>
-          <Text style={styles.lead} maxFontSizeMultiplier={1.3}>
-            Inhale for 4 seconds, hold for 7, exhale for 8. A complete cycle
-            takes 19 seconds. Most people find 3–4 cycles helpful for settling
-            the nervous system.
-          </Text>
-        </View>
-
         {/* Phase indicator */}
         <View style={styles.phaseArea}>
-          {isRunning ? (
+          {isRunning && (
             <>
               <Text style={styles.phaseLabel} accessibilityLiveRegion="polite">
                 {activePhase?.label ?? ''}
@@ -214,12 +213,6 @@ export default function Breathing478Screen() {
                 {countdown}
               </Text>
             </>
-          ) : (
-            <Text style={styles.idleLabel}>
-              {cycleCount > 0
-                ? `${cycleCount} cycle${cycleCount !== 1 ? 's' : ''} completed`
-                : 'Tap start when you are ready'}
-            </Text>
           )}
         </View>
 
@@ -229,56 +222,31 @@ export default function Breathing478Screen() {
           <Animated.View style={[styles.circle, animatedCircleStyle]} />
         </View>
 
-        {/* Phase guide */}
-        <View style={styles.phaseGuide}>
-          {(['inhale', 'hold', 'exhale'] as const).map((p) => (
-            <View
-              key={p}
-              style={[styles.phaseStep, phase === p && styles.phaseStepActive]}
-            >
-              <Text
-                style={[
-                  styles.phaseStepLabel,
-                  phase === p && styles.phaseStepLabelActive,
-                ]}
-              >
-                {PHASES[p].label}
-              </Text>
-              <Text
-                style={[
-                  styles.phaseStepCount,
-                  phase === p && styles.phaseStepCountActive,
-                ]}
-              >
-                {PHASES[p].seconds}s
-              </Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Start / Stop */}
-        <Pressable
-          style={({ pressed }) => [
-            styles.btn,
-            isRunning ? styles.btnStop : styles.btnStart,
-            pressed && styles.btnPressed,
-          ]}
-          onPress={isRunning ? handleStop : handleStart}
-          accessibilityRole="button"
-          accessibilityLabel={isRunning ? 'Stop session' : 'Start breathing exercise'}
-        >
-          <Text style={styles.btnLabel}>{isRunning ? 'Stop' : 'Start'}</Text>
-        </Pressable>
-
-        {/* Tip */}
-        {!isRunning && (
-          <Text style={styles.tip}>
-            Find a comfortable seated or reclined position. You can breathe
-            through your nose for the inhale and gently through your mouth or
-            nose for the exhale — whichever feels more natural.
-          </Text>
+        {/* Stop */}
+        {isRunning && (
+          <Pressable
+            style={({ pressed }) => [styles.btn, styles.btnStop, pressed && styles.btnPressed]}
+            onPress={handleStop}
+            accessibilityRole="button"
+            accessibilityLabel="Stop session"
+          >
+            <Text style={styles.btnLabel}>Stop</Text>
+          </Pressable>
         )}
       </ScrollView>
+
+      <BreathingStartModal
+        visible={!isRunning && !isLeaving}
+        title="4-7-8 Breathing"
+        description="Inhale for 4 seconds, hold for 7, exhale for 8. A complete cycle takes 19 seconds. Most people find 3–4 cycles helpful for settling the nervous system."
+        onStart={handleStart}
+        onBack={handleBack}
+      >
+        <View style={styles.stillVisual}>
+          <View style={[styles.circleGlow, STILL_CIRCLE]} />
+          <View style={[styles.circle, STILL_CIRCLE]} />
+        </View>
+      </BreathingStartModal>
     </SafeAreaView>
   );
 }
@@ -296,8 +264,8 @@ function makeStyles(
       paddingBottom: Spacing.xl,
       gap: Spacing.lg,
     },
-    // Negative marginBottom pulls the heading up to 4px below "← Relax" (was
-    // 28px: 8px button padding + 20px scroll gap) so the Start button fits
+    // Negative marginBottom pulls the phase text up to 4px below "← Relax" (was
+    // 28px: 8px button padding + 20px scroll gap) so the Stop button fits
     // without scrolling. The padding is kept so the tap target doesn't shrink.
     backBtn: {
       alignSelf: 'flex-start',
@@ -307,13 +275,11 @@ function makeStyles(
     },
     backBtnPressed: { opacity: 0.6 },
     backLabel: { ...typography.body, color: colors.headingAccent },
-    header: { gap: Spacing.sm },
-    title: { ...typography.display, color: colors.textPrimary },
-    lead: { ...typography.body, color: colors.textSecondary, lineHeight: 24 },
 
     phaseArea: {
       alignItems: 'center',
-      minHeight: 80,
+      // Reserves the running height so the visual doesn't shift on Start/Stop.
+      minHeight: 126,
       justifyContent: 'center',
       gap: 4,
     },
@@ -330,12 +296,16 @@ function makeStyles(
       color: colors.deepTide,
       lineHeight: 60,
     },
-    idleLabel: { ...typography.body, color: colors.textSecondary, textAlign: 'center' },
 
     circleContainer: {
       alignItems: 'center',
       justifyContent: 'center',
       height: CIRCLE_BASE * EXPANDED_SCALE + 40,
+    },
+    stillVisual: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      height: (CIRCLE_BASE + 30) * RESTING_SCALE,
     },
     circleGlow: {
       position: 'absolute',
@@ -356,42 +326,14 @@ function makeStyles(
       elevation: 8,
     },
 
-    phaseGuide: {
-      flexDirection: 'row',
-      backgroundColor: colors.background,
-      borderRadius: Radius.card,
-      padding: Spacing.md,
-      gap: Spacing.xs,
-    },
-    phaseStep: {
-      flex: 1,
-      alignItems: 'center',
-      paddingVertical: Spacing.sm,
-      borderRadius: Radius.chip,
-      gap: 2,
-    },
-    phaseStepActive: { backgroundColor: colors.surfaceVariant },
-    phaseStepLabel: { ...typography.caption, color: colors.textSecondary },
-    phaseStepLabelActive: { color: colors.deepTide, fontWeight: '600' },
-    phaseStepCount: { ...typography.heading2, color: colors.textSecondary },
-    phaseStepCountActive: { color: colors.deepTide },
-
     btn: {
       borderRadius: Radius.chip,
       paddingVertical: Spacing.base,
       alignItems: 'center',
     },
-    btnStart: { backgroundColor: Colors.deepTide },
     btnStop: { backgroundColor: Colors.warmCoral },
     btnPressed: { opacity: 0.85 },
     btnLabel: { ...typography.heading2, color: Colors.white },
 
-    tip: {
-      ...typography.caption,
-      color: colors.textSecondary,
-      textAlign: 'center',
-      lineHeight: 20,
-      fontStyle: 'italic',
-    },
   });
 }
