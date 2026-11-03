@@ -388,7 +388,7 @@ function makeStyles(
       width: SQUARE,
       height: SQUARE,
       borderWidth: BORDER_WIDTH,
-      borderColor: Colors.deepTide,
+      borderColor: colors.headingAccent,
       borderRadius: 4,
       overflow: 'visible',
       position: 'relative',
@@ -409,7 +409,7 @@ function makeStyles(
       width: 8,
       height: 8,
       borderRadius: 4,
-      backgroundColor: Colors.deepTide + '50',
+      backgroundColor: colors.headingAccent + '50',
     },
 
     // Animated dot
