@@ -364,14 +364,14 @@ function makeStyles(
     phaseLabel: {
       fontSize: 28,
       fontWeight: '400',
-      color: Colors.deepTide,
+      color: colors.headingAccent,
       letterSpacing: -0.5,
     },
     phaseHint: { ...typography.body, color: colors.textSecondary },
     countdown: {
       fontSize: 52,
       fontWeight: '300',
-      color: Colors.deepTide,
+      color: colors.headingAccent,
       lineHeight: 60,
     },
 
@@ -435,7 +435,7 @@ function makeStyles(
     sideLabelTop:    { marginBottom: 2 },
     sideLabelBottom: { marginTop: 2 },
     sideLabelSide:   { width: 40, fontSize: 11 },
-    sideLabelActive: { color: Colors.deepTide, fontWeight: '600' },
+    sideLabelActive: { color: colors.headingAccent, fontWeight: '600' },
 
     // Buttons
     btn: {

@@ -320,14 +320,14 @@ function makeStyles(
     phaseLabel: {
       fontSize: 28,
       fontWeight: '400',
-      color: colors.deepTide,
+      color: colors.headingAccent,
       letterSpacing: -0.5,
     },
     phaseHint: { ...typography.body, color: colors.textSecondary },
     countdown: {
       fontSize: 52,
       fontWeight: '300',
-      color: colors.deepTide,
+      color: colors.headingAccent,
       lineHeight: 60,
     },
 
@@ -375,9 +375,9 @@ function makeStyles(
     },
     phaseStepActive: { backgroundColor: colors.surfaceVariant },
     phaseStepLabel: { ...typography.caption, color: colors.textSecondary },
-    phaseStepLabelActive: { color: colors.deepTide, fontWeight: '600' },
+    phaseStepLabelActive: { color: colors.headingAccent, fontWeight: '600' },
     phaseStepCount: { ...typography.heading2, color: colors.textSecondary },
-    phaseStepCountActive: { color: colors.deepTide },
+    phaseStepCountActive: { color: colors.headingAccent },
 
     btn: {
       borderRadius: Radius.chip,
